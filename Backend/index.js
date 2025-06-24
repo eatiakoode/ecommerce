@@ -17,6 +17,7 @@ const couponRouter = require("./routes/couponRoute");
 const uploadRouter = require("./routes/uploadRoute");
 const categoryFrontendRouter = require("./routes/categoryFrontendRouter");
 
+// eati test
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
