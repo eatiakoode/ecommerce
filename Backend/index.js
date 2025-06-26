@@ -17,6 +17,9 @@ const couponRouter = require("./routes/couponRoute");
 const uploadRouter = require("./routes/uploadRoute");
 const categoryFrontendRouter = require("./routes/categoryFrontendRouter");
 
+//add new api
+const dealRoute = require("./routes/dealRoute");
+
 // eati test
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -40,6 +43,11 @@ app.use("/api/enquiry", enqRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/frontend/category", categoryFrontendRouter);
 const path = require("path");
+app.use("/api/deal",dealRoute);
+
+app.use('/api/order', require('./routes/order'));
+
+
 // app.use("/public", express.static(path.join(__dirname, "public")));
 // app.use(express.static("public"));
 // app.use('/images', express.static('path_to_images_directory'));

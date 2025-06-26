@@ -7,6 +7,7 @@ import "../public/css/image-compare-viewer.min.css";
 import { useEffect, useState } from "react";
 import ScrollTop from "@/components/common/ScrollTop";
 import Context from "@/context/Context";
+import { AuthProvider } from "@/context/AuthContext";
 import CartModal from "@/components/modals/CartModal";
 import QuickView from "@/components/modals/QuickView";
 import QuickAdd from "@/components/modals/QuickAdd";
@@ -123,22 +124,24 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="preload-wrapper popup-loader">
-        <Context>
-          <RtlToggler />
-          <div id="wrapper">{children}</div>
-          <CartModal />
-          <QuickView />
-          <QuickAdd />
-          <Compare />
-          <MobileMenu />
+        <AuthProvider>
+          <Context>
+            <RtlToggler />
+            <div id="wrapper">{children}</div>
+            <CartModal />
+            <QuickView />
+            <QuickAdd />
+            <Compare />
+            <MobileMenu />
 
-          <NewsLetterModal />
-          <SearchModal />
-          <SizeGuide />
-          <Wishlist />
-          <DemoModal />
-          <Categories />
-        </Context>
+            <NewsLetterModal />
+            <SearchModal />
+            <SizeGuide />
+            <Wishlist />
+            <DemoModal />
+            <Categories />
+          </Context>
+        </AuthProvider>
       </body>
     </html>
   );
