@@ -10,6 +10,3 @@ export const fetchProducts = async () => {
       return []; // Return an empty array in case of an error
     }
   };
-
-  
-  

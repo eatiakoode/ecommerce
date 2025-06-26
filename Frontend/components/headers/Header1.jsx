@@ -1,9 +1,18 @@
+"use client";
 import React from "react";
 import Nav from "./Nav";
 import Image from "next/image";
 import Link from "next/link";
 import CartLength from "../common/CartLength";
+import { useAuth } from "@/context/AuthContext";
+
 export default function Header1({ fullWidth = false }) {
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
     <header
       id="header"
@@ -99,15 +108,59 @@ export default function Header1({ fullWidth = false }) {
                   </svg>
                 </a>
                 <div className="dropdown-account dropdown-login">
-                  <div className="sub-top">
-                    <Link href={`/login`} className="tf-btn btn-reset">
-                      Login
-                    </Link>
-                    <p className="text-center text-secondary-2">
-                      Don’t have an account?{" "}
-                      <Link href={`/register`}>Register</Link>
-                    </p>
-                  </div>
+                  {isAuthenticated() ? (
+                    <>
+                      <div className="sub-top">
+                        <div className="user-info" style={{ 
+                          padding: "10px 0", 
+                          borderBottom: "1px solid #eee",
+                          marginBottom: "10px"
+                        }}>
+                          <p style={{ 
+                            margin: "0", 
+                            fontWeight: "bold", 
+                            color: "#333" 
+                          }}>
+                            Welcome, {user?.firstname} {user?.lastname}
+                          </p>
+                          <p style={{ 
+                            margin: "5px 0 0 0", 
+                            fontSize: "12px", 
+                            color: "#666" 
+                          }}>
+                            {user?.email}
+                          </p>
+                        </div>
+                        <Link href={`/my-account`} className="tf-btn btn-reset" style={{ marginBottom: "8px" }}>
+                          My Account
+                        </Link>
+                        <button 
+                          onClick={handleLogout} 
+                          className="tf-btn btn-reset"
+                          style={{ 
+                            backgroundColor: "#dc3545", 
+                            color: "white",
+                            border: "none",
+                            width: "100%"
+                          }}
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="sub-top">
+                        <Link href={`/login`} className="tf-btn btn-reset">
+                          Login
+                        </Link>
+                        <p className="text-center text-secondary-2">
+                          Don't have an account?{" "}
+                          <Link href={`/register`}>Register</Link>
+                        </p>
+                      </div>
+                    </>
+                  )}
                   <div className="sub-bot">
                     <span className="body-text-">Support</span>
                   </div>
