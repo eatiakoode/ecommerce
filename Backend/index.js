@@ -19,6 +19,8 @@ const categoryFrontendRouter = require("./routes/categoryFrontendRouter");
 
 //add new api
 const dealRoute = require("./routes/dealRoute");
+const orderRoute = require("./routes/order");
+
 
 // eati test
 const cookieParser = require("cookie-parser");
@@ -45,7 +47,7 @@ app.use("/api/frontend/category", categoryFrontendRouter);
 const path = require("path");
 app.use("/api/deal",dealRoute);
 
-app.use('/api/order', require('./routes/order'));
+app.use('/api/order', orderRoute);
 
 
 // app.use("/public", express.static(path.join(__dirname, "public")));
