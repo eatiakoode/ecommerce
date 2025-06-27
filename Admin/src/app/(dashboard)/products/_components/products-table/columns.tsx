@@ -159,7 +159,7 @@ export const columns: ColumnDef<Product>[] = [
                     className="text-foreground"
                 asChild
                   >
-                <Link href={`/dashboard/products/edit/${row.original.slug}`}>
+                <Link href={`/products/edit/${row.original.slug}`}>
                     <PenSquare className="size-5" />
                 </Link>
                   </Button>

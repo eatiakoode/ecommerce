@@ -1,286 +1,163 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
 import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import Typography from "@/components/ui/typography";
+import useGetMountStatus from "@/hooks/useGetMountStatus";
 
-const WeeklySales = () => {
-  const [activeTab, setActiveTab] = useState('sales');
-  const [mounted, setMounted] = useState(false);
-  
+export default function MonthlySales() {
+  const { theme } = useTheme();
+  const mounted = useGetMountStatus();
+
+  const [labels, setLabels] = useState<string[]>([]);
+  const [sales, setSales] = useState<number[]>([]);
+  const [orders, setOrders] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const gridColor = `rgba(161, 161, 170, ${theme === "light" ? "0.5" : "0.3"})`;
+
+  // ✅ [CHANGED] Monthly sales data fetch
   useEffect(() => {
-    setMounted(true);
+    const fetchData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/order/monthly-summary"); // ✅ [CHANGED]
+        setLabels(res.data.labels);  // Should be: ["Jan", "Feb", ..., "Dec"]
+        setSales(res.data.sales);
+        setOrders(res.data.orders);
+      } catch (err) {
+        console.error("Error fetching monthly data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
-  
-  // Generate past 7 days
-  const getPastDates = (days) => {
-    const dates = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      dates.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
-    }
-    return dates;
-  };
 
-  const labels = getPastDates(7);
-  const salesData = [400, 300, 100, 250, 200, 300, 1000];
-  const ordersData = [3, 3, 1, 4, 1, 1, 2];
-  
-  const gridColor = 'rgba(229, 231, 235, 0.5)';
-  const textColor = '#6b7280';
+//   useEffect(() => {
+//   const dummy = {
+//     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+//     sales: [1000, 1200, 1100, 1300, 1250, 1500, 1700, 1600, 1400, 1800, 2000, 2100],
+//     orders: [10, 12, 14, 16, 15, 20, 18, 22, 19, 25, 28, 30]
+//   };
 
-  const salesChartData = {
-    labels,
-    datasets: [
-      {
-        label: "Sales",
-        data: salesData,
-        borderColor: "rgb(16, 185, 129)",
-        backgroundColor: "rgba(16, 185, 129, 0.1)",
-        borderWidth: 3,
-        pointBackgroundColor: "rgb(16, 185, 129)",
-        pointBorderColor: "#ffffff",
-        pointBorderWidth: 2,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
+//   setLabels(dummy.labels);
+//   setSales(dummy.sales);
+//   setOrders(dummy.orders);
+//   setLoading(false);
+// }, []);
 
-  const ordersChartData = {
-    labels,
-    datasets: [
-      {
-        label: "Orders",
-        data: ordersData,
-        borderColor: "rgb(249, 115, 22)",
-        backgroundColor: "rgba(249, 115, 22, 0.1)",
-        borderWidth: 3,
-        pointBackgroundColor: "rgb(249, 115, 22)",
-        pointBorderColor: "#ffffff",
-        pointBorderWidth: 2,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      intersect: false,
-      mode: 'index',
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        titleColor: '#1f2937',
-        bodyColor: '#1f2937',
-        borderColor: '#e5e7eb',
-        borderWidth: 1,
-        cornerRadius: 8,
-        padding: 12,
-        displayColors: false,
-        callbacks: {
-          label: (context) => {
-            if (activeTab === 'sales') {
-              return `Sales: $${context.parsed.y}`;
-            } else {
-              return `Orders: ${context.parsed.y}`;
-            }
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-        border: {
-          display: false,
-        },
-        ticks: {
-          color: textColor,
-          padding: 10,
-          font: {
-            size: 12,
-            weight: '500',
-          },
-        },
-      },
-      y: {
-        grid: {
-          color: gridColor,
-          drawBorder: false,
-        },
-        border: {
-          display: false,
-        },
-        ticks: {
-          color: textColor,
-          padding: 15,
-          font: {
-            size: 12,
-          },
-          callback: function (value) {
-            if (activeTab === 'sales') {
-              return '$' + value;
-            }
-            return value;
-          },
-        },
-        ...(activeTab === 'orders' && {
-          min: 0,
-          max: Math.max(...ordersData) + 1,
-          ticks: {
-            ...this?.scales?.y?.ticks,
-            stepSize: 1,
-          },
-        }),
-      },
-    },
-  };
-
-  const Skeleton = () => (
-    <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse rounded-lg bg-[length:200%_100%] animate-[shimmer_2s_infinite]"></div>
-  );
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden h-[600px] flex flex-col">
-        {/* Header */}
-        <div className="p-6 pb-4 bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-sm">📊</span>
-            </div>
-            Weekly Sales Analytics
-          </h3>
-          
-          {/* Custom Tabs */}
-          <div className="flex space-x-1 bg-white p-1 rounded-xl shadow-inner">
-            <button
-              onClick={() => setActiveTab('sales')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                activeTab === 'sales'
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg transform translate-y-[-2px]'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-            >
-              <span className="text-lg">💰</span>
-              Sales Revenue
-            </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                activeTab === 'orders'
-                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg transform translate-y-[-2px]'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-            >
-              <span className="text-lg">📦</span>
-              Orders Count
-            </button>
-          </div>
-        </div>
+    <Card>
+      <Typography variant="h3" className="mb-4">
+        Monthly Sales {/* ✅ [CHANGED] Title */}
+      </Typography>
 
-        {/* Chart Content */}
-        <div className="p-6 flex-1 flex flex-col">
-          <div className="h-64 w-full relative flex-shrink-0">
-            {mounted ? (
+      <CardContent className="pb-2">
+        <Tabs defaultValue="sales">
+          <TabsList className="mb-6">
+            <TabsTrigger value="sales" className="data-[state=active]:text-primary">
+              Sales
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="data-[state=active]:text-orange-500">
+              Orders
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="sales" className="relative h-60">
+            {mounted && !loading ? (
               <Line
-                data={activeTab === 'sales' ? salesChartData : ordersChartData}
-                options={chartOptions}
+                data={{
+                  labels,
+                  datasets: [
+                    {
+                      label: "Sales",
+                      data: sales,
+                      borderColor: "rgb(34, 197, 94)",
+                      backgroundColor: "rgb(34, 197, 94)",
+                    },
+                  ],
+                }}
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      grid: { color: gridColor },
+                      border: { color: gridColor },
+                      ticks: {
+                        stepSize: 1000, // 📌 Adjust based on your monthly sales range
+                        callback: (value) => "$" + value,
+                        padding: 4,
+                      },
+                    },
+                    x: {
+                      grid: { display: false },
+                    },
+                  },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        label: (context) =>
+                          `${context.dataset.label}: $${context.parsed.y}`,
+                      },
+                    },
+                  },
+                }}
               />
             ) : (
-              <Skeleton />
+              <Skeleton className="size-full" />
             )}
-          </div>
-          
-          {/* Stats Summary */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 flex-shrink-0">
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl border border-green-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">Total Sales</p>
-                  <p className="text-xl font-bold text-green-600">
-                    ${salesData.reduce((sum, val) => sum + val, 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-green-500 mt-1">This week</p>
-                </div>
-                <div className="text-2xl opacity-80">💰</div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-orange-50 to-red-50 p-4 rounded-xl border border-orange-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">Total Orders</p>
-                  <p className="text-xl font-bold text-orange-600">
-                    {ordersData.reduce((sum, val) => sum + val, 0)}
-                  </p>
-                  <p className="text-xs text-orange-500 mt-1">This week</p>
-                </div>
-                <div className="text-2xl opacity-80">📦</div>
-              </div>
-            </div>
+          </TabsContent>
 
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">Avg Order Value</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    ${Math.round(salesData.reduce((sum, val) => sum + val, 0) / ordersData.reduce((sum, val) => sum + val, 0))}
-                  </p>
-                  <p className="text-xs text-blue-500 mt-1">Per order</p>
-                </div>
-                <div className="text-2xl opacity-80">📈</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
-    </div>
+          <TabsContent value="orders" className="relative h-60">
+            {mounted && !loading ? (
+              <Line
+                data={{
+                  labels,
+                  datasets: [
+                    {
+                      label: "Orders",
+                      data: orders,
+                      borderColor: "rgb(249, 115, 22)",
+                      backgroundColor: "rgb(249, 115, 22)",
+                    },
+                  ],
+                }}
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      grid: { color: gridColor },
+                      border: { color: gridColor },
+                      ticks: {
+                        stepSize: 5, // Adjust based on expected monthly orders
+                        padding: 4,
+                      },
+                      min: 0,
+                    },
+                    x: {
+                      grid: { display: false },
+                    },
+                  },
+                  plugins: {
+                    legend: { display: false },
+                  },
+                }}
+              />
+            ) : (
+              <Skeleton className="size-full" />
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
-};
-
-export default WeeklySales;
+}

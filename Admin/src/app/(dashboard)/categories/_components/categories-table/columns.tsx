@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { PenSquare, Trash2 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,7 +40,7 @@ import {
 import { SkeletonColumn } from "@/types/skeleton";
 import { Category } from "@/types/category";
 
-const handleSwitchChange = () => {};
+const handleSwitchChange = () => { };
 
 export const columns: ColumnDef<Category>[] = [
   {
@@ -106,8 +107,8 @@ export const columns: ColumnDef<Category>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex items-center gap-1">
-          <Sheet>
-            <Tooltip>
+          {/* <Sheet> 
+             <Tooltip>
               <TooltipTrigger asChild>
                 <SheetTrigger asChild>
                   <Button
@@ -160,10 +161,29 @@ export const columns: ColumnDef<Category>[] = [
                   <Button type="submit">Save changes</Button>
                 </SheetClose>
               </SheetFooter>
-            </SheetContent>
+            </SheetContent> 
+          </Sheet> */}
+
+          <Sheet>
+            {/* // ✅ [CHANGED] Replaced sheet edit with link to edit page */}
+            {/* <Link href={`/categories/edit/${row.original._id}`}> */}
+            <Link href={`/dashboard/categories/edit/${row.original._id}`}>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-foreground">
+                    <PenSquare className="size-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Edit Category</p>
+                </TooltipContent>
+              </Tooltip>
+            </Link>
+
           </Sheet>
 
-          <AlertDialog>
+          {/* <AlertDialog>
             <Tooltip>
               <TooltipTrigger asChild>
                 <AlertDialogTrigger asChild>
@@ -195,7 +215,55 @@ export const columns: ColumnDef<Category>[] = [
                 <AlertDialogAction>Continue</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
-          </AlertDialog>
+          </AlertDialog> */}
+
+              {/* // ✅ [CHANGED] Added delete functionality using API */}
+            <AlertDialog>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-foreground"
+                    >
+                      <Trash2 className="size-5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+
+                <TooltipContent>
+                  <p>Delete Category</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete this category.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      try {
+                        await fetch(`http://localhost:5000/api/category/${row.original._id}`, {
+                          method: "DELETE",
+                        });
+                        // ✅ Optional: force refresh the page or call a data refetch
+                        window.location.reload(); // Or use router.refresh() if using App Router
+                      } catch (err) {
+                        console.error("Delete failed", err);
+                      }
+                    }}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </div>
       );
     },

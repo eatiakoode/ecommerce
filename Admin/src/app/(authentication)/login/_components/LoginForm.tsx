@@ -33,48 +33,33 @@ type FormData = z.infer<typeof loginFormSchema>;
 
 export default function LoginForm() {
   const { toast } = useToast();
-  const router = useRouter();
-
+  const router = useRouter(); // ✅ Add-on: for redirection after login
 
   const form = useForm<FormData>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: " ",
+      email: "",
       password: "",
     },
   });
 
-  const { mutate, isPending, isSuccess } = useMutation({
+   const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: async (formData: FormData) => {
-      return await axios.post("http://localhost:5000/api/user/login", formData, {
-        headers: {
-          "x-api-key": process.env.NEXT_PUBLIC_API_KEY || "",
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await axios.post("http://localhost:5000/api/user/login", formData); // ✅ Fix: http:// added
+      localStorage.setItem("user", JSON.stringify(res.data)); // ✅ Add-on: Save user/token in localStorage
+      return res.data;
     },
-    onSuccess: (response) => {
-      console.log("✅ Login response:", response);
-
-      const token = response?.data?.token;
-      const user = response?.data?.user;
-
-      if (token) {
-        localStorage.setItem("auth_token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-
+    onSuccess: () => {
       toast({
         title: "Login Success",
-        description: "You have successfully logged in. Redirecting to the dashboard...",
+        description:
+          "You have successfully logged in. Redirecting to the dashboard...",
         variant: "success",
       });
 
       form.reset();
-      router.push("/dashboard");
+      router.push("/dashboard"); // ✅ Add-on: Redirect to dashboard after login
     },
-
-
     onError: (error) => {
       if (axios.isAxiosError(error)) {
         const { errors } = error.response?.data;

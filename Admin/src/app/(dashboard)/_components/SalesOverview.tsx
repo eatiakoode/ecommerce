@@ -1,110 +1,99 @@
+"use client";
+
+import { useEffect, useState } from "react"; // ✅ Add-on: State and lifecycle hook
+import axios from "axios"; // ✅ Add-on: For API request
+
 import { HiOutlineRefresh } from "react-icons/hi";
 import { HiOutlineSquare3Stack3D, HiCalendarDays } from "react-icons/hi2";
 
-const cn = (...classes) => classes.filter(Boolean).join(' ');
+import { cn } from "@/lib/utils";
+import Typography from "@/components/ui/typography";
 
-const Typography = ({ children, className = "" }) => (
-  <div className={className}>{children}</div>
-);
+type SalesData = {
+  todayOrders: number;
+  yesterdayOrders: number;
+  thisMonth: number;
+  lastMonth: number;
+  allTimeSales: number;
+}; // ✅ Add-on: Define type for API response
 
 export default function SalesOverview() {
+  const [data, setData] = useState<SalesData | null>(null); // ✅ Add-on: State to store API data
+  const [loading, setLoading] = useState(true); // ✅ Add-on: Loading indicator
+  const [error, setError] = useState(""); // ✅ Add-on: Error message state
+
+  useEffect(() => {
+    const fetchSalesData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/order/dashboard"); // ✅ Add-on: Fetch data from backend
+        setData(res.data); // ✅ Add-on: Store in state
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load sales data."); // ✅ Add-on: Set error message
+        setLoading(false);
+      }
+    };
+
+    fetchSalesData(); // ✅ Add-on: Call function
+  }, []);
+
   const cards = [
     {
       icon: <HiOutlineSquare3Stack3D />,
       title: "Today Orders",
-      value: "$897.40",
-      gradient: "from-violet-500 via-purple-500 to-purple-600",
-      shadowColor: "shadow-purple-500/25",
-      glowColor: "group-hover:shadow-purple-500/40",
+      value: data?.todayOrders ?? "--", // ✅ Add-on: Dynamic value
+      className: "bg-teal-600",
     },
     {
       icon: <HiOutlineSquare3Stack3D />,
-      title: "Yesterday Orders", 
-      value: "$679.93",
-      gradient: "from-pink-500 via-rose-500 to-rose-600",
-      shadowColor: "shadow-rose-500/25",
-      glowColor: "group-hover:shadow-rose-500/40",
+      title: "Yesterday Orders",
+      value: data?.yesterdayOrders ?? "--", // ✅
+      className: "bg-orange-400",
     },
     {
       icon: <HiOutlineRefresh />,
       title: "This Month",
-      value: "$13,146.96",
-      gradient: "from-blue-500 via-indigo-500 to-indigo-600",
-      shadowColor: "shadow-indigo-500/25",
-      glowColor: "group-hover:shadow-indigo-500/40",
+      value: data?.thisMonth ?? "--", // ✅
+      className: "bg-blue-500",
     },
     {
       icon: <HiCalendarDays />,
       title: "Last Month",
-      value: "$31,964.92",
-      gradient: "from-emerald-500 via-teal-500 to-teal-600",
-      shadowColor: "shadow-teal-500/25",
-      glowColor: "group-hover:shadow-teal-500/40",
+      value: data?.lastMonth ?? "--", // ✅
+      className: "bg-cyan-600",
     },
     {
       icon: <HiCalendarDays />,
       title: "All-Time Sales",
-      value: "$626,513.05",
-      gradient: "from-amber-500 via-orange-500 to-orange-600",
-      shadowColor: "shadow-orange-500/25",
-      glowColor: "group-hover:shadow-orange-500/40",
+      value: data?.allTimeSales ?? "--", // ✅
+      className: "bg-emerald-600",
     },
   ];
 
+  if (loading) {
+    return <div className="text-center mt-4">Loading Data...</div>; // ✅ Add-on: Show while loading
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center mt-4">{error}</div>; // ✅ Add-on: Show on error
+  }
+
   return (
-    <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-6 p-1">
+    <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-2">
       {cards.map((card, index) => (
         <div
           key={`sales-overview-${index}`}
           className={cn(
-            "group relative overflow-hidden rounded-2xl p-8 text-white text-center",
-            "transform transition-all duration-300 ease-out",
-            "hover:scale-105 hover:-translate-y-2",
-            "bg-gradient-to-br",
-            card.gradient,
-            "shadow-xl",
-            card.shadowColor,
-            "hover:shadow-2xl",
-            card.glowColor,
-            "before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/10 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100"
+            "p-6 rounded-lg flex flex-col items-center justify-center space-y-3 text-white text-center",
+            card.className
           )}
         >
-          {/* Decorative background pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
-          </div>
-          
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center space-y-4">
-            {/* Icon with enhanced styling */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl scale-110"></div>
-              <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-                <div className="[&>svg]:w-8 [&>svg]:h-8 [&>svg]:drop-shadow-lg">
-                  {card.icon}
-                </div>
-              </div>
-            </div>
-
-            {/* Title */}
-            <Typography className="text-sm font-medium tracking-wide opacity-90 uppercase letterspacing">
-              {card.title}
-            </Typography>
-
-            {/* Value with enhanced typography */}
-            <Typography className="text-3xl font-bold tracking-tight drop-shadow-lg">
-              {card.value}
-            </Typography>
-            
-            {/* Subtle accent line */}
-            <div className="w-12 h-0.5 bg-white/30 rounded-full"></div>
-          </div>
-
-          {/* Shine effect on hover */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
-          </div>
+          <div className="[&>svg]:size-8">{card.icon}</div>
+          <Typography className="text-base">{card.title}</Typography>
+          <Typography className="text-2xl font-semibold">
+            ${card.value} {/* ✅ Add-on: Dynamically show value */}
+          </Typography>
         </div>
       ))}
     </div>
