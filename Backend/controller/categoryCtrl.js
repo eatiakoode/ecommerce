@@ -1,4 +1,5 @@
 const Category = require("../models/categoryModel");
+const Product = require("../models/productModel");
 const asyncHandler = require("express-async-handler");
 const fs = require("fs");
 const path = require("path");
@@ -19,13 +20,29 @@ const getAllCategories = asyncHandler(async (req, res) => {
 });
 
 // Get single category
+// const getCategory = asyncHandler(async (req, res) => {
+//   const category = await Category.findById(req.params.id);
+//   if (!category) {
+//     res.status(404);
+//     throw new Error("Category not found");
+//   }
+//   res.json(category);
+// });
+
 const getCategory = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
+
   if (!category) {
     res.status(404);
     throw new Error("Category not found");
   }
-  res.json(category);
+
+  const products = await Product.find({ category: category._id });
+
+  res.json({
+    ...category._doc, // converts Mongoose doc to plain JS object
+    products,
+  });
 });
 
 // Update category

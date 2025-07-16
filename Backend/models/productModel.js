@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
- 
+
 // Product Schema Definition
 const productSchema = new mongoose.Schema(
   {
@@ -24,7 +24,8 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     category: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
       required: true,
     },
     brand: {
@@ -39,12 +40,12 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    images: [
-      {
-        public_id: { type: String },
-        url: { type: String },
-      },
-    ],
+    // images: [
+    //   {
+    //     public_id: { type: String },
+    //     url: { type: String },
+    //   },
+    // ],
     color: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -73,6 +74,6 @@ const productSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
- 
+
 // Export Model
 module.exports = mongoose.model("Product", productSchema);
