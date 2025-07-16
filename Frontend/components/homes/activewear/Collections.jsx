@@ -1,27 +1,10 @@
 "use client";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
 import { collectionsData3 } from "@/data/collections";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import { Navigation, Pagination } from "swiper/modules";
-import { fetchCategories } from "@/api/category"; 
 export default function Collections() {
-  const [categories, setCategories] = useState([]);
-  useEffect(() => {
-      const getCategories = async () => {
-        const data = await fetchCategories(); // Fetch products from API
-  
-        console.log("test")
-        console.log(data)
-        console.log("sinha")
-        setCategories(data);
-      };
-  
-      getCategories();
-    }, []);
-  // console.log("categories")
-  // console.log(categories)
   return (
     <section className="flat-spacing-2">
       <div className="container">
@@ -68,7 +51,7 @@ export default function Collections() {
               }}
               dir="ltr"
             >
-              {categories.map((collection, index) => (
+              {collectionsData3.map((collection, index) => (
                 <SwiperSlide key={index}>
                   <div className="collection-circle hover-img">
                     <Link
