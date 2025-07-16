@@ -1,10 +1,12 @@
 import { OrderMethod, OrderStatus } from "@/types/order";
 
 export const ORDER_STATUSES: OrderStatus[] = [
-  "pending",
-  "processing",
-  "delivered",
-  "cancel",
+  "Ordered",
+  "Pending",
+  "Processing",
+  "Delivered",
+  "Cancelled",
+  "Failed"
 ];
 
 export const ORDER_METHODS: OrderMethod[] = ["card", "cash", "credit"];

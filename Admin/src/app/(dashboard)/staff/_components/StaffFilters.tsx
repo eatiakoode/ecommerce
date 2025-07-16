@@ -1,4 +1,7 @@
+"use client";
+
 import { Plus } from "lucide-react";
+import Link from "next/link";
 
 import {
   Select,
@@ -22,17 +25,40 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-export default function StaffFilters() {
+interface StaffFiltersProps {
+  search: string;
+  setSearch: (value: string) => void;
+  role: string;
+  setRole: (value: string) => void;
+  onFilter: (search: string, role: string) => void;
+}
+
+export default function StaffFilters({ search, setSearch, role, setRole, onFilter }: StaffFiltersProps) {
+  // Handle filter button
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFilter(search, role);
+  };
+
+  // Handle reset button
+  const handleReset = () => {
+    setSearch("");
+    setRole("");
+    onFilter("", "");
+  };
+
   return (
     <Card className="mb-5">
-      <form className="flex flex-col md:flex-row gap-4 lg:gap-6">
+      <form className="flex flex-col md:flex-row gap-4 lg:gap-6" onSubmit={handleSubmit}>
         <Input
           type="search"
           placeholder="Search by name, email or phone"
           className="h-12 md:basis-1/3"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
 
-        <Select>
+        <Select value={role} onValueChange={setRole}>
           <SelectTrigger className="md:basis-1/3">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
@@ -45,12 +71,11 @@ export default function StaffFilters() {
         </Select>
 
         <Sheet>
-          <SheetTrigger asChild>
+          <Link href="/staff/add">
             <Button size="lg" className="h-12 md:basis-1/3">
               <Plus className="mr-2 size-4" /> Add Staff
             </Button>
-          </SheetTrigger>
-
+          </Link>
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Edit profile</SheetTitle>
@@ -82,10 +107,10 @@ export default function StaffFilters() {
         </Sheet>
 
         <div className="flex flex-wrap sm:flex-nowrap gap-4">
-          <Button size="lg" className="flex-grow">
+          <Button size="lg" className="flex-grow" type="submit">
             Filter
           </Button>
-          <Button size="lg" variant="secondary" className="flex-grow">
+          <Button size="lg" variant="secondary" className="flex-grow" type="button" onClick={handleReset}>
             Reset
           </Button>
         </div>

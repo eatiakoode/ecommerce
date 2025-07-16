@@ -33,47 +33,51 @@ export default function DataTable<TData>({
   table,
   pagination,
 }: DataTableProps<TData>) {
+  const rows = table.getRowModel().rows ?? [];
   const paginationButtons = getPaginationButtons({
     totalPages: pagination.pages,
     currentPage: pagination.current,
   });
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="rounded-xl border overflow-hidden shadow-lg animate-fadeIn">
       {/* data table */}
       <Table>
         <TableHeader className="bg-popover">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead
-                    key={header.id}
-                    className="uppercase whitespace-nowrap"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                );
-              })}
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className="uppercase whitespace-nowrap text-base font-semibold tracking-wide bg-gradient-to-r from-blue-50 via-white to-green-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800"
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                </TableHead>
+              ))}
             </TableRow>
           ))}
         </TableHeader>
-
         <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
+          {rows.length > 0 ? (
+            rows.map((row, idx) => (
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="hover:bg-transparent"
+                className={
+                  "transition-all duration-150 hover:bg-blue-50/60 dark:hover:bg-gray-800/60 " +
+                  (idx % 2 === 0
+                    ? "bg-white dark:bg-gray-900"
+                    : "bg-gray-50 dark:bg-gray-800")
+                }
+                style={{ fontSize: "1rem", minHeight: 56 }}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="whitespace-nowrap">
+                  <TableCell key={cell.id} className="whitespace-nowrap py-4 px-3">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -82,7 +86,7 @@ export default function DataTable<TData>({
           ) : (
             <TableRow>
               <TableCell
-                colSpan={table.options.columns.length}
+                colSpan={table.getAllColumns().length}
                 className="h-24 text-center"
               >
                 No results.
@@ -100,7 +104,6 @@ export default function DataTable<TData>({
           {Math.min(pagination.current * pagination.perPage, pagination.items)}{" "}
           of {pagination.items}
         </Typography>
-
         <Pagination>
           <PaginationContent className="flex-wrap">
             <PaginationItem>
@@ -109,7 +112,6 @@ export default function DataTable<TData>({
                 disabled={!pagination.prev}
               />
             </PaginationItem>
-
             {paginationButtons.map((page, index) => (
               <PaginationItem key={`page-${index}`}>
                 {page === "..." ? (
@@ -124,7 +126,6 @@ export default function DataTable<TData>({
                 )}
               </PaginationItem>
             ))}
-
             <PaginationItem>
               <PaginationNext
                 href={`?page=${pagination.next}`}

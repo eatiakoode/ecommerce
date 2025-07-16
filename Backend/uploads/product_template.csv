@@ -1,0 +1,3 @@
+title,description,price,category,brand,quantity,sold,tags,images,color
+Sample Product 1,This is a sample product description,99.99,Electronics,Sample Brand,100,0,"sample,electronics,test",[],[]
+Sample Product 2,Another sample product description,149.99,Clothing,Fashion Brand,50,5,"clothing,fashion,test",[],[] 

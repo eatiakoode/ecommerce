@@ -41,195 +41,124 @@ import { CouponBadgeVariants } from "@/constants/badge";
 import { SkeletonColumn } from "@/types/skeleton";
 import { Coupon, CouponStatus } from "@/types/coupon";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { useDeleteCoupon, useUpdateCoupon } from "@/hooks/useCoupons";
+import { toast } from "sonner";
 
-const handleSwitchChange = () => {};
-
-export const columns: ColumnDef<Coupon>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-  },
-  {
-    header: "campaign name",
-    cell: ({ row }) => (
-      <div className="flex gap-2 items-center">
-        <Image
-          src={row.original.image}
-          alt={row.original.title}
-          width={32}
-          height={32}
-          className="size-8 rounded-full"
+export function getCouponColumns(queryClient, updateCouponMutation): ColumnDef<Coupon>[] {
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
         />
-
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+    },
+    {
+      header: "campaign name",
+      cell: ({ row }) => (
         <Typography className="capitalize block truncate">
-          {row.original.title}
+          {row.original.title || row.original.name}
         </Typography>
-      </div>
-    ),
-  },
-  {
-    header: "code",
-    cell: ({ row }) => (
-      <Typography className="uppercase">{row.original.couponCode}</Typography>
-    ),
-  },
-  {
-    header: "discount",
-    cell: ({ row }) => `${Math.trunc(row.original.discount * 100)}%`,
-  },
-  {
-    header: "published",
-    cell: ({ row }) => (
-      <div className="pl-5">
-        <Switch
-          checked={row.original.published}
-          onCheckedChange={(value) => handleSwitchChange()}
-        />
-      </div>
-    ),
-  },
-  {
-    header: "start date",
-    cell: ({ row }) => format(row.original.startTime, "PP"),
-  },
-  {
-    header: "end date",
-    cell: ({ row }) => format(row.original.endTime, "PP"),
-  },
-  {
-    header: "status",
-    cell: ({ row }) => {
-      const currentTime = new Date();
-      const endTime = new Date(row.original.endTime);
-
-      const status: CouponStatus = currentTime > endTime ? "expired" : "active";
-
-      return (
-        <Badge
-          variant={CouponBadgeVariants[status]}
-          className="flex-shrink-0 text-xs capitalize"
-        >
-          {status}
-        </Badge>
-      );
+      ),
     },
-  },
-  {
-    header: "actions",
-    cell: ({ row }) => {
-      return (
-        <div className="flex items-center gap-1">
-          <Sheet>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <PenSquare className="size-5" />
-                  </Button>
-                </SheetTrigger>
-              </TooltipTrigger>
-
-              <TooltipContent>
-                <p>Edit Product</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Edit profile</SheetTitle>
-                <SheetDescription>
-                  Make changes to your profile here. Click save when you&apos;re
-                  done.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value="Pedro Duarte"
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    value="@peduarte"
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <SheetFooter>
-                <SheetClose asChild>
-                  <Button type="submit">Save changes</Button>
-                </SheetClose>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-
-          <AlertDialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <Trash2 className="size-5" />
-                  </Button>
-                </AlertDialogTrigger>
-              </TooltipTrigger>
-
-              <TooltipContent>
-                <p>Delete Product</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Continue</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      );
+    {
+      header: "code",
+      cell: ({ row }) => (
+        <Typography className="uppercase">{row.original.couponCode || row.original.code}</Typography>
+      ),
     },
-  },
-];
+    {
+      header: "discount",
+      cell: ({ row }) => {
+        const discount = row.original.discount;
+        let percent = discount;
+        if (discount > 100) {
+          percent = discount / 100;
+        }
+        return `${percent}%`;
+      },
+    },
+    {
+      header: "start date",
+      cell: ({ row }) => {
+        const value = row.original.startTime || row.original.startDate;
+        if (!value) return "-";
+        const date = new Date(value);
+        return isNaN(date.getTime()) ? "-" : format(date, "PP");
+      },
+    },
+    {
+      header: "end date",
+      cell: ({ row }) => {
+        const value = row.original.expiry;
+        if (!value) return "-";
+        const date = new Date(value);
+        return isNaN(date.getTime()) ? "-" : format(date, "PP");
+      },
+    },
+    {
+      header: "status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        return (
+          <Badge
+            variant={status === "active" ? CouponBadgeVariants["active"] : CouponBadgeVariants["expired"]}
+            className="flex-shrink-0 text-xs capitalize"
+          >
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      header: "actions",
+      cell: ({ row }) => {
+        const couponId = row.original._id;
+        const router = useRouter();
+        const deleteCouponMutation = useDeleteCoupon();
+        const handleDelete = () => {
+          if (window.confirm("Are you sure you want to delete this coupon?")) {
+            deleteCouponMutation.mutate(couponId, {
+              onSuccess: () => toast.success("Coupon deleted!"),
+              onError: (err) => toast.error(err?.response?.data?.message || "Delete failed"),
+            });
+          }
+        };
+        return (
+          <div className="flex gap-2">
+            <button
+              className="text-blue-600 hover:underline"
+              onClick={() => router.push(`/coupons/edit/${couponId}`)}
+            >
+              Edit
+            </button>
+            <button
+              className="text-red-600 hover:underline"
+              onClick={handleDelete}
+              disabled={deleteCouponMutation.isPending}
+            >
+              {deleteCouponMutation.isPending ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+}
 
 export const skeletonColumns: SkeletonColumn[] = [
   {

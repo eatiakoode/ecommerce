@@ -1,62 +1,42 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-
-import { columns, skeletonColumns } from "./columns";
+import { getCouponColumns, skeletonColumns } from "./columns";
 import CouponsTable from "./Table";
 import TableSkeleton from "@/components/shared/TableSkeleton";
 import TableError from "@/components/shared/TableError";
-import { fetchCoupons } from "@/data/coupons";
+// TODO: Replaced mock data with real API call using useCoupons
+import { useCoupons } from "@/hooks/useCoupons";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUpdateCoupon } from "@/hooks/useCoupons";
 
 type Props = {
   perPage?: number;
 };
 
-export default function AllCategories({ perPage = 10 }: Props) {
+export default function AllCoupons({ perPage = 10 }: Props) {
   const couponsPage = useSearchParams().get("page");
   const page = Math.trunc(Number(couponsPage)) || 1;
 
-  const {
-    data: coupons,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["coupons", page],
-    queryFn: () => fetchCoupons({ page, perPage }),
-    placeholderData: keepPreviousData,
-    select: (couponsData) => {
-      const { data, pages, ...rest } = couponsData;
+  const { data: coupons, isLoading, error, refetch } = useCoupons();
+  const queryClient = useQueryClient();
+  const updateCouponMutation = useUpdateCoupon();
 
-      return {
-        data: data,
-        pagination: {
-          ...rest,
-          pages,
-          current: page < 1 ? 1 : Math.min(page, pages),
-          perPage,
-        },
-      };
-    },
-  });
+  if (isLoading) return <TableSkeleton perPage={perPage} columns={skeletonColumns} />;
+  if (error) return <TableError errorMessage="Failed to load coupons" refetch={refetch} />;
 
-  if (isLoading)
-    return <TableSkeleton perPage={perPage} columns={skeletonColumns} />;
+  // Handle the case where coupons might be undefined or have a different structure
+  const couponsData = Array.isArray(coupons) ? coupons : coupons?.data || [];
+  const pagination = coupons?.pagination || { current: 1, pages: 1, total: 0 };
 
-  if (isError || !coupons)
-    return (
-      <TableError
-        errorMessage="Something went wrong while trying to fetch coupons."
-        refetch={refetch}
-      />
-    );
+  const columns = getCouponColumns(queryClient, updateCouponMutation) || [];
+  const data = Array.isArray(couponsData) ? couponsData : [];
 
   return (
     <CouponsTable
       columns={columns}
-      data={coupons.data}
-      pagination={coupons.pagination}
+      data={data}
+      pagination={pagination}
     />
   );
 }

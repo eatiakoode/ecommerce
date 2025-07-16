@@ -6,10 +6,12 @@ import { StaffStatus } from "@/types/staff";
 import { BadgeVariantProps } from "@/components/ui/badge";
 
 export const OrderBadgeVariants: Record<OrderStatus, BadgeVariantProps> = {
-  pending: "warning",
-  processing: "processing",
-  delivered: "success",
-  cancel: "destructive",
+  Ordered: "success",
+  Pending: "success",
+  Processing: "success",
+  Delivered: "success",
+  Cancelled: "destructive",
+  Failed: "destructive",
 };
 
 export const ProductBadgeVariants: Record<ProductStatus, BadgeVariantProps> = {

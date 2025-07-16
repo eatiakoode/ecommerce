@@ -39,64 +39,91 @@ import {
 
 import { SkeletonColumn } from "@/types/skeleton";
 import { Category } from "@/types/category";
+import { useDeleteCategory } from "@/hooks/useCategories";
+import { useCategoryContext } from "../../page";
+import { toast } from "sonner";
 
 const handleSwitchChange = () => { };
 
 export const columns: ColumnDef<Category>[] = [
   {
     id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    header: ({ table }) => {
+      const { selectedIds, setSelectedIds } = useCategoryContext();
+      const allSelected = table.getIsAllPageRowsSelected();
+      const someSelected = table.getIsSomePageRowsSelected();
+
+      return (
+        <Checkbox
+          checked={allSelected || (someSelected && "indeterminate")}
+          onCheckedChange={(value) => {
+            if (value) {
+              const pageIds = table.getFilteredSelectedRowModel().rows.map(row => row.original._id);
+              setSelectedIds([...selectedIds, ...pageIds]);
+            } else {
+              const pageIds = table.getFilteredSelectedRowModel().rows.map(row => row.original._id);
+              setSelectedIds(selectedIds.filter(id => !pageIds.includes(id)));
+            }
+            table.toggleAllPageRowsSelected(!!value);
+          }}
+          aria-label="Select all"
+        />
+      );
+    },
+    cell: ({ row }) => {
+      const { selectedIds, setSelectedIds } = useCategoryContext();
+      const isSelected = selectedIds.includes(row.original._id);
+
+      return (
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={(value) => {
+            if (value) {
+              setSelectedIds([...selectedIds, row.original._id]);
+            } else {
+              setSelectedIds(selectedIds.filter(id => id !== row.original._id));
+            }
+            row.toggleSelected(!!value);
+          }}
+          aria-label="Select row"
+        />
+      );
+    },
   },
   {
     header: "id",
     cell: ({ row }) => (
       <Typography className="uppercase">
-        {row.original._id.slice(-4)}
+        {row.original._id.slice(-6)}
       </Typography>
     ),
   },
-  {
-    header: "icon",
-    cell: ({ row }) => (
-      <Image
-        src={`/temp/notification-img.jpg`}
-        alt={row.original.name}
-        width={32}
-        height={32}
-        className="size-8 rounded-full"
-      />
-    ),
-  },
+  // {
+  //   header: "icon",
+  //   cell: ({ row }) => (
+  //     <Image
+  //       src={`/temp/notification-img.jpg`}
+  //       alt={row.original.name}
+  //       width={32}
+  //       height={32}
+  //       className="size-8 rounded-full"
+  //     />
+  //   ),
+  // },
   {
     header: "name",
     cell: ({ row }) => row.original.name,
   },
   {
     header: "description",
-    cell: ({ row }) => row.original.description,
+    cell: ({ row }) => row.original.description || "No description",
   },
   {
-    header: "published",
+    header: "status",
     cell: ({ row }) => (
       <div className="pl-5">
         <Switch
-          checked={row.original.published}
+          checked={row.original.isActive}
           onCheckedChange={(value) => handleSwitchChange()}
         />
       </div>
@@ -105,85 +132,36 @@ export const columns: ColumnDef<Category>[] = [
   {
     header: "actions",
     cell: ({ row }) => {
+      const deleteMutation = useDeleteCategory();
+
+      const handleDelete = async () => {
+        try {
+          await deleteMutation.mutateAsync(row.original._id);
+          toast.success("Category deleted successfully!");
+        } catch (error) {
+          toast.error("Failed to delete category. Please try again.");
+          console.error("Delete error:", error);
+        }
+      };
+
       return (
         <div className="flex items-center gap-1">
-          {/* <Sheet> 
-             <Tooltip>
+          {/* Edit Button */}
+          <Link href={`/categories/edit/${row.original._id}`}>
+            <Tooltip>
               <TooltipTrigger asChild>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <PenSquare className="size-5" />
-                  </Button>
-                </SheetTrigger>
+                <Button variant="ghost" size="icon" className="text-foreground">
+                  <PenSquare className="size-5" />
+                </Button>
               </TooltipTrigger>
-
               <TooltipContent>
-                <p>Edit Product</p>
+                <p>Edit Category</p>
               </TooltipContent>
             </Tooltip>
+          </Link>
 
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Edit profile</SheetTitle>
-                <SheetDescription>
-                  Make changes to your profile here. Click save when you&apos;re
-                  done.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value="Pedro Duarte"
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    value="@peduarte"
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <SheetFooter>
-                <SheetClose asChild>
-                  <Button type="submit">Save changes</Button>
-                </SheetClose>
-              </SheetFooter>
-            </SheetContent> 
-          </Sheet> */}
-
-          <Sheet>
-            {/* // ✅ [CHANGED] Replaced sheet edit with link to edit page */}
-            {/* <Link href={`/categories/edit/${row.original._id}`}> */}
-            <Link href={`/dashboard/categories/edit/${row.original._id}`}>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-foreground">
-                    <PenSquare className="size-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Edit Category</p>
-                </TooltipContent>
-              </Tooltip>
-            </Link>
-
-          </Sheet>
-
-          {/* <AlertDialog>
+          {/* Delete Button */}
+          <AlertDialog>
             <Tooltip>
               <TooltipTrigger asChild>
                 <AlertDialogTrigger asChild>
@@ -191,79 +169,37 @@ export const columns: ColumnDef<Category>[] = [
                     variant="ghost"
                     size="icon"
                     className="text-foreground"
+                    disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="size-5" />
                   </Button>
                 </AlertDialogTrigger>
               </TooltipTrigger>
-
               <TooltipContent>
-                <p>Delete Product</p>
+                <p>Delete Category</p>
               </TooltipContent>
             </Tooltip>
 
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogTitle>Delete Category</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
+                  Are you sure you want to delete "{row.original.name}"? 
+                  This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Continue</AlertDialogAction>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground"
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
-          </AlertDialog> */}
-
-              {/* // ✅ [CHANGED] Added delete functionality using API */}
-            <AlertDialog>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-foreground"
-                    >
-                      <Trash2 className="size-5" />
-                    </Button>
-                  </AlertDialogTrigger>
-                </TooltipTrigger>
-
-                <TooltipContent>
-                  <p>Delete Category</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete this category.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      try {
-                        await fetch(`http://localhost:5000/api/category/${row.original._id}`, {
-                          method: "DELETE",
-                        });
-                        // ✅ Optional: force refresh the page or call a data refetch
-                        window.location.reload(); // Or use router.refresh() if using App Router
-                      } catch (err) {
-                        console.error("Delete failed", err);
-                      }
-                    }}
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          </AlertDialog>
         </div>
       );
     },
@@ -292,7 +228,7 @@ export const skeletonColumns: SkeletonColumn[] = [
     cell: <Skeleton className="w-32 h-8" />,
   },
   {
-    header: "published",
+    header: "status",
     cell: <Skeleton className="w-16 h-10" />,
   },
   {

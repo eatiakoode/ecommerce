@@ -1,20 +1,20 @@
-import { Metadata } from "next";
-
+"use client";
 import PageTitle from "@/components/shared/PageTitle";
 import AllOrders from "./_components/orders-table";
 import OrderFilters from "./_components/OrderFilters";
+import { useState } from 'react';
 
-export const metadata: Metadata = {
-  title: "Orders",
-};
+export default function OrdersPage() {
+  const [filters, setFilters] = useState({});
+  const handleFilter = (filters: any) => {
+    setFilters(filters);
+  };
 
-export default async function OrdersPage() {
   return (
     <section>
       <PageTitle>Orders</PageTitle>
-
-      <OrderFilters />
-      <AllOrders perPage={20} />
+      <OrderFilters onFilter={handleFilter} />
+      <AllOrders perPage={10} filters={filters} />
     </section>
   );
 }

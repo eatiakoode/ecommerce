@@ -1,63 +1,46 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-
-import StaffTable from "./Table";
 import { columns, skeletonColumns } from "./columns";
-import TableError from "@/components/shared/TableError";
+import StaffTable from "./Table";
 import TableSkeleton from "@/components/shared/TableSkeleton";
-
-import { fetchStaff } from "@/data/staff";
+import TableError from "@/components/shared/TableError";
+import { useStaff } from "@/hooks/useStaff";
 
 type Props = {
   perPage?: number;
+  search?: string;
+  role?: string;
 };
 
-export default function AllStaff({ perPage = 10 }: Props) {
-  const staffPage = useSearchParams().get("page");
-  const page = Math.trunc(Number(staffPage)) || 1;
+export default function AllStaff({ perPage = 10, search = "", role = "" }: Props) {
+  const { data: staff, isLoading, error, refetch } = useStaff();
+  
+  if (isLoading) return <TableSkeleton perPage={perPage} columns={skeletonColumns} />;
+  if (error) return <TableError errorMessage="Failed to load staff" refetch={refetch} />;
 
-  const {
-    data: staff,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["staff", page],
-    queryFn: () => fetchStaff({ page, perPage }),
-    placeholderData: keepPreviousData,
-    select: (staffData) => {
-      const { data, pages, ...rest } = staffData;
+  // Handle the case where staff might be undefined or have a different structure
+  let staffData = Array.isArray(staff) ? staff : staff?.data || [];
+  const pagination = staff?.pagination || { current: 1, pages: 1, total: 0 };
 
-      return {
-        data: data,
-        pagination: {
-          ...rest,
-          pages,
-          current: page < 1 ? 1 : Math.min(page, pages),
-          perPage,
-        },
-      };
-    },
-  });
-
-  if (isLoading)
-    return <TableSkeleton perPage={perPage} columns={skeletonColumns} />;
-
-  if (isError || !staff)
-    return (
-      <TableError
-        errorMessage="Something went wrong while trying to fetch staff."
-        refetch={refetch}
-      />
+  // Client-side filtering if search or role is provided
+  if (search.trim()) {
+    const lower = search.trim().toLowerCase();
+    staffData = staffData.filter((s: any) =>
+      s.name?.toLowerCase().includes(lower) ||
+      s.email?.toLowerCase().includes(lower) ||
+      s.phone?.toLowerCase().includes(lower)
     );
+  }
+  if (role) {
+    const roleLower = role.trim().toLowerCase();
+    staffData = staffData.filter((s: any) => (s.role?.trim().toLowerCase() === roleLower));
+  }
 
   return (
     <StaffTable
       columns={columns}
-      data={staff.data}
-      pagination={staff.pagination}
+      data={staffData}
+      pagination={pagination}
     />
   );
 }

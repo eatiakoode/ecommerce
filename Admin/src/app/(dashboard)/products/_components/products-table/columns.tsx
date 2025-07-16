@@ -1,26 +1,17 @@
-import Link from "next/link";
-import Image from "next/image";
-import { ZoomIn, PenSquare, Trash2 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import Typography from "@/components/ui/typography";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import Typography from "@/components/ui/typography";
+import { formatAmount } from "@/helpers/formatAmount";
+import { ProductBadgeVariants } from "@/constants/badge";
+import { PenSquare, Trash2, ZoomIn } from "lucide-react";
+import Link from "next/link";
+import ProductImage from "@/components/shared/ProductImage";
+import { useDeleteProduct } from "@/hooks/useProducts";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,13 +28,97 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatAmount } from "@/helpers/formatAmount";
 
-import { ProductBadgeVariants } from "@/constants/badge";
-import { Product, ProductStatus } from "@/types/product";
-import { SkeletonColumn } from "@/types/skeleton";
+// Define the actual Product type based on your backend
+type Product = {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  price: number;
+  category: string;
+  brand: string;
+  quantity: number;
+  sold: number;
+  images: Array<{ public_id: string; url: string }>;
+  color: string[];
+  tags: string;
+  ratings: Array<{
+    star: number;
+    comment: string;
+    postedby: string;
+  }>;
+  totalrating: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type SkeletonColumn = {
+  header: React.ReactNode;
+  cell: React.ReactNode;
+};
 
 const handleSwitchChange = () => {};
+
+// Delete Product Component
+const DeleteProductButton = ({ productId }: { productId: string }) => {
+  const deleteProductMutation = useDeleteProduct();
+
+  const handleDelete = async () => {
+    try {
+      const response = await deleteProductMutation.mutateAsync(productId);
+      console.log("Delete response:", response);
+      toast.success("✅ Product deleted successfully!");
+    } catch (error: any) {
+      console.error("Delete failed", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete product";
+      toast.error(`❌ ${errorMessage}`);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground"
+              disabled={deleteProductMutation.isPending}
+            >
+              <Trash2 className="size-5" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+
+        <TooltipContent>
+          <p>Delete Product</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete
+            this product and remove it from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete}
+            disabled={deleteProductMutation.isPending}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {deleteProductMutation.isPending ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 export const columns: ColumnDef<Product>[] = [
   {
@@ -68,81 +143,64 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     header: "product name",
-    cell: ({ row }) => (
-      <div className="flex gap-2 items-center">
-        <Image
-          src={row.original.images[0]}
-          alt={row.original.name}
-          width={32}
-          height={32}
-          className="size-8 rounded-full"
-        />
+    cell: ({ row }) => {
+      // Safely extract image URL from different possible structures
+      const imageUrl = row.original.images?.[0]?.url || 
+                      row.original.images?.[0] || 
+                      null;
 
-        <Typography className="capitalize block truncate">
-          {row.original.name}
-        </Typography>
-      </div>
-    ),
+      return (
+        <div className="flex gap-2 items-center">
+          {/*
+          <ProductImage
+            src={imageUrl}
+            alt={row.original.title}
+          />
+          */}
+
+          <Typography className="capitalize block truncate">
+            {row.original.title}
+          </Typography>
+        </div>
+      );
+    },
   },
   {
     header: "category",
     cell: ({ row }) => (
       <Typography className="block max-w-52 truncate">
-        {row.original.categories[0].name}
+        {row.original.category}
       </Typography>
     ),
   },
   {
     header: "price",
     cell: ({ row }) => {
-      return formatAmount(row.original.prices.price);
+      return formatAmount(row.original.price);
     },
   },
   {
-    header: "sale price",
-    cell: ({ row }) => {
-      const { price, discount } = row.original.prices;
-
-      return formatAmount(price * (1 - discount));
-    },
-  },
-  {
-    header: "stock",
-    cell: ({ row }) => row.original.stock,
-  },
-  {
-    header: "status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-
-      return (
-        <Badge
-          variant={ProductBadgeVariants[status]}
-          className="flex-shrink-0 text-xs"
-        >
-          {status === "selling" ? "Selling" : "Out of stock"}
-        </Badge>
-      );
-    },
-  },
-  {
-    header: "view",
+    header: "brand",
     cell: ({ row }) => (
-      <Button size="icon" asChild variant="ghost" className="text-foreground">
-        <Link href={`/product/${row.original.slug}`}>
-          <ZoomIn className="size-5" />
-        </Link>
-      </Button>
+      <Typography className="block max-w-52 truncate">
+        {row.original.brand}
+      </Typography>
     ),
   },
   {
-    header: "published",
+    header: "stock",
+    cell: ({ row }) => row.original.quantity,
+  },
+  {
+    header: "sold",
+    cell: ({ row }) => row.original.sold,
+  },
+  {
+    header: "rating",
     cell: ({ row }) => (
-      <div className="pl-5">
-        <Switch
-          checked={row.original.published}
-          onCheckedChange={(value) => handleSwitchChange()}
-        />
+      <div className="flex items-center gap-1">
+        <span className="text-yellow-500">★</span>
+        <span>{row.original.totalrating}</span>
       </div>
     ),
   },
@@ -169,39 +227,7 @@ export const columns: ColumnDef<Product>[] = [
               </TooltipContent>
             </Tooltip>
 
-          <AlertDialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <Trash2 className="size-5" />
-                  </Button>
-                </AlertDialogTrigger>
-              </TooltipTrigger>
-
-              <TooltipContent>
-                <p>Delete Product</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Continue</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <DeleteProductButton productId={row.original._id} />
         </div>
       );
     },
@@ -232,7 +258,7 @@ export const skeletonColumns: SkeletonColumn[] = [
     cell: <Skeleton className="w-20 h-8" />,
   },
   {
-    header: "sale price",
+    header: "brand",
     cell: <Skeleton className="w-20 h-8" />,
   },
   {
@@ -240,16 +266,16 @@ export const skeletonColumns: SkeletonColumn[] = [
     cell: <Skeleton className="w-20 h-8" />,
   },
   {
-    header: "status",
-    cell: <Skeleton className="w-24 h-8" />,
+    header: "sold",
+    cell: <Skeleton className="w-20 h-8" />,
+  },
+  {
+    header: "rating",
+    cell: <Skeleton className="w-20 h-8" />,
   },
   {
     header: "view",
     cell: <Skeleton className="w-8 h-8" />,
-  },
-  {
-    header: "published",
-    cell: <Skeleton className="w-16 h-10" />,
   },
   {
     header: "actions",

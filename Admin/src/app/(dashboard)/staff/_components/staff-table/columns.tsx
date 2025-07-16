@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { PenSquare, Trash2 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,26 +41,18 @@ import { StaffBadgeVariants } from "@/constants/badge";
 import { Staff } from "@/types/staff";
 import { SkeletonColumn } from "@/types/skeleton";
 import { format } from "date-fns";
+import { useUpdateStaff, useDeleteStaff } from "@/hooks/useStaff";
+import { useQueryClient } from "@tanstack/react-query";
 
-const handleSwitchChange = () => {};
+const handleSwitchChange = () => { };
 
 export const columns: ColumnDef<Staff>[] = [
   {
     header: "name",
     cell: ({ row }) => (
-      <div className="flex gap-2 items-center">
-        <Image
-          src={row.original.image}
-          alt={row.original.name}
-          width={32}
-          height={32}
-          className="size-8 rounded-full"
-        />
-
-        <Typography className="capitalize block truncate">
-          {row.original.name}
-        </Typography>
-      </div>
+      <Typography className="capitalize block truncate">
+        {row.original.name}
+      </Typography>
     ),
   },
   {
@@ -92,12 +84,13 @@ export const columns: ColumnDef<Staff>[] = [
   {
     header: "status",
     cell: ({ row }) => {
-      const status = row.original.status;
-
+      const status = row.original.status || "Active";
+      const badgeClass = status === "Deactive"
+        ? "bg-red-500 hover:bg-red-600 text-white"
+        : "bg-green-500 hover:bg-green-600 text-white";
       return (
         <Badge
-          variant={StaffBadgeVariants[status]}
-          className="flex-shrink-0 text-xs capitalize"
+          className={`flex-shrink-0 text-xs capitalize ${badgeClass}`}
         >
           {status}
         </Badge>
@@ -105,111 +98,47 @@ export const columns: ColumnDef<Staff>[] = [
     },
   },
   {
-    header: "published",
-    cell: ({ row }) => (
-      <div className="pl-5">
-        <Switch
-          checked={row.original.status === "active"}
-          onCheckedChange={(value) => handleSwitchChange()}
-        />
-      </div>
-    ),
-  },
-  {
     header: "actions",
     cell: ({ row }) => {
+      const queryClient = useQueryClient();
+      const deleteStaffMutation = useDeleteStaff();
+      const handleDelete = () => {
+        if (window.confirm("Are you sure you want to delete this staff member?")) {
+          deleteStaffMutation.mutate(row.original._id, {
+            onSuccess: () => queryClient.invalidateQueries(["staff"]),
+          });
+        }
+      };
       return (
         <div className="flex items-center gap-1">
-          <Sheet>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <PenSquare className="size-5" />
-                  </Button>
-                </SheetTrigger>
-              </TooltipTrigger>
-
-              <TooltipContent>
-                <p>Edit Product</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Edit profile</SheetTitle>
-                <SheetDescription>
-                  Make changes to your profile here. Click save when you&apos;re
-                  done.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value="Pedro Duarte"
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    value="@peduarte"
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <SheetFooter>
-                <SheetClose asChild>
-                  <Button type="submit">Save changes</Button>
-                </SheetClose>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-
-          <AlertDialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <Trash2 className="size-5" />
-                  </Button>
-                </AlertDialogTrigger>
-              </TooltipTrigger>
-
-              <TooltipContent>
-                <p>Delete Product</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Continue</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/staff/edit/${row.original._id}`}>
+                <Button variant="ghost" size="icon" className="text-foreground">
+                  <PenSquare className="size-5" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit Profile</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-foreground"
+                onClick={handleDelete}
+                disabled={deleteStaffMutation.isPending}
+              >
+                <Trash2 className="size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete Profile</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       );
     },

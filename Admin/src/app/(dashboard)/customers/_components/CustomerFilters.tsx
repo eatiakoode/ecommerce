@@ -1,22 +1,61 @@
+"use client";
+
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useDebouncedCallback } from "use-debounce";
 
-export default function CustomerFilters() {
+interface CustomerFiltersProps {
+  search: string;
+  setSearch: (value: string) => void;
+  onFilter: (value: string) => void;
+}
+
+export default function CustomerFilters({ search, setSearch, onFilter }: CustomerFiltersProps) {
+  // Debounced search input
+  const debouncedSearch = useDebouncedCallback((value: string) => {
+    setSearch(value);
+  }, 300);
+
+  // Handle filter button
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFilter(search);
+  };
+
+  // Handle reset button
+  const handleReset = () => {
+    setSearch("");
+    onFilter("");
+  };
+
   return (
-    <Card className="mb-5">
-      <form className="flex flex-col md:flex-row gap-4 lg:gap-6">
+    <Card className="mb-5 shadow-lg rounded-xl bg-gradient-to-br from-white via-gray-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-950 border-0">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col md:flex-row gap-4 lg:gap-6 p-6"
+      >
+        {/* 🔍 Search input */}
         <Input
           type="search"
-          placeholder="Search by name, phone or email"
+          placeholder="Search by name, email or phone"
           className="h-12 md:basis-1/2"
+          value={search}
+          onChange={(e) => debouncedSearch(e.target.value)}
         />
 
+        {/* ✅ Filter & Reset buttons */}
         <div className="flex flex-wrap sm:flex-nowrap gap-4 md:basis-1/2">
-          <Button size="lg" className="flex-grow">
+          <Button size="lg" type="submit" className="flex-grow">
             Filter
           </Button>
-          <Button size="lg" variant="secondary" className="flex-grow">
+          <Button
+            size="lg"
+            variant="secondary"
+            type="button"
+            onClick={handleReset}
+            className="flex-grow"
+          >
             Reset
           </Button>
         </div>

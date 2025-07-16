@@ -14,7 +14,7 @@ type SalesData = {
   yesterdayOrders: number;
   thisMonth: number;
   lastMonth: number;
-  allTimeSales: number;
+  getAllTimeSales: number;
 }; // ✅ Add-on: Define type for API response
 
 export default function SalesOverview() {
@@ -66,7 +66,7 @@ export default function SalesOverview() {
     {
       icon: <HiCalendarDays />,
       title: "All-Time Sales",
-      value: data?.allTimeSales ?? "--", // ✅
+      value: data?.getAllTimeSales ?? "--", // ✅
       className: "bg-emerald-600",
     },
   ];
@@ -80,19 +80,20 @@ export default function SalesOverview() {
   }
 
   return (
-    <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-2">
+    <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
       {cards.map((card, index) => (
         <div
           key={`sales-overview-${index}`}
           className={cn(
-            "p-6 rounded-lg flex flex-col items-center justify-center space-y-3 text-white text-center",
+            "p-6 rounded-xl flex flex-col items-center justify-center space-y-3 text-white text-center shadow-lg transition-transform duration-200 hover:scale-105 hover:shadow-2xl bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 animate-fadeIn",
             card.className
           )}
+          style={{ minHeight: 140 }}
         >
-          <div className="[&>svg]:size-8">{card.icon}</div>
-          <Typography className="text-base">{card.title}</Typography>
-          <Typography className="text-2xl font-semibold">
-            ${card.value} {/* ✅ Add-on: Dynamically show value */}
+          <div className="[&>svg]:size-10 mb-2 opacity-90">{card.icon}</div>
+          <Typography className="text-base font-medium tracking-wide opacity-80">{card.title}</Typography>
+          <Typography className="text-3xl font-bold drop-shadow">
+            ₹{card.value}
           </Typography>
         </div>
       ))}

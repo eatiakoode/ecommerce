@@ -13,13 +13,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+//Accept `date` and `setDate` from parent
+
 type Props = {
   className?: string;
+  date: Date | undefined;
+  setDate: (date: Date | undefined) => void;
 };
 
-export default function DatePicker({ className }: Props) {
-  const [date, setDate] = useState<Date>();
-
+export default function DatePicker({ className, date, setDate}: Props) {
+  // const [date, setDate] = useState<Date>();
+// ❌ Removed local useState since we now get value from parent
   return (
     <Popover>
       <PopoverTrigger asChild>

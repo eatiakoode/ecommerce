@@ -24,6 +24,8 @@ import { ORDER_STATUSES } from "@/constants/orders";
 import { OrderBadgeVariants } from "@/constants/badge";
 import { Order, OrderStatus } from "@/types/order";
 import { SkeletonColumn } from "@/types/skeleton";
+import { useUpdateOrderStatus } from "@/hooks/useOrders";
+import { useState } from "react";
 
 const changeStatus = (value: OrderStatus, invoiceNo: string) => {};
 const printInvoice = (invoiceNo: string) => {};
@@ -35,11 +37,15 @@ export const columns: ColumnDef<Order>[] = [
   },
   {
     header: "order time",
-    cell: ({ row }) =>
-      `${format(row.original.orderTime, "PP")} ${format(
-        row.original.orderTime,
-        "p"
-      )}`,
+    cell: ({ row }) => {
+      const date = row.original.createdAt || row.original.orderTime;
+      if (!date) return "N/A";
+      try {
+        return `${format(new Date(date), "PP")} ${format(new Date(date), "p")}`;
+      } catch {
+        return "Invalid date";
+      }
+    },
   },
   {
     header: "customer name",
@@ -77,16 +83,22 @@ export const columns: ColumnDef<Order>[] = [
   {
     header: "action",
     cell: ({ row }) => {
-      const invoiceNo = row.original.invoiceNo;
-
+      // Use local state to show optimistic update
+      const [localStatus, setLocalStatus] = useState(row.original.status);
+      const { mutate: updateStatus, isLoading } = useUpdateOrderStatus();
+      const id = row.original.id;
       return (
         <Select
-          onValueChange={(value: OrderStatus) => changeStatus(value, invoiceNo)}
+          value={localStatus}
+          onValueChange={(value: OrderStatus) => {
+            setLocalStatus(value);
+            updateStatus({ id, status: value });
+          }}
+          disabled={isLoading}
         >
           <SelectTrigger className="capitalize">
-            <SelectValue placeholder={row.original.status} />
+            <SelectValue placeholder={localStatus} />
           </SelectTrigger>
-
           <SelectContent>
             {ORDER_STATUSES.map((badgeStatus) => (
               <SelectItem
@@ -105,6 +117,7 @@ export const columns: ColumnDef<Order>[] = [
   {
     header: "invoice",
     cell: ({ row }) => {
+      const id = row.original.id;
       return (
         <div className="flex items-center gap-1">
           <Tooltip>
@@ -112,32 +125,27 @@ export const columns: ColumnDef<Order>[] = [
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => printInvoice(row.original.invoiceNo)}
+                onClick={() => window.open(`/orders/${id}/invoice?print=true`, '_blank')}
                 className="text-foreground"
               >
                 <Printer className="size-5" />
               </Button>
             </TooltipTrigger>
-
             <TooltipContent>
               <p>Print Invoice</p>
             </TooltipContent>
           </Tooltip>
-
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-foreground"
-                asChild
+                onClick={() => window.open(`/orders/${id}/invoice`, '_blank')}
               >
-                <Link href={`/orders/${row.original.id}`}>
-                  <ZoomIn className="size-5" />
-                </Link>
+                <ZoomIn className="size-5" />
               </Button>
             </TooltipTrigger>
-
             <TooltipContent>
               <p>View Invoice</p>
             </TooltipContent>

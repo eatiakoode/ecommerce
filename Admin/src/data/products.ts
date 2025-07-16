@@ -1,31 +1,27 @@
-import axiosInstance from "@/helpers/axiosInstance";
-
-import { Product } from "@/types/product";
+// data/products.ts
 import { PaginationData, PaginationQueryProps } from "@/types/pagination";
+import { Product } from "@/types/product";
 
 export const fetchProducts = async ({
-  page,
+  page = 1,
   perPage = 10,
-}: PaginationQueryProps) => {
-  await new Promise((resolve, reject) => setTimeout(resolve, 500));
-  const { data } = await axiosInstance.get(
-    `/products?_page=${page}&_per_page=${perPage}`
-  );
-  return data as PaginationData<Product>;
-};
+  search = "",
+  category = "",
+  sort = "",
+}: PaginationQueryProps): Promise<PaginationData<Product>> => {
+  const params = new URLSearchParams({
+    page: String(page),
+    perPage: String(perPage),
+    search,
+    category,
+    sort,
+  });
 
-export const fetchProductBySlug = async (slug: string) => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  const { data } = await axiosInstance.get(`/products?slug=${slug}`);
-  return Array.isArray(data) ? data[0] : null;
-};
+  const response = await fetch(`http://localhost:5000/api/product?${params}`);
 
-// Delete product by ID
-export const deleteProduct = async (id: string) => {
-  await axiosInstance.delete(`/products/${id}`);
-};
+  if (!response.ok) {
+    throw new Error("Failed to fetch products");
+  }
 
-// Update product by ID
-export const updateProduct = async (id: string, updatedData: Partial<Product>) => {
-  await axiosInstance.put(`/products/${id}`, updatedData);
+  return response.json();
 };

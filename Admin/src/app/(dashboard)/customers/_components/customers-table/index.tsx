@@ -1,62 +1,41 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-
 import { columns, skeletonColumns } from "./columns";
 import CustomersTable from "./Table";
 import TableSkeleton from "@/components/shared/TableSkeleton";
 import TableError from "@/components/shared/TableError";
-import { fetchCustomers } from "@/data/customers";
+import { useCustomers } from "@/hooks/useCustomers";
 
 type Props = {
   perPage?: number;
+  search?: string;
 };
 
-export default function AllCustomers({ perPage = 10 }: Props) {
-  const customersPage = useSearchParams().get("page");
-  const page = Math.trunc(Number(customersPage)) || 1;
+export default function AllCustomers({ perPage = 10, search = "" }: Props) {
+  const { data: customers, isLoading, error, refetch } = useCustomers();
+  
+  if (isLoading) return <TableSkeleton perPage={perPage} columns={skeletonColumns} />;
+  if (error) return <TableError errorMessage="Failed to load customers" refetch={refetch} />;
 
-  const {
-    data: customers,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["customers", page],
-    queryFn: () => fetchCustomers({ page, perPage }),
-    placeholderData: keepPreviousData,
-    select: (customersData) => {
-      const { data, pages, ...rest } = customersData;
+  // Handle the case where customers might be undefined or have a different structure
+  let customersData = customers?.data || [];
+  const pagination = customers?.pagination || { current: 1, pages: 1, total: 0 };
 
-      return {
-        data: data,
-        pagination: {
-          ...rest,
-          pages,
-          current: page < 1 ? 1 : Math.min(page, pages),
-          perPage,
-        },
-      };
-    },
-  });
-
-  if (isLoading)
-    return <TableSkeleton perPage={perPage} columns={skeletonColumns} />;
-
-  if (isError || !customers)
-    return (
-      <TableError
-        errorMessage="Something went wrong while trying to fetch customers."
-        refetch={refetch}
-      />
+  // Client-side filtering if search is provided
+  if (search.trim()) {
+    const lower = search.trim().toLowerCase();
+    customersData = customersData.filter((c: any) =>
+      c.name?.toLowerCase().includes(lower) ||
+      c.email?.toLowerCase().includes(lower) ||
+      c.phone?.toLowerCase().includes(lower)
     );
+  }
 
   return (
     <CustomersTable
       columns={columns}
-      data={customers.data}
-      pagination={customers.pagination}
+      data={customersData}
+      pagination={pagination}
     />
   );
 }

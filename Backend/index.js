@@ -8,15 +8,17 @@ const PORT = 5000;
 const authRouter = require("./routes/authRoute");
 const productRouter = require("./routes/productRoute");
 const blogRouter = require("./routes/blogRoute");
-const categoryRouter = require("./routes/prodcategoryRoute");
+const categoryRouter = require("./routes/category");
 const blogcategoryRouter = require("./routes/blogCatRoute");
 const brandRouter = require("./routes/brandRoute");
 const colorRouter = require("./routes/colorRoute");
 const enqRouter = require("./routes/enqRoute");
 const couponRouter = require("./routes/couponRoute");
+const customerRouter = require("./routes/customerRoute");
 const uploadRouter = require("./routes/uploadRoute");
 const categoryFrontendRouter = require("./routes/categoryFrontendRouter");
-
+const staffRouter = require("./routes/staffRoute");
+const productRoutes = require("./routes/productRoute");
 //add new api
 const dealRoute = require("./routes/dealRoute");
 const orderRoute = require("./routes/order");
@@ -30,6 +32,7 @@ const cors = require("cors");
 dbConnect();
 app.use(morgan("dev"));
 app.use(cors());
+app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -40,13 +43,15 @@ app.use("/api/category", categoryRouter);
 app.use("/api/blogcategory", blogcategoryRouter);
 app.use("/api/brand", brandRouter);
 app.use("/api/coupon", couponRouter);
+app.use("/api/customer", customerRouter);
 app.use("/api/color", colorRouter);
 app.use("/api/enquiry", enqRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/frontend/category", categoryFrontendRouter);
+app.use("/api/staff", staffRouter);
 const path = require("path");
 app.use("/api/deal",dealRoute);
-
+app.use("/api/product", productRoutes);
 app.use('/api/order', orderRoute);
 
 
@@ -54,7 +59,7 @@ app.use('/api/order', orderRoute);
 // app.use(express.static("public"));
 // app.use('/images', express.static('path_to_images_directory'));
 app.use('/public', express.static(path.join(__dirname, 'public')));
-console.log("testimage")
+console.log("testimage");
 app.use(notFound);
 app.use(errorHandler);
 

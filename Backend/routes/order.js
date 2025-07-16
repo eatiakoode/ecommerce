@@ -13,12 +13,18 @@ const {
   getOrdersProcessing,
   getOrdersDelivered,
   getMonthlySales,
-   getBestSellers,
+  getBestSellers,
+  getRecentOrders,
+  updateOrderStatus,
+  getOrder
 } = require("../controller/orderCtrl");
 
-
+const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 
 // Main dashboard stats
+// ✅ Create Order
+router.get("/single/:id", getOrder);
+ 
 router.get("/dashboard", getOrderDashboard);
 
 // Time-based orders
@@ -39,4 +45,9 @@ router.get("/delivered", getOrdersDelivered);
 // Monthly sales for chart/table
 router.get("/monthly-sales", getMonthlySales);
 router.get("/best-sellers", getBestSellers);
+
+
+router.get("/recent", authMiddleware, isAdmin, getRecentOrders);
+router.put("/status/:id", updateOrderStatus);
+
 module.exports = router;

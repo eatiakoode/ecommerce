@@ -1,6 +1,7 @@
 const Order = require("../models/orderModel"); 
 const asyncHandler = require("express-async-handler");
 const moment = require("moment");
+const validateMongoDbId = require("../utils/validateMongodbId");
 
 // GET /api/order/dashboard
 const getOrderDashboard = asyncHandler(async (req, res) => {
@@ -168,6 +169,73 @@ const getBestSellers = asyncHandler(async (req, res) => {
   res.json(bestSellers);
 });
 
+
+const getRecentOrders = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const perPage = parseInt(req.query.perPage) || 10;
+
+  const total = await Order.countDocuments();
+  const pages = Math.ceil(total / perPage);
+  const skip = (page - 1) * perPage;
+
+  const orders = await Order.find()
+    .populate("user", "firstname lastname email") 
+    .populate("orderItems.product", "title brand") 
+    .populate("orderItems.color", "title") 
+    .sort({ createdAt: -1 }) 
+    .skip(skip)
+    .limit(perPage)
+    .lean();
+
+  res.status(200).json({
+    data: orders,
+    total,
+    pages,
+  });
+});
+
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  // Validate MongoDB ObjectId
+  validateMongoDbId(id);
+
+  // Validate status value
+  const allowedStatuses = ["Ordered", "Pending", "Processing", "Delivered", "Cancelled", "Failed"];
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: "Invalid status value." });
+  }
+
+  const updatedOrder = await Order.findByIdAndUpdate(
+    id,
+    {
+      status: status,
+      orderStatus: status, // keeping both in sync
+    },
+    { new: true }
+  );
+
+  if (!updatedOrder) {
+    return res.status(404).json({ message: "Order not found." });
+  }
+
+  res.status(200).json(updatedOrder);
+});
+
+// ✅ GET SINGLE ORDER BY ID
+const getOrder = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const order = await Order.findById(id).populate("user");
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  res.status(200).json(order);
+});
+
 module.exports = {
   getOrderDashboard,
   getTodayOrders,
@@ -181,4 +249,7 @@ module.exports = {
   getOrdersDelivered,
   getMonthlySales,
   getBestSellers,
+  getRecentOrders,
+  updateOrderStatus,
+  getOrder
 };

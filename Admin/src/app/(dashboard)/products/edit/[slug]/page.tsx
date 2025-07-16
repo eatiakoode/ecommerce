@@ -1,17 +1,12 @@
-import { notFound } from "next/navigation";
-import EditProduct from "@/app/(dashboard)/products/_components/EditProduct";
-import { fetchProductBySlug } from "@/data/products";
+'use client';
+import dynamic from "next/dynamic";
 
-export default async function EditProductPage({ params }: { params: { slug: string } }) {
-  const product = await fetchProductBySlug(params.slug);
+const EditProductClient = dynamic(() => import("../../_components/EditProductClient"), { ssr: false });
 
-  if (!product) {
-    notFound();
-  }
-
+export default function EditProductPage({ params }: { params: { slug: string } }) {
   return (
     <div className="max-w-3xl mx-auto py-8">
-      <EditProduct product={product} />
+      <EditProductClient slug={params.slug} />
     </div>
   );
 } 

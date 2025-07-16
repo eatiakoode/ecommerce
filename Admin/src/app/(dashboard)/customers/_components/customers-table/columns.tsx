@@ -37,6 +37,69 @@ import {
 
 import { Customer } from "@/types/customer";
 import { SkeletonColumn } from "@/types/skeleton";
+import { useDeleteCustomer } from "@/hooks/useCustomers";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+// Delete Customer Component
+const DeleteCustomerButton = ({ customerId }: { customerId: string }) => {
+  const deleteCustomerMutation = useDeleteCustomer();
+
+  const handleDelete = async () => {
+    try {
+      const response = await deleteCustomerMutation.mutateAsync(customerId);
+      console.log("Delete response:", response);
+      toast.success("✅ Customer deleted successfully!");
+    } catch (error: any) {
+      console.error("Delete failed", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete customer";
+      toast.error(`❌ ${errorMessage}`);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground"
+              disabled={deleteCustomerMutation.isPending}
+            >
+              <Trash2 className="size-5" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+
+        <TooltipContent>
+          <p>Delete Customer</p>
+        </TooltipContent>
+      </Tooltip>
+
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete
+            this customer and remove their data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete}
+            disabled={deleteCustomerMutation.isPending}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {deleteCustomerMutation.isPending ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 export const columns: ColumnDef<Customer>[] = [
   {
@@ -49,11 +112,11 @@ export const columns: ColumnDef<Customer>[] = [
   },
   {
     header: "joining date",
-    cell: ({ row }) => format(row.original.createdAt, "PP"),
+    cell: ({ row }) => format(new Date(row.original.createdAt), "PP"),
   },
   {
     header: "name",
-    cell: ({ row }) => row.original.name,
+    cell: ({ row }) => `${row.original.firstname} ${row.original.lastname}`,
   },
   {
     header: "email",
@@ -65,11 +128,25 @@ export const columns: ColumnDef<Customer>[] = [
   },
   {
     header: "phone",
-    cell: ({ row }) => row.original.phone,
+    cell: ({ row }) => row.original.mobile || "N/A",
+  },
+  {
+    header: "status",
+    cell: ({ row }) => (
+      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+        row.original.isBlocked 
+          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" 
+          : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+      }`}>
+        {row.original.isBlocked ? "Blocked" : "Active"}
+      </div>
+    ),
   },
   {
     header: "actions",
     cell: ({ row }) => {
+      const customerId = row.original._id;
+      const router = useRouter();
       return (
         <div className="flex items-center gap-1">
           <Button
@@ -78,101 +155,28 @@ export const columns: ColumnDef<Customer>[] = [
             variant="ghost"
             className="text-foreground"
           >
-            <Link href={`/customer-orders/${row.original._id}`}>
+            {/* <Link href={`/customer-orders/${row.original._id}`}>
               <ZoomIn className="size-5" />
-            </Link>
+            </Link> */}
           </Button>
 
-          <Sheet>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <PenSquare className="size-5" />
-                  </Button>
-                </SheetTrigger>
-              </TooltipTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-foreground"
+                onClick={() => router.push(`/customers/edit/${customerId}`)}
+              >
+                <PenSquare className="size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit Profile</p>
+            </TooltipContent>
+          </Tooltip>
 
-              <TooltipContent>
-                <p>Edit Product</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Edit profile</SheetTitle>
-                <SheetDescription>
-                  Make changes to your profile here. Click save when you&apos;re
-                  done.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value="Pedro Duarte"
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    value="@peduarte"
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <SheetFooter>
-                <SheetClose asChild>
-                  <Button type="submit">Save changes</Button>
-                </SheetClose>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-
-          <AlertDialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground"
-                  >
-                    <Trash2 className="size-5" />
-                  </Button>
-                </AlertDialogTrigger>
-              </TooltipTrigger>
-
-              <TooltipContent>
-                <p>Delete Product</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Continue</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <DeleteCustomerButton customerId={row.original._id} />
         </div>
       );
     },
@@ -198,7 +202,11 @@ export const skeletonColumns: SkeletonColumn[] = [
   },
   {
     header: "phone",
-    cell: <Skeleton className="w-20 h-10" />,
+    cell: <Skeleton className="w-20 h-8" />,
+  },
+  {
+    header: "status",
+    cell: <Skeleton className="w-16 h-6" />,
   },
   {
     header: "actions",

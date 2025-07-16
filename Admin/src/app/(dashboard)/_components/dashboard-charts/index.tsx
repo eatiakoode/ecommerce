@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 
-import WeeklySales from "./WeeklySales";
+import MonthlySales from "./MonthlySales";
 import BestSellers from "./BestSellers";
 
 ChartJS.register(
@@ -32,7 +32,7 @@ export default function DashboardCharts() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <WeeklySales />
+      <MonthlySales />
       <BestSellers />
     </div>
   );

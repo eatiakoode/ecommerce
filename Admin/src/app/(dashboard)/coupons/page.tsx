@@ -1,22 +1,29 @@
-import { Metadata } from "next";
+"use client";
 
+import { useState } from "react";
 import PageTitle from "@/components/shared/PageTitle";
 import CouponActions from "./_components/CouponActions";
 import CouponFilters from "./_components/CouponFilters";
 import AllCoupons from "./_components/coupons-table";
 
-export const metadata: Metadata = {
-  title: "Coupons",
-};
+export default function CouponsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
 
-export default async function CouponsPage() {
+  const handleFilter = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleReset = () => {
+    setSearchQuery("");
+  };
+
   return (
     <section>
       <PageTitle>Coupons</PageTitle>
 
       <CouponActions />
-      <CouponFilters />
-      <AllCoupons />
+      <CouponFilters onFilter={handleFilter} onReset={handleReset} />
+      <AllCoupons query={searchQuery} />
     </section>
   );
 }

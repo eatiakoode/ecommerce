@@ -8,8 +8,9 @@ interface Pagination {
 }
 
 export interface PaginationQueryProps {
-  page: number;
+  page?: number;
   perPage?: number;
+  query?: string;
 }
 
 export interface PaginationProps extends Pagination {

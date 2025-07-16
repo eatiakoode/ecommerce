@@ -4,7 +4,7 @@ export type StaffStatus = "active" | "inactive";
 export type StaffRole = "admin" | "cashier" | "super-admin";
 
 export type Staff = {
-  id: string;
+  _id: string;
   image: string;
   name: string;
   email: string;

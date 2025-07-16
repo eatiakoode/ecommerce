@@ -9,7 +9,7 @@ export const formatAmount = (amount: string | number): string => {
 
   const formatted = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
   }).format(amountInNumber);
 
   return formatted;

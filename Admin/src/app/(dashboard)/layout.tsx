@@ -6,6 +6,7 @@ import Header from "@/components/shared/header";
 import Container from "@/components/ui/container";
 import AppSidebar from "@/components/shared/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function RootLayout({
   children,
@@ -31,7 +32,9 @@ export default async function RootLayout({
         <Header />
 
         <main className="pt-6 pb-8">
-          <Container>{children}</Container>
+          <Container>{children}
+            <Toaster /> 
+          </Container>
         </main>
       </div>
     </SidebarProvider>

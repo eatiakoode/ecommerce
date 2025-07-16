@@ -1,0 +1,3 @@
+firstname,lastname,email,mobile,password,role,isBlocked
+aditi,sharma,aditi123@example.com,1234567890,password1,user,FALSE
+john,doe,john123@example.com,987654321,password2,user,FALSE

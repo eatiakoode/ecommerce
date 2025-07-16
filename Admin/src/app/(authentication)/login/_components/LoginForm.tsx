@@ -27,7 +27,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 import { loginFields } from "./fields";
 import { loginFormSchema } from "./schema";
-import AuthProviders from "@/components/shared/AuthProviders";
+// import AuthProviders from "@/components/shared/AuthProviders";
 
 type FormData = z.infer<typeof loginFormSchema>;
 
@@ -47,6 +47,10 @@ export default function LoginForm() {
     mutationFn: async (formData: FormData) => {
       const res = await axios.post("http://localhost:5000/api/user/login", formData); // ✅ Fix: http:// added
       localStorage.setItem("user", JSON.stringify(res.data)); // ✅ Add-on: Save user/token in localStorage
+      // Save token separately for axiosInstance
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+      }
       return res.data;
     },
     onSuccess: () => {
@@ -130,7 +134,7 @@ export default function LoginForm() {
 
       <Separator className="my-12" />
 
-      <AuthProviders />
+      {/* <AuthProviders /> */}
 
       <div className="flex flex-wrap justify-between gap-4 w-full">
         <Typography variant="a" href="/forgot-password" className="md:!text-sm">

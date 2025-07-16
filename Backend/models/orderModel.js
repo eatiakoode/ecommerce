@@ -1,62 +1,68 @@
 const mongoose = require("mongoose");
 
-// Declare the Schema of the Mongo model
+// Define the schema for orders
 const orderSchema = new mongoose.Schema(
   {
+    invoiceNo: { type: Number, required: true, unique: true },
+    orderTime: { type: Date, required: true },
+    customerName: { type: String, required: true },
+    paymentMethod: {
+      type: String,
+      enum: ["Cash", "Card", "UPI", "Netbanking"],
+      required: true,
+    },
+    amount: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: ["Ordered", "Pending", "Processing", "Delivered", "Cancelled", "Failed"],
+      default: "Ordered",
+    },
+    action: { type: String, default: "" },
+
+    // Extra fields for dashboard/stats compatibility
+    paidAt: { type: Date },
+    month: { type: Number },
+    totalPrice: { type: Number },
+    totalPriceAfterDiscount: { type: Number },
+    orderStatus: {
+      type: String,
+      enum: ["Ordered", "Pending", "Processing", "Delivered", "Cancelled", "Failed"],
+      default: "Ordered",
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
     },
     shippingInfo: {
-      firstname: { type: String, required: true },
-      lastname: { type: String, required: true },
-      address: { type: String, required: true },
-      city: { type: String, required: true },
-      state: { type: String, required: true },
+      firstname: { type: String },
+      lastname: { type: String },
+      address: { type: String },
+      city: { type: String },
+      state: { type: String },
       other: { type: String },
-      pincode: { type: Number, required: true },
+      pincode: { type: Number },
     },
     paymentInfo: {
-      razorpayOrderId: { type: String, required: true },
-      razorpayPaymentId: { type: String, required: true },
+      razorpayOrderId: { type: String },
+      razorpayPaymentId: { type: String },
     },
     orderItems: [
       {
         product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
-          required: true,
         },
         color: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Color",
-          required: true,
         },
-        quantity: { type: Number, required: true },
-        price: { type: Number, required: true },
+        quantity: { type: Number },
+        price: { type: Number },
       },
     ],
-    paidAt: {
-      type: Date,
-      default: Date.now,
-    },
-    totalPrice: {
-      type: Number,
-      required: true,
-    },
-    totalPriceAfterDiscount: {
-      type: Number,
-      required: true,
-    },
-    orderStatus: {
-      type: String,
-      enum: ["Pending", "Processing", "Delivered", "Cancelled"],
-      default: "Pending",
-    },
   },
   {
-    timestamps: true, // adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 

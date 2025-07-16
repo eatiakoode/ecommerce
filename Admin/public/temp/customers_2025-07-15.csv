@@ -1,0 +1,7 @@
+"firstname","lastname","email","mobile","isBlocked","createdAt"
+"Eati1","Sinha","eati@akoode.in","9650217264",false,"2025-03-05T06:52:02.694Z"
+"John","Doe","johndoe123@example.com","+1234567890",false,"2025-07-11T05:46:54.344Z"
+"Sourabh","Kushwaha","sourabah@akoode.in","+918376918847",false,"2025-07-11T05:48:18.590Z"
+"Aditi","Sharma","aditi@akoode.in","5832857408",true,"2025-07-12T12:28:22.232Z"
+"Rohan","Mehra","rohanmehra@example.com","1029384756",false,"2025-07-14T11:31:34.188Z"
+"Ajay","Test","test@admin.com","9650217223",true,"2025-07-15T05:27:42.232Z"
