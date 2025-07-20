@@ -1,5 +1,5 @@
-const Category = require("../models/categoryModel");
-const Product = require("../models/productModel");
+const Category = require("../model/categoryModel");
+const Product = require("../model/productModel");
 const asyncHandler = require("express-async-handler");
 const fs = require("fs");
 const path = require("path");

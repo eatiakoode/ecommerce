@@ -6,7 +6,7 @@ const {
   // getCategory,
   // getallCategory,
   getCategoryHome
-} = require("../controller/prodcategoryHomeCtrl");
+} = require("../controllers/prodcategoryHomeCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
 

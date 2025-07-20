@@ -13,7 +13,7 @@ const {
   bulkDeleteCategories,
   bulkEditCategories,
   getPaginatedCategories,
-} = require("../controller/categoryCtrl");
+} = require("../controllers/categoryCtrl");
 
 router.post("/", createCategory);
 router.get("/export", exportCategories);

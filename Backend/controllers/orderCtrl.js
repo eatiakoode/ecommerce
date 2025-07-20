@@ -1,4 +1,4 @@
-const Order = require("../models/orderModel"); 
+const Order = require("../model/orderModel"); 
 const asyncHandler = require("express-async-handler");
 const moment = require("moment");
 const validateMongoDbId = require("../utils/validateMongodbId");

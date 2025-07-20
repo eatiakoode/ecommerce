@@ -1,18 +1,33 @@
 const express = require("express");
+const router = express.Router();
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
 const {
   createBrand,
+  getAllBrands,
+  getBrand,
   updateBrand,
   deleteBrand,
-  getBrand,
-  getallBrand,
-} = require("../controller/brandCtrl");
-const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
-const router = express.Router();
+  bulkDeleteBrands,
+  bulkEditBrands,
+  importBrands,
+  exportBrands,
+} = require("../controllers/brandCtrl");
 
-router.post("/", authMiddleware, isAdmin, createBrand);
-router.put("/:id", authMiddleware, isAdmin, updateBrand);
-router.delete("/:id", authMiddleware, isAdmin, deleteBrand);
+// 📦 CSV Import/Export Routes
+router.get("/export", exportBrands);
+router.post("/import", upload.single("file"), importBrands);
+
+// 🔁 Bulk Operations
+router.post("/bulk-delete", bulkDeleteBrands);
+router.post("/bulk-edit", bulkEditBrands);
+
+// 🔧 Basic CRUD
+router.post("/", createBrand);
+router.get("/", getAllBrands);
 router.get("/:id", getBrand);
-router.get("/", getallBrand);
+router.put("/:id", updateBrand);
+router.delete("/:id", deleteBrand);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-const Staff = require("../models/staffModel");
+const Staff = require("../model/staffModel");
 const asyncHandler = require("express-async-handler");
 
 // Create new staff member

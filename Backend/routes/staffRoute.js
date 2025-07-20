@@ -7,7 +7,7 @@ const {
   deleteStaff,
   updateStaff,
   updateStaffStatus
-} = require("../controller/staffCtrl");
+} = require("../controllers/staffCtrl");
 
 router.post("/", createStaff);
 router.get("/", getAllStaff);

@@ -17,7 +17,7 @@ const {
   getRecentOrders,
   updateOrderStatus,
   getOrder
-} = require("../controller/orderCtrl");
+} = require("../controllers/orderCtrl");
 
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 

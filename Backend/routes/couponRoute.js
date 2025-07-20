@@ -9,7 +9,7 @@ const {
   getCoupon,
   importCouponsFromCSV,
   exportCouponsToCSV,
-} = require("../controller/couponCtrl");
+} = require("../controllers/couponCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
 

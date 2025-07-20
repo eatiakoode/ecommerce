@@ -1,4 +1,4 @@
-const Color = require("../models/colorModel");
+const Color = require("../model/colorModel");
 const asyncHandler = require("express-async-handler");
 const validateMongoDbId = require("../utils/validateMongodbId");
 

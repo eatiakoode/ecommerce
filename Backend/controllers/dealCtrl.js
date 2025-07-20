@@ -1,4 +1,4 @@
-const deal = require("../models/dealModel");
+const deal = require("../model/dealModel");
 const asyncHandler = require("express-async-handler");
 const validateMongoDbId = require("../utils/validateMongodbId");
 

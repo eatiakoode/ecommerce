@@ -5,6 +5,8 @@ const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const app = express();
 const dotenv = require("dotenv").config();
 const PORT = 5000;
+
+// Import Routes
 const authRouter = require("./routes/authRoute");
 const productRouter = require("./routes/productRoute");
 const blogRouter = require("./routes/blogRoute");
@@ -19,23 +21,35 @@ const uploadRouter = require("./routes/uploadRoute");
 const categoryFrontendRouter = require("./routes/categoryFrontendRouter");
 const staffRouter = require("./routes/staffRoute");
 const productRoutes = require("./routes/productRoute");
-//add new api
 const dealRoute = require("./routes/dealRoute");
 const orderRoute = require("./routes/order");
+const userAuthRoutes = require("./routes/userAuthRoutes");
+const sizeRoutes = require("./routes/sizeRoutes");
+const instapostRoutes = require('./routes/instapostRoutes');// ✅ Add Testimonial Route
+const testimonialRoutes = require("./routes/testimonialRoutes");
 
-
-// eati test
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
+const path = require("path");
 
+// DB Connection
 dbConnect();
+
+// Middlewares
 app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+// Static Files
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// API Routes
+app.use('/api/instapost', instapostRoutes);
+app.use("/api/size", sizeRoutes);
 app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
 app.use("/api/blog", blogRouter);
@@ -49,20 +63,19 @@ app.use("/api/enquiry", enqRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/frontend/category", categoryFrontendRouter);
 app.use("/api/staff", staffRouter);
-const path = require("path");
-app.use("/api/deal",dealRoute);
+app.use("/api/deal", dealRoute);
 app.use("/api/product", productRoutes);
-app.use('/api/order', orderRoute);
+app.use("/api/order", orderRoute);
+app.use("/api/user-auth", userAuthRoutes);
 
+// ✅ Register Testimonial Route
+app.use("/api/testimonials", testimonialRoutes);
 
-// app.use("/public", express.static(path.join(__dirname, "public")));
-// app.use(express.static("public"));
-// app.use('/images', express.static('path_to_images_directory'));
-app.use('/public', express.static(path.join(__dirname, 'public')));
-console.log("testimage");
+// Error Handling
 app.use(notFound);
 app.use(errorHandler);
 
+// Start Server
 app.listen(PORT, () => {
-  console.log(`Server is running  at PORT ${PORT}`);
+  console.log(`Server is running at PORT ${PORT}`);
 });

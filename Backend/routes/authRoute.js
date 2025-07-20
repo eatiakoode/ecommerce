@@ -31,9 +31,9 @@ const {
   getAllOrders,
   getsingleOrder,
   updateOrder,
-} = require("../controller/userCtrl");
+} = require("../controllers/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
-const { checkout, paymentVerification } = require("../controller/paymentCtrl");
+const { checkout, paymentVerification } = require("../controllers/paymentCtrl");
 
 const router = express.Router();
 router.post("/register", createUser);

@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 
-const { getCustomer, getAllCustomers, updateCustomer, deleteCustomer, importCustomersFromCSV, exportCustomersToCSV } = require("../controller/customerCtrl");
+const { getCustomer, getAllCustomers, updateCustomer, deleteCustomer, importCustomersFromCSV, exportCustomersToCSV } = require("../controllers/customerCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 
 const router = express.Router();

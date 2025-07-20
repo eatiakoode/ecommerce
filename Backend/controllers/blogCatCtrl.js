@@ -1,4 +1,4 @@
-const Category = require("../models/blogCatModel");
+const Category = require("../model/blogCatModel");
 const asyncHandler = require("express-async-handler");
 const validateMongoDbId = require("../utils/validateMongodbId");
 

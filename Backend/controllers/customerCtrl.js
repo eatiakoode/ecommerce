@@ -1,4 +1,4 @@
-const User = require("../models/userModel"); 
+const User = require("../model/userModel"); 
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-parser");

@@ -1,8 +1,8 @@
-const User = require("../models/userModel");
-const Product = require("../models/productModel");
-const Cart = require("../models/cartModel");
-const Coupon = require("../models/couponModel");
-const Order = require("../models/orderModel");
+const User = require("../model/userModel");
+const Product = require("../model/productModel");
+const Cart = require("../model/cartModel");
+const Coupon = require("../model/couponModel");
+const Order = require("../model/orderModel");
 const uniqid = require("uniqid");
 
 const asyncHandler = require("express-async-handler");
@@ -12,7 +12,7 @@ const { generateRefreshToken } = require("../config/refreshtoken");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("./emailCtrl");
-const { createPasswordResetToken } = require("../models/userModel");
+const { createPasswordResetToken } = require("../model/userModel");
 
 // Create a User ----------------------------------------------
 
