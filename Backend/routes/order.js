@@ -17,37 +17,37 @@ const {
   getRecentOrders,
   updateOrderStatus,
   getOrder
-} = require("../controllers/orderCtrl");
+} = require("../controller/orderCtrl");
 
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 
 // Main dashboard stats
 // ✅ Create Order
-router.get("/single/:id", getOrder);
+router.get("/single/:id",authMiddleware,isAdmin, getOrder);
  
-router.get("/dashboard", getOrderDashboard);
+router.get("/dashboard",authMiddleware,isAdmin, getOrderDashboard);
 
 // Time-based orders
-router.get("/todayorders", getTodayOrders);
-router.get("/yesterdayorders", getYesterdayOrders);
-router.get("/thisMonth", getThisMonth);
-router.get("/lastMonth", getLastMonth);
-router.get("/allTimeSales", getAllTimeSales);
+router.get("/todayorders",authMiddleware,isAdmin, getTodayOrders);
+router.get("/yesterdayorders",authMiddleware,isAdmin, getYesterdayOrders);
+router.get("/thisMonth",authMiddleware,isAdmin, getThisMonth);
+router.get("/lastMonth",authMiddleware,isAdmin, getLastMonth);
+router.get("/allTimeSales",authMiddleware,isAdmin, getAllTimeSales);
 
 // Order status summary
-router.get("/statuscounts", getOrderStatusCounts);
+router.get("/statuscounts",authMiddleware,isAdmin, getOrderStatusCounts);
 
 // Order lists by status
-router.get("/pending", getOrdersPending);
-router.get("/processing", getOrdersProcessing);
-router.get("/delivered", getOrdersDelivered);
+router.get("/pending",authMiddleware,isAdmin, getOrdersPending);
+router.get("/processing",authMiddleware,isAdmin, getOrdersProcessing);
+router.get("/delivered",authMiddleware,isAdmin, getOrdersDelivered);
 
 // Monthly sales for chart/table
-router.get("/monthly-sales", getMonthlySales);
-router.get("/best-sellers", getBestSellers);
+router.get("/monthly-sales",authMiddleware,isAdmin, getMonthlySales);
+router.get("/best-sellers",authMiddleware,isAdmin, getBestSellers);
 
 
 router.get("/recent", authMiddleware, isAdmin, getRecentOrders);
-router.put("/status/:id", updateOrderStatus);
+router.put("/status/:id",authMiddleware,isAdmin, updateOrderStatus);
 
 module.exports = router;

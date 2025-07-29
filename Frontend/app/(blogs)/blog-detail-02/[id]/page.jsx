@@ -15,10 +15,10 @@ export default async function BlogDetailsPage2({ params }) {
   return (
     <>
       <Topbar6 bgColor="bg-main" />
-      <Header1 />
+      {/* <Header1 /> */}
       <BlogDetail2 blog={blog} />
       <RelatedBlogs />
-      <Footer1 />
+      {/* <Footer1 /> */}
     </>
   );
 }

@@ -7,13 +7,14 @@ const {
   deleteStaff,
   updateStaff,
   updateStaffStatus
-} = require("../controllers/staffCtrl");
+} = require("../controller/staffCtrl");
+const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 
-router.post("/", createStaff);
-router.get("/", getAllStaff);
-router.get("/:id", getStaffById);
-router.put("/:id", updateStaff);
-router.delete("/:id", deleteStaff);
-router.put("/update-status/:id", updateStaffStatus);
+router.post("/",authMiddleware, isAdmin, createStaff);
+router.get("/",authMiddleware, isAdmin, getAllStaff);
+router.get("/:id",authMiddleware, isAdmin, getStaffById);
+router.put("/:id",authMiddleware, isAdmin, updateStaff);
+router.delete("/:id",authMiddleware, isAdmin, deleteStaff);
+router.put("/update-status/:id",authMiddleware, isAdmin, updateStaffStatus);
 
 module.exports = router;

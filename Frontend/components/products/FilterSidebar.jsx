@@ -1,16 +1,49 @@
 "use client";
 
-import {
-  availabilityOptions,
-  brands,
-  categories,
-  colors,
-  sizes,
-} from "@/data/productFilterOptions";
-import { productMain } from "@/data/products";
+import { useEffect, useState } from "react";
+// import { productMain } from "@/data/products";
+import "react-range-slider-input/dist/style.css";
+const availabilityOptions = [
+  { label: "In stock", value: true },
+  { label: "Out of stock", value: false },
+];
 
-import RangeSlider from "react-range-slider-input";
+let RangeSlider;
+try {
+  RangeSlider = require("react-range-slider-input").default;
+} catch (error) {
+  console.warn("RangeSlider component could not be loaded:", error);
+  RangeSlider = null;
+}
 export default function FilterSidebar({ allProps }) {
+  const [mounted, setMounted] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [colors, setColors] = useState([]);
+  const [sliderError, setSliderError] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (!mounted) return;
+    // Fetch categories
+    fetch("/api/frontend/category/category-list")
+      .then((res) => res.json())
+      .then((data) => setCategories(data?.data || []));
+    // Fetch brands
+    fetch("/api/brand")
+      .then((res) => res.json())
+      .then((data) => setBrands(data?.data || []));
+    // Fetch sizes
+    fetch("/api/size")
+      .then((res) => res.json())
+      .then((data) => setSizes(data || []));
+    // Fetch colors
+    fetch("/api/color")
+      .then((res) => res.json())
+      .then((data) => setColors(data || []));
+  }, [mounted]);
+  if (!mounted) return null;
   return (
     <div className="sidebar-filter canvas-filter left">
       <div className="canvas-wrapper">
@@ -23,10 +56,21 @@ export default function FilterSidebar({ allProps }) {
             <h6 className="facet-title">Product Categories</h6>
             <ul className="facet-content">
               {categories.map((category, index) => (
-                <li key={index}>
-                  <a href="#" className={`categories-item`}>
-                    {category.name}{" "}
-                    <span className="count-cate">({category.count})</span>
+                <li key={category._id || index}>
+                  <a
+                    href="#"
+                    className={`categories-item${allProps.categories && allProps.categories.includes(category._id) ? ' active' : ''}`}
+                    onClick={e => {
+                      e.preventDefault();
+                      if (allProps.setCategories) {
+                        allProps.setCategories([category._id]);
+                      } else if (allProps.setCategory) {
+                        allProps.setCategory(category._id);
+                      }
+                    }}
+                  >
+                    {category.name || category.title} {" "}
+                    <span className="count-cate">({category.productCount || 0})</span>
                   </a>
                 </li>
               ))}
@@ -35,12 +79,36 @@ export default function FilterSidebar({ allProps }) {
           <div className="widget-facet facet-price">
             <h6 className="facet-title">Price</h6>
 
-            <RangeSlider
-              min={10}
-              max={450}
-              value={allProps.price}
-              onInput={(value) => allProps.setPrice(value)}
-            />
+            {RangeSlider && !sliderError ? (
+              <RangeSlider
+                min={10}
+                max={450}
+                value={allProps.price}
+                onInput={(value) => allProps.setPrice(value)}
+                onError={() => setSliderError(true)}
+              />
+            ) : (
+              <div className="fallback-slider">
+                <input
+                  type="range"
+                  min="10"
+                  max="450"
+                  value={allProps.price[0]}
+                  onChange={(e) => allProps.setPrice([parseInt(e.target.value), allProps.price[1]])}
+                  style={{ width: '100%', marginBottom: '10px' }}
+                  suppressHydrationWarning
+                />
+                <input
+                  type="range"
+                  min="10"
+                  max="450"
+                  value={allProps.price[1]}
+                  onChange={(e) => allProps.setPrice([allProps.price[0], parseInt(e.target.value)])}
+                  style={{ width: '100%' }}
+                  suppressHydrationWarning
+                />
+              </div>
+            )}
             <div className="box-price-product mt-3">
               <div className="box-price-item">
                 <span className="title-price">Min price</span>
@@ -69,13 +137,13 @@ export default function FilterSidebar({ allProps }) {
             <div className="facet-size-box size-box">
               {sizes.map((size, index) => (
                 <span
-                  key={index}
-                  onClick={() => allProps.setSize(size)}
+                  key={size._id || index}
+                  onClick={() => allProps.setSize(size.value || size.name || size.title || size)}
                   className={`size-item size-check ${
-                    allProps.size === size ? "active" : ""
+                    allProps.size === (size.value || size.name || size.title || size) ? "active" : ""
                   }`}
                 >
-                  {size}
+                  {size.value || size.name || size.title || size}
                 </span>
               ))}
               <span
@@ -94,13 +162,25 @@ export default function FilterSidebar({ allProps }) {
               {colors.map((color, index) => (
                 <div
                   onClick={() => allProps.setColor(color)}
-                  key={index}
+                  key={color._id || index}
                   className={`color-item color-check ${
                     color == allProps.color ? "active" : ""
                   }`}
+                  title={color.name || color.title}
                 >
-                  <span className={`color ${color.className}`} />
-                  {color.name}
+                  <span
+                    className="color"
+                    style={{
+                      backgroundColor: color.code || color.hex || color.value || color.name || color.title,
+                      display: 'inline-block',
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      border: '1px solid #ccc',
+                      marginRight: 8,
+                      verticalAlign: 'middle',
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -113,6 +193,7 @@ export default function FilterSidebar({ allProps }) {
                   key={index}
                   className="fieldset-item"
                   onClick={() => allProps.setAvailability(option)}
+                  suppressHydrationWarning
                 >
                   <input
                     type="radio"
@@ -120,14 +201,15 @@ export default function FilterSidebar({ allProps }) {
                     className="tf-check"
                     readOnly
                     checked={allProps.availability === option}
+                    suppressHydrationWarning
                   />
                   <label>
                     {option.label}{" "}
                     <span className="count-stock">
                       (
                       {
-                        productMain.filter((el) => el.inStock == option.value)
-                          .length
+                        // productMain.filter((el) => el.inStock == option.value)
+                        //   .length
                       }
                       )
                     </span>
@@ -141,28 +223,22 @@ export default function FilterSidebar({ allProps }) {
             <div className="box-fieldset-item">
               {brands.map((brand, index) => (
                 <fieldset
-                  key={index}
+                  key={brand._id || index}
                   className="fieldset-item"
-                  onClick={() => allProps.setBrands(brand.label)}
+                  onClick={() => allProps.setBrands(brand.title || brand.name || brand.label)}
+                  suppressHydrationWarning
                 >
                   <input
                     type="checkbox"
                     name="brand"
                     className="tf-check"
                     readOnly
-                    checked={allProps.brands.includes(brand.label)}
+                    checked={allProps.brands.includes(brand.title || brand.name || brand.label)}
+                    suppressHydrationWarning
                   />
                   <label>
-                    {brand.label}{" "}
-                    <span className="count-brand">
-                      ({" "}
-                      {
-                        productMain.filter((el) =>
-                          el.filterBrands.includes(brand.label)
-                        ).length
-                      }
-                      )
-                    </span>
+                    {brand.title || brand.name || brand.label} {" "}
+                    {/* No count for now, or you can add if available from backend */}
                   </label>
                 </fieldset>
               ))}
@@ -174,6 +250,7 @@ export default function FilterSidebar({ allProps }) {
             id="reset-filter"
             onClick={allProps.clearFilter}
             className="tf-btn btn-reset"
+            suppressHydrationWarning
           >
             Reset Filters
           </button>

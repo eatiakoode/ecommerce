@@ -1,34 +1,48 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useContextElement } from "@/context/Context";
-import { allProducts } from "@/data/products";
+import { useWishlist } from "@/context/WishlistContext";
 
 export default function Wishlist() {
-  const { removeFromWishlist, wishList } = useContextElement();
-  const [items, setItems] = useState([]);
-  useEffect(() => {
-    setItems([...allProducts.filter((elm) => wishList.includes(elm.id))]);
-  }, [wishList]);
+  const { wishlistItems, loading, removeFromWishlist, fetchWishlist } = useWishlist();
+
+  // Transform wishlist items to match the expected format
+  const transformedItems = wishlistItems.map((item) => {
+    const product = item.productId;
+    return {
+      ...product,
+      id: product?._id || item._id, // Use product _id or wishlist item _id
+      wishlistItemId: item._id, // Keep the wishlist item ID for removal
+      title: product?.title || "Product",
+      imgSrc: product?.images?.[0]?.url || "/images/products/no-image.png",
+      price: product?.sellingPrice || 0,
+    };
+  });
   return (
     <div className="modal fullRight fade modal-wishlist" id="wishlist">
       <div className="modal-dialog">
         <div className="modal-content">
           <div className="header">
-            <h5 className="title">Wish List</h5>
+            <h5 className="title">Your Wishlist</h5>
             <span
               className="icon-close icon-close-popup"
               data-bs-dismiss="modal"
+              onClick={fetchWishlist}
             />
           </div>
           <div className="wrap">
             <div className="tf-mini-cart-wrap">
               <div className="tf-mini-cart-main">
                 <div className="tf-mini-cart-sroll">
-                  {items.length ? (
+                  {loading ? (
+                    <div className="p-4 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                      <div>Loading wishlist...</div>
+                    </div>
+                  ) : transformedItems.length ? (
                     <div className="tf-mini-cart-items">
-                      {items.map((elm, i) => (
+                      {transformedItems.map((elm, i) => (
                         <div key={i} className="tf-mini-cart-item file-delete">
                           <div className="tf-mini-cart-image">
                             <Image
@@ -51,7 +65,7 @@ export default function Wishlist() {
                               </div>
                               <div
                                 className="text-button tf-btn-remove remove"
-                                onClick={() => removeFromWishlist(elm.id)}
+                                onClick={() => removeFromWishlist(elm.wishlistItemId)}
                               >
                                 Remove
                               </div>
@@ -67,10 +81,10 @@ export default function Wishlist() {
                       ))}
                     </div>
                   ) : (
-                    <div className="p-4">
-                      Your wishlist is empty. Start adding your favorite
-                      products to save them for later!{" "}
-                      <Link className="btn-line" href="/shop-default-grid">
+                    <div className="p-4 text-center">
+                      <h6>Your wishlist is empty</h6>
+                      <p>Add some products to your wishlist</p>
+                      <Link className="btn-line" href="/shop-left-sidebar">
                         Explore Products
                       </Link>
                     </div>

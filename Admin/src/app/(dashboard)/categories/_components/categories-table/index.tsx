@@ -26,11 +26,27 @@ export default function AllCategories({ search, page, onPageChange, perPage = 10
   if (error) return <TableError errorMessage="Failed to load categories" refetch={refetch} />;
 
   // Handle the case where categories might be undefined or have a different structure
-  const categories = categoriesData?.categories || [];
+  let categories: any[] = [];
+  if (Array.isArray(categoriesData?.categories)) {
+    categories = categoriesData.categories;
+  } else if (categoriesData?.categories && typeof categoriesData.categories === 'object') {
+    // If it's a single object, wrap it in an array
+    categories = [categoriesData.categories];
+  } else {
+    categories = [];
+  }
+  console.log("[CategoriesTable] categoriesData:", categoriesData);
+  console.log("[CategoriesTable] categories:", categories);
   const pagination = {
     current: page,
     pages: categoriesData?.pages || 1,
-    total: categoriesData?.total || 0
+    total: categoriesData?.total || 0,
+    perPage,
+    items: categories.length, // Fix: items should be a number
+    first: 1,
+    last: categoriesData?.pages || 1,
+    next: page < (categoriesData?.pages || 1) ? page + 1 : null,
+    prev: page > 1 ? page - 1 : null,
   };
 
   return (
@@ -39,6 +55,7 @@ export default function AllCategories({ search, page, onPageChange, perPage = 10
         columns={columns}
         data={categories}
         pagination={pagination}
+        
       />
       {/* Pagination Controls */}
       {pagination.pages > 1 && (

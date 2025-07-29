@@ -15,6 +15,8 @@ const {
   resetPassword,
   loginAdmin,
   getWishlist,
+  removeFromWishlist,
+  emptyWishlist,
   saveAddress,
   userCart,
   getUserCart,
@@ -31,9 +33,10 @@ const {
   getAllOrders,
   getsingleOrder,
   updateOrder,
-} = require("../controllers/userCtrl");
+  addToWishlist,
+} = require("../controller/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
-const { checkout, paymentVerification } = require("../controllers/paymentCtrl");
+const { checkout, paymentVerification } = require("../controller/paymentCtrl");
 
 const router = express.Router();
 router.post("/register", createUser);
@@ -60,7 +63,11 @@ router.get("/getyearlyorders", authMiddleware, getYearlyTotalOrder);
 
 router.get("/refresh", handleRefreshToken);
 router.get("/logout", logout);
+// router.get("/wishlist", authMiddleware, getWishlist);
+router.post("/wishlist",authMiddleware, addToWishlist);
 router.get("/wishlist", authMiddleware, getWishlist);
+router.delete("/wishlist/:wishlistItemId", authMiddleware, removeFromWishlist);
+router.delete("/wishlist", authMiddleware, emptyWishlist);
 router.get("/cart", authMiddleware, getUserCart);
 
 router.get("/:id", authMiddleware, isAdmin, getaUser);

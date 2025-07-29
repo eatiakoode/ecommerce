@@ -61,6 +61,7 @@ export default function Contact2() {
               ref={formRef}
               id="contactform"
               className="form-leave-comment"
+              suppressHydrationWarning
             >
               <div className="wrap">
                 <div className="cols">
@@ -69,12 +70,12 @@ export default function Contact2() {
                       className=""
                       type="text"
                       placeholder="Your Name*"
-                      name="name"
-                      id="name"
+                      name="user_name"
                       tabIndex={2}
                       defaultValue=""
                       aria-required="true"
                       required
+                      suppressHydrationWarning
                     />
                   </fieldset>
                   <fieldset className="">
@@ -82,30 +83,31 @@ export default function Contact2() {
                       className=""
                       type="email"
                       placeholder="Your Email*"
-                      name="email"
-                      id="email"
+                      name="user_email"
                       tabIndex={2}
                       defaultValue=""
                       aria-required="true"
                       required
+                      suppressHydrationWarning
                     />
                   </fieldset>
                 </div>
                 <fieldset className="">
                   <textarea
-                    name="message"
-                    id="message"
+                    className=""
                     rows={4}
                     placeholder="Your Message*"
+                    name="message"
                     tabIndex={2}
                     aria-required="true"
                     required
                     defaultValue={""}
+                    suppressHydrationWarning
                   />
                 </fieldset>
               </div>
-              <div className="button-submit send-wrap">
-                <button className="tf-btn btn-fill" type="submit">
+              <div className="button-submit text-center">
+                <button className="tf-btn btn-fill" type="submit" suppressHydrationWarning>
                   <span className="text text-button">Send message</span>
                 </button>
               </div>

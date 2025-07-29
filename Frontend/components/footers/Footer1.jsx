@@ -9,6 +9,7 @@ import ToolbarBottom from "../headers/ToolbarBottom";
 import ScrollTop from "../common/ScrollTop";
 import { footerLinks, socialLinks } from "@/data/footerLinks";
 import axios from "axios";
+
 export default function Footer1({
   border = true,
   dark = false,
@@ -16,6 +17,11 @@ export default function Footer1({
 }) {
   const [success, setSuccess] = useState(true);
   const [showMessage, setShowMessage] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleShowMessage = () => {
     setShowMessage(true);
@@ -51,19 +57,21 @@ export default function Footer1({
       e.target.reset(); // Reset the form
     }
   };
+
   useEffect(() => {
     const headings = document.querySelectorAll(".footer-heading-mobile");
 
     const toggleOpen = (event) => {
       const parent = event.target.closest(".footer-col-block");
       const content = parent.querySelector(".tf-collapse-content");
+      const icon = parent.querySelector(".icon");
 
-      if (parent.classList.contains("open")) {
-        parent.classList.remove("open");
-        content.style.height = "0px";
+      if (content.classList.contains("show")) {
+        content.classList.remove("show");
+        icon.classList.remove("rotate");
       } else {
-        parent.classList.add("open");
-        content.style.height = content.scrollHeight + 10 + "px";
+        content.classList.add("show");
+        icon.classList.add("rotate");
       }
     };
 
@@ -71,13 +79,13 @@ export default function Footer1({
       heading.addEventListener("click", toggleOpen);
     });
 
-    // Clean up event listeners when the component unmounts
     return () => {
       headings.forEach((heading) => {
         heading.removeEventListener("click", toggleOpen);
       });
     };
-  }, []); // Empty dependency array means this will run only once on mount
+  }, []);
+
   return (
     <>
       <footer
@@ -181,7 +189,7 @@ export default function Footer1({
                 <div className="col-lg-4">
                   <div className="footer-col-block">
                     <div className="footer-heading text-button footer-heading-mobile">
-                      Newletter
+                      Newsletter
                     </div>
                     <div className="tf-collapse-content">
                       <div className="footer-newsletter">
@@ -189,8 +197,10 @@ export default function Footer1({
                           Sign up for our newsletter and get 10% off your first
                           purchase
                         </p>
+                        {isClient && (
+                          <>
                         <div
-                          className={`tfSubscribeMsg  footer-sub-element ${
+                              className={`tfSubscribeMsg footer-sub-element ${
                             showMessage ? "active" : ""
                           }`}
                         >
@@ -207,6 +217,7 @@ export default function Footer1({
                           className={`form-newsletter subscribe-form ${
                             dark ? "style-black" : ""
                           }`}
+                              suppressHydrationWarning
                         >
                           <div className="subscribe-content">
                             <fieldset className="email">
@@ -217,12 +228,14 @@ export default function Footer1({
                                 placeholder="Enter your e-mail"
                                 tabIndex={0}
                                 aria-required="true"
+                                    suppressHydrationWarning
                               />
                             </fieldset>
                             <div className="button-submit">
                               <button
                                 className="subscribe-button"
                                 type="submit"
+                                    suppressHydrationWarning
                               >
                                 <i className="icon icon-arrowUpRight" />
                               </button>
@@ -237,6 +250,7 @@ export default function Footer1({
                               type="checkbox"
                               id="footer-Form_agree"
                               name="agree_checkbox"
+                                  suppressHydrationWarning
                             />
                             <div>
                               <i className="icon-check" />
@@ -257,6 +271,8 @@ export default function Footer1({
                             .
                           </label>
                         </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

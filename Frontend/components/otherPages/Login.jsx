@@ -105,7 +105,7 @@ export default function Login() {
               </div>
             )}
             
-            <form onSubmit={handleSubmit} className="form-login form-has-password">
+            <form onSubmit={handleSubmit} className="form-login form-has-password" suppressHydrationWarning>
               <div className="wrap">
                 <fieldset className="">
                   <input
@@ -118,6 +118,7 @@ export default function Login() {
                     tabIndex={2}
                     aria-required="true"
                     required
+                    suppressHydrationWarning
                   />
                   {errors.email && (
                     <div className="error-message" style={{ 
@@ -130,18 +131,27 @@ export default function Login() {
                   )}
                 </fieldset>
                 
-                <fieldset className="position-relative password-item">
+                <fieldset className="form-has-password">
                   <input
-                    className={`input-password ${errors.password ? "error" : ""}`}
+                    className={errors.password ? "error" : ""}
                     type={passwordType}
                     placeholder="Password*"
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    tabIndex={2}
+                    tabIndex={3}
                     aria-required="true"
                     required
+                    suppressHydrationWarning
                   />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={togglePassword}
+                    suppressHydrationWarning
+                  >
+                    <i className={`icon ${passwordType === "password" ? "icon-eye" : "icon-eye-off"}`} />
+                  </button>
                   {errors.password && (
                     <div className="error-message" style={{ 
                       color: "#dc3545", 
@@ -151,51 +161,15 @@ export default function Login() {
                       {errors.password}
                     </div>
                   )}
-                  <span
-                    className={`toggle-password ${
-                      !(passwordType === "text") ? "unshow" : ""
-                    }`}
-                    onClick={togglePassword}
-                  >
-                    <i
-                      className={`icon-eye-${
-                        !(passwordType === "text") ? "hide" : "show"
-                      }-line`}
-                    />
-                  </span>
                 </fieldset>
-                
-                <div className="d-flex align-items-center justify-content-between">
-                  <div className="tf-cart-checkbox">
-                    <div className="tf-checkbox-wrapp">
-                      <input
-                        defaultChecked
-                        className=""
-                        type="checkbox"
-                        id="login-form_agree"
-                        name="agree_checkbox"
-                      />
-                      <div>
-                        <i className="icon-check" />
-                      </div>
-                    </div>
-                    <label htmlFor="login-form_agree"> Remember me </label>
-                  </div>
-                  <Link
-                    href={`/forget-password`}
-                    className="font-2 text-button forget-password link"
-                  >
-                    Forgot Your Password?
-                  </Link>
-                </div>
               </div>
               
-              <div className="button-submit">
+              <div className="button-submit text-center">
                 <button 
-                  className="tf-btn btn-fill" 
                   type="submit"
+                  className="tf-btn btn-fill w-100"
                   disabled={isSubmitting}
-                  style={{ opacity: isSubmitting ? 0.7 : 1 }}
+                  suppressHydrationWarning
                 >
                   <span className="text text-button">
                     {isSubmitting ? "Logging in..." : "Login"}

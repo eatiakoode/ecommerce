@@ -2,8 +2,14 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useContextElement } from "@/context/Context";
-import { products41 } from "@/data/products";
+// import { useContextElement } from "@/context/Context";
+// import { useContextElement } from "@/context/Context";
+import { useContextElement } from "../../context/Context";
+
+
+// import { products41 } from "@/data/products";
+import { products41 } from "../../data/products";
+
 export default function CartModal() {
   const {
     cartProducts,
@@ -14,7 +20,7 @@ export default function CartModal() {
   } = useContextElement();
 
   const removeItem = (id) => {
-    setCartProducts((pre) => [...pre.filter((elm) => elm.id != id)]);
+    setCartProducts((pre) => [...pre.filter((elm) => elm.id != id && elm._id != id)]);
   };
 
   const [currentOpenPopup, setCurrentOpenPopup] = useState("");
@@ -50,7 +56,7 @@ export default function CartModal() {
                       </div>
                       <div className="cart-item-bot">
                         <div className="text-button price">
-                          ${product.price.toFixed(2)}
+                          ${product.price ? product.price.toFixed(2) : '0.00'}
                         </div>
                         <a
                           className="link text-button"
@@ -103,8 +109,8 @@ export default function CartModal() {
                             <div className="tf-mini-cart-image">
                               <Image
                                 className="lazyload"
-                                alt=""
-                                src={product.imgSrc}
+                                alt={product.title || product.name || 'Product'}
+                                src={product.imgSrc || '/images/products/no-image.png'}
                                 width={600}
                                 height={800}
                               />
@@ -113,10 +119,10 @@ export default function CartModal() {
                               <div className="mb_12 d-flex align-items-center justify-content-between flex-wrap gap-12">
                                 <div className="text-title">
                                   <Link
-                                    href={`/product-detail/${product.id}`}
+                                    href={`/product-detail/${product.id || product._id || 1}`}
                                     className="link text-line-clamp-1"
                                   >
-                                    {product.title}
+                                    {product.title || product.name || 'Product'}
                                   </Link>
                                 </div>
                                 <div
@@ -129,8 +135,8 @@ export default function CartModal() {
                               <div className="d-flex align-items-center justify-content-between flex-wrap gap-12">
                                 <div className="text-secondary-2">XL/Blue</div>
                                 <div className="text-button">
-                                  {product.quantity} X $
-                                  {product.price.toFixed(2)}
+                                  {product.quantity || 1} X $
+                                  {product.price ? product.price.toFixed(2) : '0.00'}
                                 </div>
                               </div>
                             </div>
@@ -265,7 +271,7 @@ export default function CartModal() {
                     <div className="tf-cart-totals-discounts">
                       <h5>Subtotal</h5>
                       <h5 className="tf-totals-total-value">
-                        ${totalPrice.toFixed(2)}
+                        ${totalPrice ? totalPrice.toFixed(2) : '0.00'}
                       </h5>
                     </div>
                     <div className="tf-cart-checkbox">

@@ -1,13 +1,19 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Nav from "./Nav";
 import Image from "next/image";
 import Link from "next/link";
 import CartLength from "../common/CartLength";
 import { useAuth } from "@/context/AuthContext";
+import { useWishlist } from "@/context/WishlistContext";
+import CartModal from "../common/CartModal"; // import the modal
+import WishlistModal from "../common/WishlistModal"; // import the modal
 
 export default function Header1({ fullWidth = false }) {
   const { user, isAuthenticated, logout } = useAuth();
+  const { getWishlistCount } = useWishlist();
+  const [showCart, setShowCart] = useState(false);
+  const [showWishlist, setShowWishlist] = useState(false); // new state
 
   const handleLogout = async () => {
     await logout();
@@ -167,7 +173,11 @@ export default function Header1({ fullWidth = false }) {
                 </div>
               </li>
               <li className="nav-wishlist">
-                <Link href={`/wish-list`} className="nav-icon-item">
+                <a
+                  href="#wishlist"
+                  className="nav-icon-item"
+                  onClick={e => { e.preventDefault(); setShowWishlist(true); }}
+                >
                   <svg
                     className="icon"
                     width={24}
@@ -184,13 +194,19 @@ export default function Header1({ fullWidth = false }) {
                       strokeLinejoin="round"
                     />
                   </svg>
-                </Link>
+                  {getWishlistCount() > 0 && (
+                    <span className="count-box">
+                      {getWishlistCount()}
+                    </span>
+                  )}
+                </a>
               </li>
               <li className="nav-cart">
                 <a
                   href="#shoppingCart"
                   data-bs-toggle="modal"
                   className="nav-icon-item"
+                  onClick={e => { e.preventDefault(); setShowCart(true); }}
                 >
                   <svg
                     className="icon"
@@ -217,6 +233,8 @@ export default function Header1({ fullWidth = false }) {
           </div>
         </div>
       </div>
+      <CartModal show={showCart} onClose={() => setShowCart(false)} />
+      <WishlistModal show={showWishlist} onClose={() => setShowWishlist(false)} />
     </header>
   );
 }

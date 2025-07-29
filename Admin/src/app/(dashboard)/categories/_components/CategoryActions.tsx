@@ -47,6 +47,9 @@ export default function CategoryActions() {
   const [categoryDescription, setCategoryDescription] = useState(""); // New category description
   const [bulkActionType, setBulkActionType] = useState<"delete" | "edit">("delete");
   const [bulkEditData, setBulkEditData] = useState({ name: "", description: "" });
+  const [categoryImages, setCategoryImages] = useState<File[]>([]);
+  const [categoryImage, setCategoryImage] = useState<File | null>(null);
+  const [categoryIsActive, setCategoryIsActive] = useState(true);
 
   // API hooks
   const exportMutation = useExportCategories();
@@ -144,16 +147,18 @@ export default function CategoryActions() {
       toast.error("Category name is required.");
       return;
     }
-
+    if (!categoryImage) {
+      toast.error("Image is required.");
+      return;
+    }
     try {
-      await createMutation.mutateAsync({
-        name: categoryName.trim(),
-        description: categoryDescription.trim(),
-        isActive: true
-      });
-      
-      setCategoryName("");
-      setCategoryDescription("");
+      const formData = new FormData();
+      formData.append("name", categoryName.trim());
+      if (categoryDescription.trim()) formData.append("description", categoryDescription.trim());
+      formData.append("isActive", String(categoryIsActive));
+      formData.append("image", categoryImage);
+      await createMutation.mutateAsync(formData);
+      setCategoryIsActive(true);
       setOpen(false);
       toast.success("Category added successfully!");
     } catch (error) {
@@ -303,6 +308,7 @@ export default function CategoryActions() {
                     value={categoryName}
                     onChange={(e) => setCategoryName(e.target.value)}
                     placeholder="Enter category name"
+                    required
                   />
                 </div>
                 <div>
@@ -312,6 +318,34 @@ export default function CategoryActions() {
                     onChange={(e) => setCategoryDescription(e.target.value)}
                     placeholder="Enter category description (optional)"
                   />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Image *</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={e => setCategoryImage(e.target.files?.[0] || null)}
+                    className="border p-2 rounded w-full"
+                    required
+                  />
+                  {categoryImage && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <img
+                        src={URL.createObjectURL(categoryImage)}
+                        alt="Preview"
+                        className="w-16 h-16 object-cover rounded border"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={categoryIsActive}
+                    onChange={() => setCategoryIsActive((prev) => !prev)}
+                    id="isActive"
+                  />
+                  <label htmlFor="isActive" className="text-sm font-medium">Active</label>
                 </div>
               </div>
               <DialogFooter>

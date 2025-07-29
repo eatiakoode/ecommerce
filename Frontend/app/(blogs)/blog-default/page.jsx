@@ -9,7 +9,7 @@ export default function BlogDefaultPage() {
   return (
     <>
       <Topbar6 bgColor="bg-main" />
-      <Header1 />
+      {/* <Header1 /> */}
       <div
         className="page-title"
         style={{ backgroundImage: "url(/images/section/page-title.jpg)" }}
@@ -42,7 +42,7 @@ export default function BlogDefaultPage() {
         </div>
       </div>
       <BlogDefault />
-      <Footer1 />
+      {/* <Footer1 /> */}
     </>
   );
 }

@@ -56,51 +56,52 @@ export default function Contact1() {
             <p style={{ color: "red" }}>Something went wrong</p>
           )}
         </div>
-        <form onSubmit={sendMail} ref={formRef} className="form-leave-comment">
-          <div className="wrap">
-            <div className="cols">
+        <form onSubmit={sendMail} ref={formRef} className="form-leave-comment" suppressHydrationWarning>
+          <div className="row">
+            <div className="col-lg-6">
               <fieldset className="">
                 <input
-                  className=""
                   type="text"
-                  placeholder="Your Name*"
-                  name="text"
-                  tabIndex={2}
-                  defaultValue=""
+                  placeholder="Your name*"
+                  name="user_name"
+                  tabIndex={0}
                   aria-required="true"
                   required
-                />
-              </fieldset>
-              <fieldset className="">
-                <input
-                  className=""
-                  type="email"
-                  placeholder="Your Email*"
-                  name="email"
-                  tabIndex={2}
-                  defaultValue=""
-                  aria-required="true"
-                  required
+                  suppressHydrationWarning
                 />
               </fieldset>
             </div>
+            <div className="col-lg-6">
+              <fieldset className="">
+                <input
+                  type="email"
+                  placeholder="Your email*"
+                  name="user_email"
+                  tabIndex={0}
+                  aria-required="true"
+                  required
+                  suppressHydrationWarning
+                />
+              </fieldset>
+            </div>
+            </div>
             <fieldset className="">
               <textarea
-                className=""
-                rows={4}
-                placeholder="Your Message*"
-                tabIndex={2}
+              placeholder="Your message*"
+              name="message"
+              tabIndex={0}
                 aria-required="true"
                 required
-                defaultValue={""}
+              suppressHydrationWarning
               />
             </fieldset>
-          </div>
-          <div className="button-submit text-center">
-            <button className="tf-btn btn-fill" type="submit">
+          <button
+            type="submit"
+            className="btn-style-2 radius-12 w-100 justify-content-center"
+            suppressHydrationWarning
+          >
               <span className="text text-button">Send message</span>
             </button>
-          </div>
         </form>
       </div>
     </section>

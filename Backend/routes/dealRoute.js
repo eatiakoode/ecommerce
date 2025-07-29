@@ -5,7 +5,7 @@ const {
   deletedeal,
   getdeal,
   getalldeal,
-} = require("../controllers/dealCtrl");
+} = require("../controller/dealCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
 

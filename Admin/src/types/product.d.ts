@@ -2,16 +2,12 @@ import { Category } from "./category";
 
 export type ProductStatus = "selling" | "out-of-stock";
 
-type Price = {
-  price: number;
-  discount: number;
-};
-
 type Variant = {
   _id: string;
   name: string;
   slug: string;
-  prices: Price;
+  mrp: number;
+  salePrice: number;
   images: string[];
   status: Status;
   stock: number;
@@ -23,7 +19,8 @@ export type Product = {
   name: string;
   description: string;
   categories: Category[];
-  prices: Price;
+  mrp: number;
+  salePrice: number;
   stock: number;
   sales: number;
   sku: string;

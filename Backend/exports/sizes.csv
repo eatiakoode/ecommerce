@@ -1,2 +1,5 @@
-Name,IsActive
-Medium,true
+Name,Value,IsActive
+Medium,M,false
+Small,S,true
+Extra Large,XL,true
+Large,L,true

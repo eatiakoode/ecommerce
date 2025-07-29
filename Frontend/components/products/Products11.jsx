@@ -20,11 +20,9 @@ export default function Products11() {
     color,
     size,
     brands,
-
     filtered,
     sortingOption,
     sorted,
-
     activeFilterOnSale,
     currentPage,
     itemPerPage,
@@ -75,59 +73,121 @@ export default function Products11() {
     },
   };
 
-  useEffect(() => {
-    let filteredArrays = [];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    if (brands.length) {
-      const filteredByBrands = [...productMain].filter((elm) =>
-        brands.every((el) => elm.filterBrands.includes(el))
+  // Apply filters to products
+  const applyFilters = (productsToFilter) => {
+    let filteredProducts = [...productsToFilter];
+
+    // Filter by price range
+    if (price && price.length === 2) {
+      filteredProducts = filteredProducts.filter(
+        product => product.sellingPrice >= price[0] && product.sellingPrice <= price[1]
       );
-      filteredArrays = [...filteredArrays, filteredByBrands];
     }
-    if (availability !== "All") {
-      const filteredByavailability = [...productMain].filter(
-        (elm) => availability.value === elm.inStock
-      );
-      filteredArrays = [...filteredArrays, filteredByavailability];
+
+    // Filter by size
+    if (size !== 'All') {
+      filteredProducts = filteredProducts.filter(product => {
+        if (size === 'Free Size') {
+          return !product.size || product.size.length === 0;
+        }
+        return product.size && product.size.includes(size);
+      });
     }
-    if (color !== "All") {
-      const filteredByColor = [...productMain].filter((elm) =>
-        elm.filterColor.includes(color.name)
-      );
-      filteredArrays = [...filteredArrays, filteredByColor];
+
+    // Filter by color
+    if (color !== 'All') {
+      filteredProducts = filteredProducts.filter(product => {
+        return product.color && product.color.name === color.name;
+      });
     }
-    if (size !== "All" && size !== "Free Size") {
-      const filteredBysize = [...productMain].filter((elm) =>
-        elm.filterSizes.includes(size)
-      );
-      filteredArrays = [...filteredArrays, filteredBysize];
+
+    // Filter by availability
+    if (availability !== 'All') {
+      filteredProducts = filteredProducts.filter(product => {
+        if (availability.value === 'In Stock') {
+          return product.quantity > 0;
+        } else if (availability.value === 'Out of Stock') {
+          return product.quantity === 0;
+        }
+        return true;
+      });
     }
+
+    // Filter by brands
+    if (brands.length > 0) {
+      filteredProducts = filteredProducts.filter(product => {
+        return product.brand && brands.includes(product.brand.title);
+      });
+    }
+
+    // Filter by sale items
     if (activeFilterOnSale) {
-      const filteredByonSale = [...productMain].filter((elm) => elm.oldPrice);
-      filteredArrays = [...filteredArrays, filteredByonSale];
+      filteredProducts = filteredProducts.filter(product => {
+        return product.MRP && product.MRP > product.sellingPrice;
+      });
     }
 
-    const filteredByPrice = [...productMain].filter(
-      (elm) => elm.price >= price[0] && elm.price <= price[1]
-    );
-    filteredArrays = [...filteredArrays, filteredByPrice];
+    return filteredProducts;
+  };
 
-    const commonItems = [...productMain].filter((item) =>
-      filteredArrays.every((array) => array.includes(item))
-    );
-    dispatch({ type: "SET_FILTERED", payload: commonItems });
-  }, [price, availability, color, size, brands, activeFilterOnSale]);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch all products using the correct endpoint
+        const res = await fetch(`http://localhost:5000/api/frontend/product/lists`);
+        const result = await res.json();
+        
+        let fetchedProducts = [];
+        if (result.success && Array.isArray(result.data)) {
+          fetchedProducts = result.data;
+        } else if (Array.isArray(result)) {
+          fetchedProducts = result;
+        } else {
+          console.error("Invalid response format:", result);
+          fetchedProducts = [];
+        }
+
+        setProducts(fetchedProducts);
+        
+        // Apply initial filters
+        const filteredProducts = applyFilters(fetchedProducts);
+        dispatch({ type: "SET_FILTERED", payload: filteredProducts });
+      } catch (err) {
+        console.error("Error fetching products:", err);
+        setError('Failed to fetch products');
+        setProducts([]);
+        dispatch({ type: "SET_FILTERED", payload: [] });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // Re-apply filters when filter state changes
+  useEffect(() => {
+    if (products.length > 0) {
+      const filteredProducts = applyFilters(products);
+      dispatch({ type: "SET_FILTERED", payload: filteredProducts });
+    }
+  }, [price, size, color, availability, brands, activeFilterOnSale, products]);
 
   useEffect(() => {
     if (sortingOption === "Price Ascending") {
       dispatch({
         type: "SET_SORTED",
-        payload: [...filtered].sort((a, b) => a.price - b.price),
+        payload: [...filtered].sort((a, b) => a.sellingPrice - b.sellingPrice),
       });
     } else if (sortingOption === "Price Descending") {
       dispatch({
         type: "SET_SORTED",
-        payload: [...filtered].sort((a, b) => b.price - a.price),
+        payload: [...filtered].sort((a, b) => b.sellingPrice - a.sellingPrice),
       });
     } else if (sortingOption === "Title Ascending") {
       dispatch({
@@ -144,13 +204,17 @@ export default function Products11() {
     }
     dispatch({ type: "SET_CURRENT_PAGE", payload: 1 });
   }, [filtered, sortingOption]);
+
   return (
     <>
       <section className="flat-spacing">
         <div className="container">
           <div className="tf-shop-control">
             <div className="tf-control-filter">
-              <button className="filterShop tf-btn-filter hidden-mx-1200">
+              <button 
+                className="filterShop tf-btn-filter hidden-mx-1200"
+                suppressHydrationWarning
+              >
                 <span className="icon icon-filter" />
                 <span className="text">Filters</span>
               </button>
@@ -192,7 +256,15 @@ export default function Products11() {
                 <FilterSidebar allProps={allProps} />
               </div>
               <div className="col-xl-9">
-                {activeLayout == 1 ? (
+                {loading ? (
+                  <div style={{ textAlign: 'center', padding: '50px' }}>
+                    <p>Loading products...</p>
+                  </div>
+                ) : error ? (
+                  <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
+                    <p>{error}</p>
+                  </div>
+                ) : activeLayout == 1 ? (
                   <div className="tf-list-layout wrapper-shop" id="listLayout">
                     <Listview products={sorted} />
                   </div>

@@ -150,7 +150,10 @@ export default function Products12() {
         <div className="container">
           <div className="tf-shop-control">
             <div className="tf-control-filter">
-              <button className="filterShop tf-btn-filter hidden-mx-1200">
+              <button 
+                className="filterShop tf-btn-filter hidden-mx-1200"
+                suppressHydrationWarning
+              >
                 <span className="icon icon-filter" />
                 <span className="text">Filters</span>
               </button>

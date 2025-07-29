@@ -4,6 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import CountdownTimer from "../common/Countdown";
 import { useContextElement } from "@/context/Context";
+import { useWishlist } from "@/context/WishlistContext";
+import { useAuth } from "@/context/AuthContext";
+import { formatCurrency } from "@/utlis/currency";
+
 export default function ProductCard1({
   product,
   gridClass = "",
@@ -11,16 +15,68 @@ export default function ProductCard1({
   isNotImageRatio = false,
   radiusClass = "",
 }) {
-  // console.log("tej");
-  // console.log(product)
-  // console.log("veer");
-  // console.log(useContextElement)
-  const [currentImage, setCurrentImage] = useState(product.images?product.images[0].url:product.imgSrc);
+  const [mounted, setMounted] = useState(false);
+  const [currentImage, setCurrentImage] = useState('/images/products/product-1.jpg');
 
+  const getSafeImageSrc = (src) => {
+    // Handle null, undefined, or empty string
+    if (!src || src === '' || src === 'null' || src === 'undefined') {
+      return '/images/products/product-1.jpg';
+    }
+    
+    // If it's already a full URL, return as is
+    if (src.startsWith('http')) return src;
+    
+    // If it starts with /uploads/, it's from backend - prepend backend URL
+    if (src.startsWith('/uploads/')) {
+      return `http://localhost:5000${src}`;
+    }
+    
+    // If it starts with upload-, it's from backend uploads - use proxy
+    if (src.startsWith('upload-')) {
+      return `http://localhost:5000/uploads/${src}`;
+    }
+    
+    // If it starts with /, it's a relative path
+    if (src.startsWith('/')) return src;
+    
+    // Default case - treat as relative path
+    return `/${src}`;
+  };
+
+  // Get the initial image source from backend data
+  const getInitialImageSrc = () => {
+    // Check if product has images array from backend
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      const firstImage = product.images[0];
+      if (firstImage && firstImage.url) {
+        return firstImage.url;
+      }
+    }
+    
+    // Fallback to old structure
+    if (product.imgSrc) {
+      return product.imgSrc;
+    }
+    
+    return null;
+  };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && product) {
+      const imageSrc = getSafeImageSrc(getInitialImageSrc());
+      setCurrentImage(imageSrc);
+    }
+  }, [mounted, product]);
+
+  const { addToWishlist, isInWishlist, loading: wishlistLoading } = useWishlist();
+  const { isAuthenticated } = useAuth();
   const {
     setQuickAddItem,
-    addToWishlist,
-    isAddedtoWishlist,
     addToCompareItem,
     isAddedtoCompareItem,
     setQuickViewItem,
@@ -28,234 +84,229 @@ export default function ProductCard1({
     isAddedToCartProducts,
   } = useContextElement();
 
-  useEffect(() => {
-    setCurrentImage(product.images?product.images[0].url:product.imgSrc);
-  }, [product]);
+  // Calculate discount percentage
+  const calculateDiscount = () => {
+    const currentPrice = product.sellingPrice || product.price;
+    if (product.MRP && currentPrice && product.MRP > currentPrice) {
+      const discount = Math.round(((product.MRP - currentPrice) / product.MRP) * 100);
+      return discount > 0 ? discount : 0;
+    }
+    return 0;
+  };
+
+  const discount = calculateDiscount();
+
+  // Don't render until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className={`${parentClass} ${gridClass}`}>
+        <div className={`card-product-wrapper ${isNotImageRatio ? "aspect-ratio-0" : ""} ${radiusClass}`}>
+          <div className="product-img test">
+            <div style={{ width: 300, height: 300, backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              Loading...
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
       className={`${parentClass} ${gridClass} ${
-        product.price ? "on-sale" : ""
-      } ${product.price ? "card-product-size" : ""}`}
+        product.MRP && product.MRP > (product.sellingPrice || product.price) ? "on-sale" : ""
+      } ${product.MRP && product.MRP > (product.sellingPrice || product.price) ? "card-product-size" : ""}`}
     >
       <div
         className={`card-product-wrapper ${
           isNotImageRatio ? "aspect-ratio-0" : ""
         } ${radiusClass} `}
       >
-        <Link href={`/product-detail/${product.id}`} className="product-img test">
-          <Image
-            className="lazyload img-product"
-            src={currentImage}
-            alt={product.title}
-            width={600}
-            height={800}
-          />
+        {/* Discount Badge */}
+        {discount > 0 && (
+          <div className="on-sale-wrap" style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
+            <span className="on-sale" style={{ 
+              backgroundColor: '#dc3545', 
+              color: 'white', 
+              padding: '4px 8px', 
+              borderRadius: '4px', 
+              fontSize: '12px', 
+              fontWeight: 'bold',
+              display: 'inline-block'
+            }}>
+              -{discount}%
+            </span>
+          </div>
+        )}
 
-          <Image
-            className="lazyload img-hover"
-            src={product.images?product.images[0].url:product.imgHover}
-            alt={product.title}
-            width={600}
-            height={800}
+        {/* Product Image */}
+        <Link href={`/product-detail/${product.slug || product._id || product.id}`} className="product-img test">
+          <img
+            src={currentImage}
+            alt={product.title || product.name || 'Product Image'}
+            className="img-fluid"
+            style={{
+              width: '100%',
+              height: 'auto',
+              objectFit: 'cover',
+              minHeight: '200px'
+            }}
+            onError={(e) => {
+              e.target.src = '/images/products/product-1.jpg';
+            }}
           />
         </Link>
-        {product.hotSale && (
-          <div className="marquee-product bg-main">
-            <div className="marquee-wrapper">
-              <div className="initial-child-container">
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-              </div>
-            </div>
-            <div className="marquee-wrapper">
-              <div className="initial-child-container">
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-                <div className="marquee-child-item">
-                  <p className="font-2 text-btn-uppercase fw-6 text-white">
-                    Hot Sale 25% OFF
-                  </p>
-                </div>
-                <div className="marquee-child-item">
-                  <span className="icon icon-lightning text-critical" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {product.price && (
-          <div className="on-sale-wrap">
-            <span className="on-sale-item">-{product.price}</span>
-          </div>
-        )}
-        
-       
-        {product.price ? (
-          <div className="on-sale-wrap">
-            <span className="on-sale-item">-25%</span>
-          </div>
-        ) : (
-          ""
-        )}
-        <div className="list-product-btn">
-          <a
-            onClick={() => addToWishlist(product.id)}
-            className="box-icon wishlist btn-icon-action"
-          >
-            <span className="icon icon-heart" />
-            <span className="tooltip">
-              {isAddedtoWishlist(product.id)
-                ? "Already Wishlished"
-                : "Wishlist"}
-            </span>
-          </a>
-          <a
-            href="#compare"
-            data-bs-toggle="offcanvas"
-            aria-controls="compare"
-            onClick={() => addToCompareItem(product.id)}
-            className="box-icon compare btn-icon-action"
-          >
-            <span className="icon icon-gitDiff" />
-            <span className="tooltip">
-              {isAddedtoCompareItem(product.id)
-                ? "Already compared"
-                : "Compare"}
-            </span>
-          </a>
-          <a
-            href="#quickView"
-            onClick={() => setQuickViewItem(product)}
-            data-bs-toggle="modal"
-            className="box-icon quickview tf-btn-loading"
-          >
-            <span className="icon icon-eye" />
-            <span className="tooltip">Quick View</span>
-          </a>
-        </div>
-        <div className="list-btn-main">
-          {product.id == "Quick Add" ? (
-            <a
-              className="btn-main-product"
-              href="#quickAdd"
-              onClick={() => setQuickAddItem(product.id)}
-              data-bs-toggle="modal"
+
+        {/* Hover Icons */}
+        <div className="list-product-btn" style={{ 
+          position: 'absolute', 
+          top: '10px', 
+          right: '10px', 
+          zIndex: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '5px',
+          opacity: 1,
+          pointerEvents: 'auto'
+        }}>
+          <div className="list-btn-main">
+            <button
+              className="list-btn"
+              onClick={() => addToWishlist(product.id || product._id)}
+              title="Add to Wishlist"
+              disabled={wishlistLoading}
+              suppressHydrationWarning
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid #ddd',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: wishlistLoading ? 'not-allowed' : 'pointer',
+                opacity: wishlistLoading ? 0.6 : 1,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                transition: 'all 0.3s ease',
+                zIndex: 25
+              }}
             >
-              Quick Add
-            </a>
-          ) : (
-            <a
-              className="btn-main-product"
-              onClick={() => addProductToCart(product.id)}
+              <i className={`icon ${isInWishlist(product.id || product._id) ? "icon-heart-fill" : "icon-heart"}`} style={{ color: isInWishlist(product.id || product._id) ? '#dc3545' : '#333', fontSize: '14px' }} />
+            </button>
+            <button
+              className="list-btn"
+              onClick={() => addToCompareItem(product.id || product._id)}
+              title="Add to Compare"
+              suppressHydrationWarning
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid #ddd',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                transition: 'all 0.3s ease',
+                zIndex: 25
+              }}
             >
-              {isAddedToCartProducts(product.id)
-                ? "Already Added"
-                : "ADD TO CART"}
-            </a>
+              <i className={`icon ${isAddedtoCompareItem(product.id || product._id) ? "icon-refresh-fill" : "icon-refresh"}`} style={{ color: isAddedtoCompareItem(product.id || product._id) ? '#007bff' : '#333', fontSize: '14px' }} />
+            </button>
+            <button
+              className="list-btn"
+              onClick={() => setQuickViewItem(product)}
+              title="Quick View"
+              suppressHydrationWarning
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid #ddd',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                transition: 'all 0.3s ease',
+                zIndex: 25
+              }}
+            >
+              <i className="icon icon-eye" style={{ color: '#333', fontSize: '14px' }} />
+            </button>
+          </div>
+          </div>
+
+        {/* Product Info */}
+        <div className="card-product-info" style={{ 
+          padding: '15px', 
+          backgroundColor: 'white',
+          borderTop: '1px solid #f0f0f0',
+          position: 'relative',
+          zIndex: 10,
+          marginTop: '10px'
+        }}>
+          <Link href={`/product-detail/${product.slug || product._id || product.id}`} className="title link">
+            <h5 style={{ 
+              fontSize: '16px', 
+              fontWeight: '600', 
+              color: '#333', 
+              marginBottom: '8px',
+              lineHeight: '1.3',
+              textDecoration: 'none'
+            }}>
+              {product.title || product.name || 'Product Title'}
+            </h5>
+          </Link>
+          
+          <div className="price" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            {product.MRP && product.MRP > (product.sellingPrice || product.price) && (
+              <span className="old-price" style={{ 
+                color: '#999', 
+                textDecoration: 'line-through', 
+                fontSize: '14px' 
+              }}>
+                ₹{product.MRP}
+              </span>
+            )}
+            <span className="current-price" style={{ 
+              color: '#007bff', 
+              fontSize: '18px', 
+              fontWeight: 'bold' 
+            }}>
+              ₹{product.sellingPrice || product.price || 0}
+            </span>
+            {!product.sellingPrice && !product.price && (
+              <span className="no-price" style={{ 
+                color: '#999', 
+                fontSize: '14px' 
+              }}>
+                Price not available
+              </span>
+            )}
+          </div>
+          
+          {/* Short Description */}
+          {product.shortDescription && (
+            <p style={{ 
+              fontSize: '14px', 
+              color: '#666', 
+              marginBottom: '0px',
+              lineHeight: '1.4',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {product.shortDescription}
+            </p>
           )}
         </div>
-      </div>
-      <div className="card-product-info">
-        <Link href={`/product-detail/${product.id}`} className="title link">
-          {product.title}
-        </Link>
-        <span className="price">
-          {product.price && (
-            <span className="old-price">${product.price.toFixed(2)}</span>
-          )}{" "}
-          ${product.price?.toFixed(2)}
-        </span>
-        {product.color && (
-          <ul className="list-color-product">
-            {product.color.map((color, index) => (
-              <li
-                key={index}
-                className={`list-color-item color-swatch ${
-                  currentImage == color[0] ? "active" : ""
-                } ${color.bgColor == "bg-white" ? "line" : ""}`}
-                onMouseOver={() => setCurrentImage(color[0])}
-              >
-                <span className={`swatch-value ${color.bgColor}`} />
-                <Image
-                  className="lazyload"
-                  src={color[0]}
-                  alt="color variant"
-                  width={600}
-                  height={800}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </div>
   );

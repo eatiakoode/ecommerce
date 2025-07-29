@@ -7,7 +7,7 @@ export default function Sidebar() {
   return (
     <div className="sidebar maxw-360">
       <div className="sidebar-item sidebar-search">
-        <form className="form-search" onSubmit={(e) => e.preventDefault()}>
+        <form className="form-search" onSubmit={(e) => e.preventDefault()} suppressHydrationWarning>
           <fieldset className="text">
             <input
               type="email"
@@ -18,9 +18,10 @@ export default function Sidebar() {
               defaultValue=""
               aria-required="true"
               required
+              suppressHydrationWarning
             />
           </fieldset>
-          <button className="" type="submit">
+          <button className="" type="submit" suppressHydrationWarning>
             <svg
               className="icon"
               width={20}

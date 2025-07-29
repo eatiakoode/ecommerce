@@ -1,7 +1,7 @@
 "use client";
-import { allProducts } from "@/data/products";
-import { openCartModal } from "@/utlis/openCartModal";
-import { openWistlistModal } from "@/utlis/openWishlist";
+import { allProducts } from "../data/products";
+import { openCartModal } from "../utlis/openCartModal";
+import { openWistlistModal } from "../utlis/openWishlist";
 
 import React, { useEffect } from "react";
 import { useContext, useState } from "react";
@@ -25,16 +25,38 @@ export default function Context({ children }) {
   }, [cartProducts]);
 
   const isAddedToCartProducts = (id) => {
-    if (cartProducts.filter((elm) => elm.id == id)[0]) {
+    if (cartProducts.filter((elm) => elm.id == id || elm._id == id)[0]) {
       return true;
     }
     return false;
   };
   const addProductToCart = (id, qty, isModal = true) => {
     if (!isAddedToCartProducts(id)) {
+      const productFromAllProducts = allProducts.filter((elm) => elm.id == id)[0];
+      if (productFromAllProducts) {
+        const item = {
+          ...productFromAllProducts,
+          quantity: qty ? qty : 1,
+        };
+        setCartProducts((pre) => [...pre, item]);
+        if (isModal) {
+          openCartModal();
+        }
+      } else {
+        console.warn(`Product with id ${id} not found in allProducts`);
+      }
+    }
+  };
+
+  const addProductToCartDirect = (product, qty = 1, isModal = true) => {
+    if (!isAddedToCartProducts(product.id || product._id)) {
       const item = {
-        ...allProducts.filter((elm) => elm.id == id)[0],
-        quantity: qty ? qty : 1,
+        ...product,
+        id: product.id || product._id,
+        quantity: qty,
+        price: product.price || product.sellingPrice || 0,
+        title: product.title || product.name || 'Product',
+        imgSrc: product.imgSrc || product.images?.[0]?.url || '/images/products/no-image.png',
       };
       setCartProducts((pre) => [...pre, item]);
       if (isModal) {
@@ -115,6 +137,7 @@ export default function Context({ children }) {
     setCartProducts,
     totalPrice,
     addProductToCart,
+    addProductToCartDirect,
     isAddedToCartProducts,
     removeFromWishlist,
     addToWishlist,

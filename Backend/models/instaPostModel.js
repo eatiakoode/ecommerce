@@ -1,0 +1,30 @@
+const mongoose = require("mongoose");
+
+const instapostSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        required: true
+    },
+    imageLink: {
+        type: String,
+        required: true
+    },
+    instaLink: {
+        type: String,
+        required: true
+    },
+    // SKU: {
+    //     type: String,
+    //     required: true,
+    //     unique: true
+    // },
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active"
+    },
+}, {
+    timestamps: true
+});
+
+module.exports = mongoose.model("Instapost", instapostSchema);

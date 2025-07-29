@@ -65,6 +65,7 @@ export default function FilterMeta({ allProps, productLength }) {
           id="remove-all"
           className="remove-all-filters text-btn-uppercase"
           onClick={allProps.clearFilter}
+          suppressHydrationWarning
         >
           REMOVE ALL <i className="icon icon-close" />
         </button>

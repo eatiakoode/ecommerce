@@ -1,6 +1,4 @@
 import Footer1 from "@/components/footers/Footer1";
-import Header1 from "@/components/headers/Header1";
-import Topbar6 from "@/components/headers/Topbar6";
 import Breadcumb from "@/components/productDetails/Breadcumb";
 import Descriptions1 from "@/components/productDetails/descriptions/Descriptions1";
 import DetailsCombo from "@/components/productDetails/details/DetailsCombo";
@@ -20,8 +18,6 @@ export default async function ProductDetailPage({ params }) {
   const product = allProducts.filter((p) => p.id == id)[0] || allProducts[0];
   return (
     <>
-      <Topbar6 bgColor="bg-main" />
-      <Header1 />
       <Breadcumb product={product} />
       <DetailsCombo product={product} />
       <Descriptions1 />

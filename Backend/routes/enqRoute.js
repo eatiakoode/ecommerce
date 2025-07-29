@@ -5,7 +5,7 @@ const {
   deleteEnquiry,
   getEnquiry,
   getallEnquiry,
-} = require("../controllers/enqCtrl");
+} = require("../controller/enqCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
 

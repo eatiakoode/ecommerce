@@ -5,7 +5,8 @@ import { Swiper, SwiperSlide } from "swiper/react";
 
 export default function Topbar3() {
   return (
-    <div className="tf-topbar topbar-white bg-main">
+    <div>
+    {/* <div className="tf-topbar topbar-white bg-main">
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-8 col-12 text-center">
@@ -47,6 +48,7 @@ export default function Topbar3() {
           </div>
         </div>
       </div>
+    </div> */}
     </div>
   );
 }

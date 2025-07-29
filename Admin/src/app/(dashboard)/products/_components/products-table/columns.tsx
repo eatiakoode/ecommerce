@@ -36,7 +36,11 @@ type Product = {
   slug: string;
   description: string;
   price: number;
-  category: string;
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+  };
   brand: string;
   quantity: number;
   sold: number;
@@ -165,27 +169,50 @@ export const columns: ColumnDef<Product>[] = [
       );
     },
   },
+  // You should inject these maps from props/context or fetch them globally
+  // Example: const categoryMap = { [id]: name, ... }, brandMap = { [id]: title, ... }
+  // For now, fallback to showing the ID if not found
   {
     header: "category",
-    cell: ({ row }) => (
-      <Typography className="block max-w-52 truncate">
-        {row.original.category}
-      </Typography>
-    ),
+    cell: ({ row }) => {
+      // Try to get the name from category object or fallback to ID
+      const cat = row.original.category;
+      if (cat && typeof cat === 'object' && (cat.name || cat.title)) {
+        return <Typography className="block max-w-52 truncate">{cat.name || cat.title}</Typography>;
+      }
+      if (Array.isArray(row.original.categories) && row.original.categories.length > 0) {
+        const c = row.original.categories[0];
+        return <Typography className="block max-w-52 truncate">{c.name || c.title || c}</Typography>;
+      }
+      return <Typography className="block max-w-52 truncate">{cat || '-'}</Typography>;
+    },
   },
   {
-    header: "price",
+    header: "MRP",
     cell: ({ row }) => {
-      return formatAmount(row.original.price);
+      const mrp = Number(row.original.mrp || row.original.MRP);
+      return isNaN(mrp) ? '-' : `₹${mrp.toLocaleString()}`;
+    },
+  },
+  {
+    header: "sale price",
+    cell: ({ row }) => {
+      const price = Number(row.original.salePrice || row.original.sellingPrice);
+      return isNaN(price) ? '-' : `₹${price.toLocaleString()}`;
     },
   },
   {
     header: "brand",
-    cell: ({ row }) => (
-      <Typography className="block max-w-52 truncate">
-        {row.original.brand}
-      </Typography>
-    ),
+    cell: ({ row }) => {
+      const brand = row.original.brand;
+      if (brand && typeof brand === 'object' && brand.title) {
+        return <Typography className="block max-w-52 truncate">{brand.title}</Typography>;
+      }
+      if (brand && typeof brand === 'object' && brand.name) {
+        return <Typography className="block max-w-52 truncate">{brand.name}</Typography>;
+      }
+      return <Typography className="block max-w-52 truncate">-</Typography>;
+    },
   },
   {
     header: "stock",
@@ -194,15 +221,6 @@ export const columns: ColumnDef<Product>[] = [
   {
     header: "sold",
     cell: ({ row }) => row.original.sold,
-  },
-  {
-    header: "rating",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-1">
-        <span className="text-yellow-500">★</span>
-        <span>{row.original.totalrating}</span>
-      </div>
-    ),
   },
   {
     header: "actions",

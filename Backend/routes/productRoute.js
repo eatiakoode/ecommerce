@@ -1,6 +1,4 @@
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
 const router = express.Router();
  
 const {
@@ -14,14 +12,19 @@ const {
   importProductsFromCSV,
   exportProductsToCSV,
   bulkEditProducts,
-} = require("../controllers/productCtrl");
+  getProductsByCategory,
+  getProductBySlug, // <-- import the new controller
+} = require("../controller/productCtrl");
  
 const { isAdmin, authMiddleware } = require("../middlewares/authMiddleware");
+const upload = require("../middlewares/upload");
  
 // ==============================
 // 🗂️ Multer Configuration (CSV)
 // ==============================
-const storage = multer.diskStorage({
+const multer = require("multer");
+const path = require("path");
+const csvStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "imports/"); // CSV files will go to /imports
   },
@@ -29,7 +32,7 @@ const storage = multer.diskStorage({
     cb(null, "import_" + Date.now() + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage });
+const csvUpload = multer({ storage: csvStorage });
  
 // ==============================
 // 📦 Product Routes
@@ -41,7 +44,7 @@ router.post(
   "/import",
   authMiddleware,
   isAdmin,
-  upload.single("file"),
+  csvUpload.single("file"),
   importProductsFromCSV
 );
  
@@ -55,19 +58,25 @@ router.put("/bulk-edit", authMiddleware, isAdmin, bulkEditProducts);
  
 // ✅ Create a Product
 // POST: /api/product/
-router.post("/", authMiddleware, isAdmin, createProduct);
+router.post(
+  "/create",
+  authMiddleware,
+  isAdmin,
+  upload.array("images", 10), // use shared upload middleware for images
+  createProduct
+);
  
 // ✅ Get All Products
 // GET: /api/product/
-router.get("/", getAllProduct);
+router.get("/",authMiddleware,isAdmin, getAllProduct);
  
 // ✅ Get Single Product by ID
 // GET: /api/product/:id
-router.get("/:id", getaProduct);
+// router.get("/:id",authMiddleware,isAdmin, getaProduct);
  
 // ✅ Update Product
 // PUT: /api/product/:id
-router.put("/:id", authMiddleware, isAdmin, updateProduct);
+router.put("/:id", authMiddleware, isAdmin,upload.array("images",10), updateProduct);
  
 // ✅ Delete Product
 // DELETE: /api/product/:id
@@ -79,6 +88,11 @@ router.put("/wishlist", authMiddleware, addToWishlist);
  
 // ✅ Product Rating
 // PUT: /api/product/rating
-router.put("/rating", authMiddleware, rating);
+router.put("/rating", authMiddleware,isAdmin, rating);
+
+router.get("/category/:categoryId",authMiddleware,isAdmin, getProductsByCategory);
+ 
+// ✅ Get Product by Slug
+router.get("/slug/:slug", authMiddleware, isAdmin, getProductBySlug);
  
 module.exports = router;

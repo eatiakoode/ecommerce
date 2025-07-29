@@ -14,8 +14,18 @@ export default function Slider1({
   thumbSlidePerView = 6,
   thumbSlidePerViewOnMobile = 6,
 }) {
-  const items = [...slideItems];
-  items[0].src = firstItem ?? items[0].src;
+  // Use dynamic images if provided, otherwise fall back to static slides
+  const items = slideItems && slideItems.length > 0 ? [...slideItems] : [...slides];
+  
+  // If we have dynamic images, use them; otherwise use the firstItem fallback
+  if (slideItems && slideItems.length > 0) {
+    // Use the dynamic images as provided
+    items.length = 0;
+    items.push(...slideItems);
+  } else if (firstItem) {
+    // Fallback to firstItem if no dynamic images
+    items[0].src = firstItem;
+  }
 
   useEffect(() => {
     // Function to initialize Drift

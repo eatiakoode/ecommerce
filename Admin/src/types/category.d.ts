@@ -7,4 +7,6 @@ export type Category = {
   published: boolean;
   createdAt: string;
   updatedAt: string;
+  isActive?: boolean;
+  image?: string;
 };

@@ -8,12 +8,13 @@ const {
   liketheBlog,
   disliketheBlog,
   uploadImages,
-} = require("../controllers/blogCtrl");
+} = require("../controller/blogCtrl");
+const upload = require("../middlewares/upload");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const { blogImgResize, uploadPhoto } = require("../middlewares/uploadImage");
 const router = express.Router();
 
-router.post("/", authMiddleware, isAdmin, createBlog);
+router.post("/", authMiddleware, isAdmin, upload.array("images",10), createBlog);
 router.put(
   "/upload/:id",
   authMiddleware,

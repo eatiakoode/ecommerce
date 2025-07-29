@@ -21,6 +21,7 @@ export default function CommingSoon() {
             className="form-newsletter subscribe-form type-coming-soon"
             id="subscribe-form"
             onSubmit={(e) => e.preventDefault()}
+            suppressHydrationWarning
           >
             <div id="subscribe-content" className="subscribe-content">
               <fieldset className="email">
@@ -32,6 +33,7 @@ export default function CommingSoon() {
                   placeholder="Enter your e-mail"
                   tabIndex={0}
                   aria-required="true"
+                  suppressHydrationWarning
                 />
               </fieldset>
               <div className="button-submit">
@@ -39,6 +41,7 @@ export default function CommingSoon() {
                   className="subscribe-button"
                   type="button"
                   id="subscribe-button"
+                  suppressHydrationWarning
                 >
                   <svg
                     width={24}

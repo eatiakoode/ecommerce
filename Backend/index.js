@@ -5,8 +5,6 @@ const { notFound, errorHandler } = require("./middlewares/errorHandler");
 const app = express();
 const dotenv = require("dotenv").config();
 const PORT = 5000;
-
-// Import Routes
 const authRouter = require("./routes/authRoute");
 const productRouter = require("./routes/productRoute");
 const blogRouter = require("./routes/blogRoute");
@@ -18,38 +16,41 @@ const enqRouter = require("./routes/enqRoute");
 const couponRouter = require("./routes/couponRoute");
 const customerRouter = require("./routes/customerRoute");
 const uploadRouter = require("./routes/uploadRoute");
-const categoryFrontendRouter = require("./routes/categoryFrontendRouter");
 const staffRouter = require("./routes/staffRoute");
-const productRoutes = require("./routes/productRoute");
+// const productRoutes = require("./routes/productRoute");
+const sizeRoute = require("./routes/sizeRoute");
+//add new api
 const dealRoute = require("./routes/dealRoute");
 const orderRoute = require("./routes/order");
-const userAuthRoutes = require("./routes/userAuthRoutes");
-const sizeRoutes = require("./routes/sizeRoutes");
-const instapostRoutes = require('./routes/instapostRoutes');// ✅ Add Testimonial Route
-const testimonialRoutes = require("./routes/testimonialRoutes");
+const faqRoutes = require("./routes/faqRoutes");
 
+const categoryFrontendRouter = require("./routes/Frontend/categoryRoute");
+const instagramFrntRoutes = require("./routes/Frontend/instaFrntRoute");
+const productFrontendRouter = require("./routes/Frontend/productFrntRoute");
+const sliderRoute = require("./routes/sliderRoute");
+const sliderFrntRoute = require("./routes/Frontend/sliderFrntRoute");
+const instapostRoutes = require('./routes/instaPostRoute');
+const testimonialRoutes = require("./routes/testimonialRoute");
+const testimonialFrntRoutes = require("./routes/Frontend/testimonialFrntRoute");
+
+
+// eati test
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
-const path = require("path");
 
-// DB Connection
+// FIX: Set up CORS to allow credentials and multiple frontend origins
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:4001"],
+  credentials: true
+}));
+
 dbConnect();
-
-// Middlewares
 app.use(morgan("dev"));
-app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-
-// Static Files
-app.use('/public', express.static(path.join(__dirname, 'public')));
-
-// API Routes
-app.use('/api/instapost', instapostRoutes);
-app.use("/api/size", sizeRoutes);
 app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
 app.use("/api/blog", blogRouter);
@@ -61,21 +62,42 @@ app.use("/api/customer", customerRouter);
 app.use("/api/color", colorRouter);
 app.use("/api/enquiry", enqRouter);
 app.use("/api/upload", uploadRouter);
-app.use("/api/frontend/category", categoryFrontendRouter);
 app.use("/api/staff", staffRouter);
-app.use("/api/deal", dealRoute);
-app.use("/api/product", productRoutes);
-app.use("/api/order", orderRoute);
-app.use("/api/user-auth", userAuthRoutes);
+// const path = require("path");
+app.use("/api/deal",dealRoute);
+// app.use("/api/product", productRoutes);
+app.use('/api/order', orderRoute);
+app.use("/api/faq", faqRoutes);
 
-// ✅ Register Testimonial Route
+app.use("/api/frontend/category", categoryFrontendRouter);
+app.use("/api/frontend/instagram", instagramFrntRoutes);
+app.use("/api/frontend/product", productFrontendRouter);
+app.use("/api/slider", sliderRoute);
+app.use("/api/frontend/slider", sliderFrntRoute);
+app.use("/api/instapost", instapostRoutes);
 app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/frontend/testimonials", testimonialFrntRoutes);
+app.use("/api/size", sizeRoute);
 
-// Error Handling
+
+// app.use("/public", express.static(path.join(__dirname, "public")));
+// app.use(express.static("public"));
+// app.use('/images', express.static('path_to_images_directory'));
+// app.use('/public', express.static(path.join(__dirname, 'public')));
+const fs = require('fs');
+const path = require("path");
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+// const testImagePath = path.join(__dirname, 'public/images/upload-1752933459572-592741853.jpg');
+// console.log('Checking for image at:', testImagePath);
+// console.log('Does image exist?', fs.existsSync(testImagePath));
+console.log("testimage");
 app.use(notFound);
 app.use(errorHandler);
 
-// Start Server
 app.listen(PORT, () => {
-  console.log(`Server is running at PORT ${PORT}`);
+  console.log(`Server is running  at PORT ${PORT}`);
 });
+
+// const path = require("path");
+

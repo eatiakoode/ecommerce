@@ -196,7 +196,7 @@ export default function ProductFilters({
           <SelectContent>
             <SelectItem value="low">Low to High</SelectItem>
             <SelectItem value="high">High to Low</SelectItem>
-            <SelectItem value="ratings">Ratings</SelectItem>
+            <SelectItem value="sold">Sold</SelectItem>
             <SelectItem value="stock">Stock</SelectItem>
           </SelectContent>
         </Select>

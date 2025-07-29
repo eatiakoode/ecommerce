@@ -9,7 +9,10 @@ import { useContextElement } from "@/context/Context";
 import ProductStikyBottom from "../ProductStikyBottom";
 export default function Details1({ product }) {
   const [activeColor, setActiveColor] = useState("gray");
+  const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
   const {
     addProductToCart,
     isAddedToCartProducts,
@@ -20,6 +23,53 @@ export default function Details1({ product }) {
     cartProducts,
     updateQuantity,
   } = useContextElement();
+
+  const handleAddToCart = async () => {
+    if (!activeColor || !selectedSize) {
+      alert("Please select color and size.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/user/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id || product._id,
+          color: activeColor,
+          size: selectedSize,
+          quantity,
+        }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to add to cart");
+      alert("Product added to cart!");
+    } catch (err) {
+      alert("Error adding to cart: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToWishlist = async () => {
+    setWishlistLoading(true);
+    try {
+      const res = await fetch("/api/user/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id || product._id,
+        }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to add to wishlist");
+      alert("Product added to wishlist!");
+    } catch (err) {
+      alert("Error adding to wishlist: " + err.message);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   return (
     <section className="flat-spacing">
@@ -32,7 +82,8 @@ export default function Details1({ product }) {
                 <Slider1
                   setActiveColor={setActiveColor}
                   activeColor={activeColor}
-                  firstItem={product.imgSrc}
+                  firstItem={product.images && product.images.length > 0 ? product.images[0].src : null}
+                  slideItems={product.images || []}
                 />
               </div>
             </div>
@@ -45,8 +96,8 @@ export default function Details1({ product }) {
                   <div className="tf-product-info-heading">
                     <div className="tf-product-info-name">
                       <div className="text text-btn-uppercase">Clothing</div>
-                      <h3 className="name">{product.title}</h3>
-                      <div className="sub">
+                      <h3 className="name">{product.title || "No Title"}</h3>
+                     {/* < div className="sub">
                         <div className="tf-product-info-rate">
                           <div className="list-star">
                             <i className="icon icon-star" />
@@ -65,13 +116,13 @@ export default function Details1({ product }) {
                             18&nbsp;sold in last&nbsp;32&nbsp;hours
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                     <div className="tf-product-info-desc">
                       <div className="tf-product-info-price">
                         <h5 className="price-on-sale font-2">
                           {" "}
-                          ${product.price.toFixed(2)}
+                          ${typeof product.price === "number" && !isNaN(product.price) ? product.price.toFixed(2) : "0.00"}
                         </h5>
                         {product.oldPrice ? (
                           <>
@@ -87,17 +138,13 @@ export default function Details1({ product }) {
                           ""
                         )}
                       </div>
-                      <p>
-                        The garments labelled as Committed are products that
-                        have been produced using sustainable fibres or
-                        processes, reducing their environmental impact.
-                      </p>
+                      <p>{product.longDescription}</p>
                       <div className="tf-product-info-liveview">
-                        <i className="icon icon-eye" />
-                        <p className="text-caption-1">
+                        {/* <i className="icon icon-eye" /> */}
+                        {/* <p className="text-caption-1">
                           <span className="liveview-count">28</span> people are
                           viewing this right now
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                   </div>
@@ -105,8 +152,13 @@ export default function Details1({ product }) {
                     <ColorSelect
                       setActiveColor={setActiveColor}
                       activeColor={activeColor}
+                      colors={product.color || []}
                     />
-                    <SizeSelect />
+                    <SizeSelect
+                      sizes={product.size || []}
+                      selectedSize={selectedSize}
+                      setSelectedSize={setSelectedSize}
+                    />
                     <div className="tf-product-info-quantity">
                       <div className="title mb_12">Quantity:</div>
                       <QuantitySelect
@@ -124,29 +176,21 @@ export default function Details1({ product }) {
                             setQuantity(qty);
                           }
                         }}
+                        max={product.quantity || 1}
                       />
                     </div>
                     <div>
                       <div className="tf-product-info-by-btn mb_10">
                         <a
-                          onClick={() => addProductToCart(product.id, quantity)}
+                          onClick={handleAddToCart}
                           className="btn-style-2 flex-grow-1 text-btn-uppercase fw-6 btn-add-to-cart"
+                          style={{ cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}
                         >
                           <span>
-                            {isAddedToCartProducts(product.id)
-                              ? "Already Added"
-                              : "Add to cart -"}
+                            {loading ? "Adding..." : "Add to cart -"}
                           </span>
                           <span className="tf-qty-price total-price">
-                            $
-                            {isAddedToCartProducts(product.id)
-                              ? (
-                                  product.price *
-                                  cartProducts.filter(
-                                    (elm) => elm.id == product.id
-                                  )[0].quantity
-                                ).toFixed(2)
-                              : (product.price * quantity).toFixed(2)}{" "}
+                            ${ (product.price * quantity).toFixed(2) }
                           </span>
                         </a>
                         <a
@@ -164,14 +208,13 @@ export default function Details1({ product }) {
                           </span>
                         </a>
                         <a
-                          onClick={() => addToWishlist(product.id)}
+                          onClick={handleAddToWishlist}
                           className="box-icon hover-tooltip text-caption-2 wishlist btn-icon-action"
+                          style={{ cursor: wishlistLoading ? "not-allowed" : "pointer", opacity: wishlistLoading ? 0.6 : 1 }}
                         >
                           <span className="icon icon-heart" />
                           <span className="tooltip text-caption-2">
-                            {isAddedtoWishlist(product.id)
-                              ? "Already Wishlished"
-                              : "Wishlist"}
+                            {wishlistLoading ? "Adding..." : (isAddedtoWishlist(product.id) ? "Already Wishlished" : "Wishlist")}
                           </span>
                         </a>
                       </div>
@@ -267,11 +310,11 @@ export default function Details1({ product }) {
                     <ul className="tf-product-info-sku">
                       <li>
                         <p className="text-caption-1">SKU:</p>
-                        <p className="text-caption-1 text-1">53453412</p>
+                        <p className="text-caption-1 text-1">{product.SKU}</p>
                       </li>
                       <li>
                         <p className="text-caption-1">Vendor:</p>
-                        <p className="text-caption-1 text-1">Modave</p>
+                        <p className="text-caption-1 text-1">{product.brand}</p>
                       </li>
                       <li>
                         <p className="text-caption-1">Available:</p>
@@ -280,18 +323,13 @@ export default function Details1({ product }) {
                       <li>
                         <p className="text-caption-1">Categories:</p>
                         <p className="text-caption-1">
-                          <a href="#" className="text-1 link">
-                            Clothes
-                          </a>
-                          ,
-                          <a href="#" className="text-1 link">
-                            women
-                          </a>
-                          ,
-                          <a href="#" className="text-1 link">
-                            T-shirt
-                          </a>
-                        </p>
+  {product.categories && product.categories.map((cat, idx) => (
+    <span key={cat._id}>
+      <a href="#" className="text-1 link">{cat.name}</a>
+      {idx < product.categories.length - 1 ? ', ' : ''}
+    </span>
+  ))}
+</p>
                       </li>
                     </ul>
                     <div className="tf-product-info-guranteed">

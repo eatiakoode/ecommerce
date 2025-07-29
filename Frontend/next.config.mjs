@@ -1,11 +1,36 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/public/**',
+      },
+    ],
   },
   sassOptions: {
-    quietDeps: true, // This will silence deprecation warnings
-    silenceDeprecations: ["legacy-js-api"],
+    quietDeps: true,
+    silenceDeprecations: ['legacy-js-api'],
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:5000/api/:path*', // Proxy to Backend
+      },
+      {
+        source: '/uploads/:path*',
+        destination: 'http://localhost:5000/uploads/:path*', // Proxy image requests to Backend
+      },
+    ];
   },
 };
 

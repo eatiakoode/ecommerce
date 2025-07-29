@@ -3,65 +3,74 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import axios from "axios";
+
 export default function NewsLetterModal() {
   const pathname = usePathname();
-  const modalElement = useRef();
+  const modalElement = useRef(null);
+  const [success, setSuccess] = useState(true);
+  const [showMessage, setShowMessage] = useState(false);
+
   useEffect(() => {
     const showModal = async () => {
       if (pathname === "/") {
-        const bootstrap = await import("bootstrap"); // dynamically import bootstrap
-        const myModal = new bootstrap.Modal(
-          document.getElementById("newsletterPopup"),
-          {
-            keyboard: false,
-          }
-        );
+        const bootstrap = await import("bootstrap");
 
-        // Show the modal after a delay using a promise
+        const modalNode = modalElement.current;
+        if (!modalNode) return;
+
+        const myModal = new bootstrap.Modal(modalNode, {
+          keyboard: false,
+        });
+
         await new Promise((resolve) => setTimeout(resolve, 2000));
         myModal.show();
 
-        modalElement.current.addEventListener("hidden.bs.modal", () => {
+        // ✅ Safely attach event listener
+        const handleHidden = () => {
           myModal.hide();
-        });
+        };
+
+        modalNode.addEventListener("hidden.bs.modal", handleHidden);
+
+        // 🧹 Clean up event listener when component unmounts
+        return () => {
+          modalNode.removeEventListener("hidden.bs.modal", handleHidden);
+        };
       }
     };
 
     showModal();
   }, [pathname]);
-  const [success, setSuccess] = useState(true);
-  const [showMessage, setShowMessage] = useState(false);
+
   const handleShowMessage = () => {
     setShowMessage(true);
     setTimeout(() => {
       setShowMessage(false);
     }, 2000);
   };
+
   const sendEmail = async (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault();
     const email = e.target.email.value;
 
     try {
       const response = await axios.post(
         "https://express-brevomail.vercel.app/api/contacts",
-        {
-          email,
-        }
+        { email }
       );
 
       if ([200, 201].includes(response.status)) {
-        e.target.reset(); // Reset the form
-        setSuccess(true); // Set success state
-        handleShowMessage();
+        e.target.reset();
+        setSuccess(true);
       } else {
-        setSuccess(false); // Handle unexpected responses
-        handleShowMessage();
+        setSuccess(false);
       }
     } catch (error) {
       console.error("Error:", error.response?.data || "An error occurred");
-      setSuccess(false); // Set error state
+      setSuccess(false);
+    } finally {
       handleShowMessage();
-      e.target.reset(); // Reset the form
+      e.target.reset();
     }
   };
 
@@ -89,13 +98,13 @@ export default function NewsLetterModal() {
           </div>
           <div className="modal-bottom text-center">
             <p className="text-btn-uppercase fw-4 font-2">
-              Subscribe To Our Newletter!
+              Subscribe To Our Newsletter!
             </p>
             <h5>
               Receive 10% OFF your next order, exclusive offers &amp; more!
             </h5>
             <div
-              className={`tfSubscribeMsg  footer-sub-element ${
+              className={`tfSubscribeMsg footer-sub-element ${
                 showMessage ? "active" : ""
               }`}
             >
@@ -107,31 +116,23 @@ export default function NewsLetterModal() {
                 <p style={{ color: "red" }}>Something went wrong</p>
               )}
             </div>
-            <form
-              id="subscribe-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendEmail(e);
-              }}
-              className="form-newsletter-subscribe"
-            >
+            <form onSubmit={sendEmail} className="form-newsletter-subscribe" suppressHydrationWarning>
               <div id="subscribe-content">
                 <input
                   type="email"
                   name="email"
-                  id="subscribe-email"
                   placeholder="Enter your e-mail"
                   required
+                  suppressHydrationWarning
                 />
                 <button
                   type="submit"
-                  id="subscribe-button"
                   className="btn-style-2 radius-12 w-100 justify-content-center"
+                  suppressHydrationWarning
                 >
                   <span className="text text-btn-uppercase">SUBSCRIBE</span>
                 </button>
               </div>
-              <div id="subscribe-msg" />
             </form>
             <ul className="tf-social-icon style-default justify-content-center">
               <li>

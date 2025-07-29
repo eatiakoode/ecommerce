@@ -1,7 +1,7 @@
 import Footer1 from "@/components/footers/Footer1";
-import Header1 from "@/components/headers/Header1";
-import Topbar6 from "@/components/headers/Topbar6";
 import Products11 from "@/components/products/Products11";
+import WishlistTest from "@/components/test/WishlistTest";
+import ProductDebug from "@/components/test/ProductDebug";
 
 import Link from "next/link";
 import React from "react";
@@ -9,8 +9,6 @@ import React from "react";
 export default function ShopLeftSidebarPage() {
   return (
     <>
-      <Topbar6 bgColor="bg-main" />
-      <Header1 />
       <div
         className="page-title"
         style={{ backgroundImage: "url(/images/section/page-title.jpg)" }}
@@ -34,6 +32,8 @@ export default function ShopLeftSidebarPage() {
           </div>
         </div>
       </div>
+      <WishlistTest />
+      <ProductDebug />
       <Products11 />
       <Footer1 />
     </>

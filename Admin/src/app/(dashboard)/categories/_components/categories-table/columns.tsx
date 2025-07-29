@@ -43,6 +43,15 @@ import { useDeleteCategory } from "@/hooks/useCategories";
 import { useCategoryContext } from "../../page";
 import { toast } from "sonner";
 
+// Helper to get the correct image URL
+const getImageUrl = (image: string) => {
+  if (!image) return '';
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
+  if (image.startsWith('/uploads/')) return `http://localhost:5000${image}`;
+  if (!image.startsWith('/')) return `http://localhost:5000/uploads/${image}`;
+  return `http://localhost:5000/uploads/${image.replace(/^\//, '')}`;
+};
+
 const handleSwitchChange = () => { };
 
 export const columns: ColumnDef<Category>[] = [
@@ -98,6 +107,20 @@ export const columns: ColumnDef<Category>[] = [
       </Typography>
     ),
   },
+  {
+    header: "image",
+    cell: ({ row }) => (
+      row.original.image ? (
+        <img
+          src={getImageUrl(row.original.image)}
+          alt={row.original.name}
+          className="w-10 h-10 object-cover rounded-full border"
+        />
+      ) : (
+        <span className="text-xs text-gray-400">No image</span>
+      )
+    ),
+  },
   // {
   //   header: "icon",
   //   cell: ({ row }) => (
@@ -121,12 +144,7 @@ export const columns: ColumnDef<Category>[] = [
   {
     header: "status",
     cell: ({ row }) => (
-      <div className="pl-5">
-        <Switch
-          checked={row.original.isActive}
-          onCheckedChange={(value) => handleSwitchChange()}
-        />
-      </div>
+      <span className={`px-4 py-1 rounded-full text-xs font-semibold ${row.original.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{row.original.isActive ? 'Active' : 'Blocked'}</span>
     ),
   },
   {

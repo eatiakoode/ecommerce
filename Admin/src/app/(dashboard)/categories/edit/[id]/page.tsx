@@ -1,179 +1,168 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { getCategoryById, updateCategory } from "@/api/category";
+
+// Helper to get the correct image URL
+const getImageUrl = (image: string) => {
+  if (!image) return '';
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
+  if (image.startsWith('/uploads/')) return `http://localhost:5000${image}`;
+  if (!image.startsWith('/')) return `http://localhost:5000/uploads/${image}`;
+  return `http://localhost:5000/uploads/${image.replace(/^\//, '')}`;
+};
 
 export default function EditCategoryPage() {
   const { id } = useParams();
   const router = useRouter();
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isActive, setIsActive] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [image, setImage] = useState<File | null>(null);
+  const [currentImage, setCurrentImage] = useState<string>("");
 
-  // 🔁 CHANGED: Start with null to handle loading state
-  const [category, setCategory] = useState<any>(null); // ✅
-  const [originalCategory, setOriginalCategory] = useState<any>(null); // ✅
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ name?: boolean; description?: boolean }>({});
-  const [isDirty, setIsDirty] = useState(false);
-
-  // ✅ Fetch category from API
   useEffect(() => {
-    const fetchCategory = async () => {
+    async function fetchCategory() {
       try {
-        const res = await axios.get(`http://localhost:5000/api/category/${id}`);
-        setCategory(res.data);
-        setOriginalCategory(res.data);
-        setIsDirty(false);
-      } catch (err) {
-        console.error("Error fetching category", err);
+        const stringId = Array.isArray(id) ? id[0] : id;
+        const response = await getCategoryById(stringId);
+        const category = response.data;
+        setName(category.name || "");
+        setDescription(category.description || "");
+        setIsActive(category.isActive ?? true);
+        setCurrentImage(category.image || "");
+      } catch {
         toast.error("Failed to load category");
+      } finally {
+        setLoading(false);
       }
-    };
+    }
 
-    fetchCategory();
+    if (id) fetchCategory();
   }, [id]);
 
-  // ✅ Warn before reload/leave
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty]);
+  // const handleUpdate = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setUpdating(true);
+  //   try {
+  //     let payload: any;
+  //     let headers = {};
+  //     if (image) {
+  //       payload = new FormData();
+  //       payload.append("name", name);
+  //       payload.append("description", description);
+  //       payload.append("isActive", String(isActive));
+  //       payload.append("image", image);
+  //       headers = { headers: { "Content-Type": "multipart/form-data" } };
+  //     } else {
+  //       payload = { name, description, isActive };
+  //     }
+  //     await updateCategory(id, payload, headers);
+  //     toast.success("Category updated");
+  //     router.push("/categories");
+  //   } catch {
+  //     toast.error("Failed to update category");
+  //   } finally {
+  //     setUpdating(false);
+  //   }
+  // };
 
-  const handleChange = (field: string, value: string | boolean) => {
-    const updated = { ...category, [field]: value };
-    setCategory(updated);
-    setIsDirty(JSON.stringify(updated) !== JSON.stringify(originalCategory));
-
-    if (errors[field as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [field]: false }));
+  const handleUpdate = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setUpdating(true);
+  try {
+    let payload: any;
+    let config = {};
+    if (image) {
+      payload = new FormData();
+      payload.append("name", name);
+      payload.append("description", description);
+      payload.append("isActive", String(isActive));
+      payload.append("image", image); // Only if image is a File
+      config = { headers: { "Content-Type": "multipart/form-data" } };
+      await updateCategory(Array.isArray(id) ? id[0] : id, payload, config);
+    } else {
+      // Only send name, description, isActive (do NOT send image)
+      payload = { name, description, isActive };
+      await updateCategory(Array.isArray(id) ? id[0] : id, payload);
     }
-  };
-
-  const handleSubmit = async () => {
-    const newErrors = {
-      name: category.name.trim() === "",
-      description: category.description.trim() === "",
-    };
-
-    if (newErrors.name || newErrors.description) {
-      setErrors(newErrors);
-      toast.error("Please fill all required fields");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let iconUrl = category.icon;
-
-      // ✅ Upload image if new file is selected
-      if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const uploadRes = await axios.post("http://localhost:5000/api/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        iconUrl = uploadRes.data.url;
-      }
-
-      // ✅ Update category
-      await axios.put(`http://localhost:5000/api/category/${id}`, {
-        ...category,
-        icon: iconUrl,
-      });
-
-      toast.success("Category updated successfully");
-      router.push("/categories"); // ✅ Redirect to success page
-    } catch (err) {
-      console.error("Failed to update category", err);
-      toast.error("Update failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    const confirmDelete = confirm("Are you sure you want to delete this category?");
-    if (!confirmDelete) return;
-
-    try {
-      await axios.delete(`http://localhost:5000/api/category/${id}`);
-      toast.success("Category deleted");
-      router.push("/categories");
-    } catch (err) {
-      console.error("Delete failed", err);
-      toast.error("Failed to delete category");
-    }
-  };
-
-  // ✅ Show loading message until data is fetched
-  if (!category) {
-    return <div className="text-center mt-10">Loading category...</div>; // ✅
+    toast.success("Category updated");
+    router.push("/categories");
+  } catch (error) {
+    toast.error("Failed to update category");
+  } finally {
+    setUpdating(false);
   }
+};
+
+
+  if (loading) return <p className="p-4">Loading...</p>;
 
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-4">
-      <h1 className="text-xl font-semibold">Edit Category</h1>
-
-      <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label>Name *</Label>
-          <Input
-            className={errors.name ? "border-red-500" : ""}
-            value={category.name}
-            onChange={(e) => handleChange("name", e.target.value)}
+    <div className="p-4 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Edit Category</h1>
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <div>
+          <label className="block mb-1">Name</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="border p-2 rounded w-full"
           />
         </div>
-
-        <div className="grid gap-2">
-          <Label>Description *</Label>
-          <Input
-            className={errors.description ? "border-red-500" : ""}
-            value={category.description}
-            onChange={(e) => handleChange("description", e.target.value)}
+        <div>
+          <label className="block mb-1">Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="border p-2 rounded w-full"
           />
         </div>
-
-        <div className="grid gap-2">
-          <Label>Published</Label>
-          <Switch
-            checked={category.published}
-            onCheckedChange={(val) => handleChange("published", val)}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={() => setIsActive((prev) => !prev)}
           />
+          <label>Active</label>
         </div>
-
-        {/* <div className="grid gap-2">
-          <Label>Icon</Label>
-          <Input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-          {category.icon && (
-            <img src={category.icon} alt="Icon Preview" className="w-16 h-16 rounded-full mt-2" />
-          )}
-        </div> */}
-
-        <div className="flex flex-wrap gap-4 mt-4">
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
-          </Button>
-
-          <Button variant="outline" onClick={() => router.push("/categories")}>
-            Cancel
-          </Button>
-
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete Category
-          </Button>
+        <div>
+          <label className="block mb-1">Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => setImage(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+            className="border p-2 rounded w-full"
+          />
+          {image ? (
+            <div className="mt-2">
+              <img
+                src={URL.createObjectURL(image)}
+                alt="Preview"
+                className="w-24 h-24 object-cover rounded border"
+              />
+            </div>
+          ) : currentImage ? (
+            <div className="mt-2">
+              <img
+                src={getImageUrl(currentImage)}
+                alt="Current"
+                className="w-24 h-24 object-cover rounded border"
+              />
+            </div>
+          ) : null}
         </div>
-      </div>
+        <Button type="submit" disabled={updating} className="w-full">
+          {updating ? "Updating..." : "Update Category"}
+        </Button>
+      </form>
     </div>
   );
 }

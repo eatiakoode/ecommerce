@@ -1,7 +1,9 @@
 // src/app/(dashboard)/products/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { getCategories } from "@/api/category";
+import { getBrands } from "@/api/brand";
 import ProductFilters from "./_components/ProductFilters";
 import ProductActions from "./_components/ProductActions";
 import AllProducts from "./_components/products-table";
@@ -15,6 +17,24 @@ export default function ProductPage() {
   });
 
   const { data: products, isLoading, error } = useProducts();
+
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+
+  useEffect(() => {
+    getCategories().then((res: any) => setCategories(Array.isArray(res.data) ? res.data : []));
+    getBrands().then((res: any) => setBrands(Array.isArray(res.data) ? res.data : []));
+  }, []);
+
+  // Create lookup maps for category and brand
+  const categoryMap = useMemo(
+    () => Object.fromEntries((Array.isArray(categories) ? categories : []).map((cat: any) => [cat._id, cat.name || cat.title])),
+    [categories]
+  );
+  const brandMap = useMemo(
+    () => Object.fromEntries((Array.isArray(brands) ? brands : []).map((brand: any) => [brand._id, brand.title || brand.name])),
+    [brands]
+  );
 
   // Filter products on the client side
   const filteredProducts = useMemo(() => {
@@ -54,13 +74,13 @@ export default function ProductPage() {
     if (filters.sort) {
       switch (filters.sort) {
         case "low":
-          filtered.sort((a, b) => a.price - b.price);
+          filtered.sort((a, b) => a.mrp - b.mrp);
           break;
         case "high":
-          filtered.sort((a, b) => b.price - a.price);
+          filtered.sort((a, b) => b.mrp - a.mrp);
           break;
-        case "ratings":
-          filtered.sort((a, b) => (b.totalrating || 0) - (a.totalrating || 0));
+        case "sold":
+          filtered.sort((a, b) => (b.sold || 0) - (a.sold || 0));
           break;
         case "stock":
           filtered.sort((a, b) => (b.quantity || b.stock || 0) - (a.quantity || a.stock || 0));

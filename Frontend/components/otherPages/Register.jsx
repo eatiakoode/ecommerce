@@ -139,19 +139,22 @@ export default function Register() {
               </div>
             )}
             
-            <form onSubmit={handleSubmit} className="form-login form-has-password">
+            <form onSubmit={handleSubmit} className="form-register" suppressHydrationWarning>
               <div className="wrap">
+                <div className="row">
+                  <div className="col-lg-6">
                 <fieldset className="">
                   <input
                     className={errors.firstname ? "error" : ""}
                     type="text"
-                    placeholder="First Name*"
+                        placeholder="First name*"
                     name="firstname"
                     value={formData.firstname}
                     onChange={handleInputChange}
                     tabIndex={2}
                     aria-required="true"
                     required
+                        suppressHydrationWarning
                   />
                   {errors.firstname && (
                     <div className="error-message" style={{ 
@@ -163,18 +166,20 @@ export default function Register() {
                     </div>
                   )}
                 </fieldset>
-                
+                  </div>
+                  <div className="col-lg-6">
                 <fieldset className="">
                   <input
                     className={errors.lastname ? "error" : ""}
                     type="text"
-                    placeholder="Last Name*"
+                        placeholder="Last name*"
                     name="lastname"
                     value={formData.lastname}
                     onChange={handleInputChange}
-                    tabIndex={2}
+                        tabIndex={3}
                     aria-required="true"
                     required
+                        suppressHydrationWarning
                   />
                   {errors.lastname && (
                     <div className="error-message" style={{ 
@@ -186,6 +191,8 @@ export default function Register() {
                     </div>
                   )}
                 </fieldset>
+                  </div>
+                </div>
                 
                 <fieldset className="">
                   <input
@@ -195,9 +202,10 @@ export default function Register() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    tabIndex={2}
+                    tabIndex={4}
                     aria-required="true"
                     required
+                    suppressHydrationWarning
                   />
                   {errors.email && (
                     <div className="error-message" style={{ 
@@ -218,9 +226,10 @@ export default function Register() {
                     name="mobile"
                     value={formData.mobile}
                     onChange={handleInputChange}
-                    tabIndex={2}
+                    tabIndex={5}
                     aria-required="true"
                     required
+                    suppressHydrationWarning
                   />
                   {errors.mobile && (
                     <div className="error-message" style={{ 
@@ -233,18 +242,27 @@ export default function Register() {
                   )}
                 </fieldset>
                 
-                <fieldset className="position-relative password-item">
+                <fieldset className="form-has-password">
                   <input
-                    className={`input-password ${errors.password ? "error" : ""}`}
+                    className={errors.password ? "error" : ""}
                     type={passwordType}
                     placeholder="Password*"
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    tabIndex={2}
+                    tabIndex={6}
                     aria-required="true"
                     required
+                    suppressHydrationWarning
                   />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={togglePassword}
+                    suppressHydrationWarning
+                  >
+                    <i className={`icon ${passwordType === "password" ? "icon-eye" : "icon-eye-off"}`} />
+                  </button>
                   {errors.password && (
                     <div className="error-message" style={{ 
                       color: "#dc3545", 
@@ -254,32 +272,29 @@ export default function Register() {
                       {errors.password}
                     </div>
                   )}
-                  <span
-                    className={`toggle-password ${
-                      !(passwordType === "text") ? "unshow" : ""
-                    }`}
-                    onClick={togglePassword}
-                  >
-                    <i
-                      className={`icon-eye-${
-                        !(passwordType === "text") ? "hide" : "show"
-                      }-line`}
-                    />
-                  </span>
                 </fieldset>
 
-                <fieldset className="position-relative password-item">
+                <fieldset className="form-has-password">
                   <input
-                    className={`input-password ${errors.confirmPassword ? "error" : ""}`}
+                    className={errors.confirmPassword ? "error" : ""}
                     type={confirmPasswordType}
-                    placeholder="Confirm Password*"
+                    placeholder="Confirm password*"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    tabIndex={2}
+                    tabIndex={7}
                     aria-required="true"
                     required
+                    suppressHydrationWarning
                   />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={toggleConfirmPassword}
+                    suppressHydrationWarning
+                  >
+                    <i className={`icon ${confirmPasswordType === "password" ? "icon-eye" : "icon-eye-off"}`} />
+                  </button>
                   {errors.confirmPassword && (
                     <div className="error-message" style={{ 
                       color: "#dc3545", 
@@ -289,56 +304,18 @@ export default function Register() {
                       {errors.confirmPassword}
                     </div>
                   )}
-                  <span
-                    className={`toggle-password ${
-                      !(confirmPasswordType === "text") ? "unshow" : ""
-                    }`}
-                    onClick={toggleConfirmPassword}
-                  >
-                    <i
-                      className={`icon-eye-${
-                        !(confirmPasswordType === "text") ? "hide" : "show"
-                      }-line`}
-                    />
-                  </span>
                 </fieldset>
-                
-                <div className="d-flex align-items-center">
-                  <div className="tf-cart-checkbox">
-                    <div className="tf-checkbox-wrapp">
-                      <input
-                        defaultChecked
-                        className=""
-                        type="checkbox"
-                        id="login-form_agree"
-                        name="agree_checkbox"
-                      />
-                      <div>
-                        <i className="icon-check" />
-                      </div>
-                    </div>
-                    <label
-                      className="text-secondary-2"
-                      htmlFor="login-form_agree"
-                    >
-                      I agree to the&nbsp;
-                    </label>
-                  </div>
-                  <Link href={`/term-of-use`} title="Terms of Service">
-                    Terms of User
-                  </Link>
-                </div>
               </div>
               
-              <div className="button-submit">
+              <div className="button-submit text-center">
                 <button 
-                  className="tf-btn btn-fill" 
                   type="submit"
+                  className="tf-btn btn-fill w-100"
                   disabled={isSubmitting}
-                  style={{ opacity: isSubmitting ? 0.7 : 1 }}
+                  suppressHydrationWarning
                 >
                   <span className="text text-button">
-                    {isSubmitting ? "Registering..." : "Register"}
+                    {isSubmitting ? "Creating account..." : "Create account"}
                   </span>
                 </button>
               </div>

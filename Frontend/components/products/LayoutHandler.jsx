@@ -31,6 +31,7 @@ export default function LayoutHandler({
         }`}
         onClick={() => setActiveLayout(1)}
         data-value-layout="list"
+        suppressHydrationWarning
       >
         <div className="item">
           <svg
@@ -68,6 +69,7 @@ export default function LayoutHandler({
         }`}
         onClick={() => setActiveLayout(2)}
         data-value-layout="tf-col-2"
+        suppressHydrationWarning
       >
         <div className="item">
           <svg
@@ -91,6 +93,7 @@ export default function LayoutHandler({
         }`}
         onClick={() => setActiveLayout(3)}
         data-value-layout="tf-col-3"
+        suppressHydrationWarning
       >
         <div className="item">
           <svg
@@ -116,6 +119,7 @@ export default function LayoutHandler({
         }`}
         onClick={() => setActiveLayout(4)}
         data-value-layout="tf-col-4"
+        suppressHydrationWarning
       >
         <div className="item">
           <svg
@@ -144,6 +148,7 @@ export default function LayoutHandler({
           }`}
           onClick={() => setActiveLayout(5)}
           data-value-layout="tf-col-5"
+          suppressHydrationWarning
         >
           <div className="item">
             <svg

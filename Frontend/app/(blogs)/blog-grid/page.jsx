@@ -10,7 +10,7 @@ export default function BlogGridPage() {
   return (
     <>
       <Topbar6 bgColor="bg-main" />
-      <Header1 />
+      {/* <Header1 /> */}
       <div
         className="page-title"
         style={{ backgroundImage: "url(/images/section/page-title.jpg)" }}
@@ -43,7 +43,7 @@ export default function BlogGridPage() {
         </div>
       </div>
       <BlogGrid />
-      <Footer1 />
+      {/* <Footer1 /> */}
     </>
   );
 }
