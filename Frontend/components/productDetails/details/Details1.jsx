@@ -6,13 +6,35 @@ import SizeSelect from "../SizeSelect";
 import QuantitySelect from "../QuantitySelect";
 import Image from "next/image";
 import { useContextElement } from "@/context/Context";
+import { useAuth } from "@/context/AuthContext";
+import { addToCart, addToWishlist as addToWishlistAPI } from "@/api/auth";
 import ProductStikyBottom from "../ProductStikyBottom";
+import LoginModal from "../../modals/LoginModal";
 export default function Details1({ product }) {
   const [activeColor, setActiveColor] = useState("gray");
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [loginModalMessage, setLoginModalMessage] = useState("Please login to add items to your cart.");
+
+  // Set default size and color when product data is available
+  useEffect(() => {
+    console.log("Product color data:", product.color);
+    console.log("Product size data:", product.size);
+    
+    if (product.size && product.size.length > 0 && !selectedSize) {
+      setSelectedSize(product.size[0].value);
+    }
+    if (product.color && product.color.length > 0 && activeColor === "gray") {
+      // Set the color to match what ColorSelect expects
+      const firstColor = product.color[0];
+      console.log("First color object:", firstColor);
+      const colorValue = firstColor.color || firstColor.title?.toLowerCase() || firstColor.name?.toLowerCase() || firstColor.value?.toLowerCase();
+      console.log("Setting color value to:", colorValue);
+      setActiveColor(colorValue);
+    }
+  }, [product.size, product.color, selectedSize, activeColor]);
   const {
     addProductToCart,
     isAddedToCartProducts,
@@ -22,50 +44,167 @@ export default function Details1({ product }) {
     addToCompareItem,
     cartProducts,
     updateQuantity,
+    addProductToCartDirect,
   } = useContextElement();
+  
+  const { token, isAuthenticated } = useAuth();
 
   const handleAddToCart = async () => {
-    if (!activeColor || !selectedSize) {
-      alert("Please select color and size.");
+    if (!isAuthenticated()) {
+      // Set message and show login modal
+      setLoginModalMessage("Please login to add items to your cart.");
+      const loginModal = document.getElementById('loginModal');
+      if (loginModal) {
+        // Use Bootstrap modal if available
+        const modal = new bootstrap.Modal(loginModal);
+        modal.show();
+      } else {
+        // Fallback to alert with login link
+        alert("Please login to add items to cart. You will be redirected to the login page.");
+        window.location.href = '/login';
+      }
       return;
     }
+
+    // Ensure we have a valid product ID
+    const productId = product.id || product._id;
+    if (!productId) {
+      // Try to get product ID from URL as fallback
+      const urlParts = window.location.pathname.split('/');
+      const slugFromUrl = urlParts[urlParts.length - 1];
+      console.log("Product ID not found, using slug from URL:", slugFromUrl);
+      
+      // For now, let's add to local cart only if we can't get a proper ID
+      const cartItem = {
+        ...product,
+        id: slugFromUrl, // Use slug as temporary ID
+        quantity: quantity,
+        price: product.price || product.sellingPrice || 0,
+        title: product.title || product.name || 'Product',
+        imgSrc: product.images?.[0]?.src || product.images?.[0]?.url || '/images/products/no-image.png',
+        selectedColor: activeColor,
+        selectedSize: selectedSize,
+      };
+      addProductToCartDirect(cartItem, quantity, false);
+      alert(`Product "${product.title}" (${activeColor}, ${selectedSize}) added to cart! (Local only - backend sync requires valid product ID)`);
+      return;
+    }
+
+    // Find selected color and size objects
+    const selectedColorObj = product.color?.find(c => 
+      c.value === activeColor || 
+      c.title === activeColor || 
+      c.color === activeColor ||
+      c.value?.toLowerCase() === activeColor?.toLowerCase() ||
+      c.title?.toLowerCase() === activeColor?.toLowerCase() ||
+      c.color?.toLowerCase() === activeColor?.toLowerCase()
+    );
+    const selectedSizeObj = product.size?.find(s => 
+      s.value === selectedSize || 
+      s.name === selectedSize ||
+      s.value?.toLowerCase() === selectedSize?.toLowerCase() ||
+      s.name?.toLowerCase() === selectedSize?.toLowerCase()
+    );
+
+    // Check if color and size are required for this product
+    const hasColors = product.color && product.color.length > 0;
+    const hasSizes = product.size && product.size.length > 0;
+
+    if (hasColors && !selectedColorObj) {
+      alert("Please select a color before adding to cart.");
+      return;
+    }
+
+    if (hasSizes && !selectedSizeObj) {
+      alert("Please select a size before adding to cart.");
+      return;
+    }
+
+    // If product has no colors or sizes, allow adding without selection
+    if (!hasColors && !hasSizes) {
+      console.log("Product has no colors or sizes, proceeding without selection");
+    }
+
     setLoading(true);
     try {
-      const res = await fetch("/api/user/cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id || product._id,
-          color: activeColor,
-          size: selectedSize,
-          quantity,
-        }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to add to cart");
-      alert("Product added to cart!");
-    } catch (err) {
-      alert("Error adding to cart: " + err.message);
+      const cartData = {
+        productId: productId,
+        quantity,
+        ...(selectedColorObj?._id && { color: selectedColorObj._id }),
+        ...(selectedSizeObj?._id && { size: selectedSizeObj._id }),
+      };
+
+      const result = await addToCart(token, cartData);
+      
+      if (result.success) {
+        // Add to local cart for immediate UI update
+        const cartItem = {
+          ...product,
+          id: product.id || product._id,
+          quantity: quantity,
+          price: product.price || product.sellingPrice || 0,
+          title: product.title || product.name || 'Product',
+          imgSrc: product.images?.[0]?.src || product.images?.[0]?.url || '/images/products/no-image.png',
+          selectedColor: activeColor,
+          selectedSize: selectedSize,
+        };
+        addProductToCartDirect(cartItem, quantity, false);
+        
+        alert(`Product "${product.title}" (${activeColor}, ${selectedSize}) added to cart successfully!`);
+      } else {
+        alert("Error adding to cart: " + (result.error || "Unknown error occurred"));
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      alert("Error adding to cart: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddToWishlist = async () => {
+    if (!isAuthenticated()) {
+      // Set message and show login modal
+      setLoginModalMessage("Please login to add items to your wishlist.");
+      const loginModal = document.getElementById('loginModal');
+      if (loginModal) {
+        // Use Bootstrap modal if available
+        const modal = new bootstrap.Modal(loginModal);
+        modal.show();
+      } else {
+        // Fallback to alert with login link
+        alert("Please login to add items to wishlist. You will be redirected to the login page.");
+        window.location.href = '/login';
+      }
+      return;
+    }
+    
+    // Validate product ID
+    const productId = product.id || product._id;
+    if (!productId) {
+      alert("Error: Product ID not found. Please try refreshing the page.");
+      return;
+    }
+    
     setWishlistLoading(true);
     try {
-      const res = await fetch("/api/user/wishlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id || product._id,
-        }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to add to wishlist");
-      alert("Product added to wishlist!");
+      const result = await addToWishlistAPI(token, productId);
+      
+      if (result && result.success) {
+        alert(`Product "${product.title}" added to wishlist!`);
+      } else {
+        const errorMessage = result && result.error ? result.error : "Unknown error occurred";
+        
+        // Handle specific error cases
+        if (errorMessage.includes("already in wishlist")) {
+          alert(`Product "${product.title}" is already in your wishlist!`);
+        } else {
+          alert("Error adding to wishlist: " + errorMessage);
+        }
+      }
     } catch (err) {
-      alert("Error adding to wishlist: " + err.message);
+      console.error("Wishlist error:", err);
+      alert("Error adding to wishlist: " + (err.message || "Unknown error occurred"));
     } finally {
       setWishlistLoading(false);
     }
@@ -122,13 +261,13 @@ export default function Details1({ product }) {
                       <div className="tf-product-info-price">
                         <h5 className="price-on-sale font-2">
                           {" "}
-                          ${typeof product.price === "number" && !isNaN(product.price) ? product.price.toFixed(2) : "0.00"}
+                          ₹{typeof product.price === "number" && !isNaN(product.price) ? product.price.toFixed(2) : "0.00"}
                         </h5>
                         {product.oldPrice ? (
                           <>
                             <div className="compare-at-price font-2">
                               {" "}
-                              ${product.oldPrice.toFixed(2)}
+                              ₹{product.oldPrice.toFixed(2)}
                             </div>
                             <div className="badges-on-sale text-btn-uppercase">
                               -25%
@@ -190,7 +329,7 @@ export default function Details1({ product }) {
                             {loading ? "Adding..." : "Add to cart -"}
                           </span>
                           <span className="tf-qty-price total-price">
-                            ${ (product.price * quantity).toFixed(2) }
+                            ₹{ (product.price * quantity).toFixed(2) }
                           </span>
                         </a>
                         <a
@@ -394,6 +533,7 @@ export default function Details1({ product }) {
         </div>
       </div>
       <ProductStikyBottom />
+      <LoginModal message={loginModalMessage} />
     </section>
   );
 }

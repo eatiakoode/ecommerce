@@ -1,26 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useContextElement } from "../../context/Context";
 
 export default function CartModal({ show, onClose }) {
-  const [cart, setCart] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { cartProducts } = useContextElement();
 
-  useEffect(() => {
-    if (show) {
-      setLoading(true);
-      fetch("/api/user/cart", {
-        credentials: "include", // if using cookies for auth
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("Cart API response:", data); // <--- Add this
-          // Always set cart as an array
-          setCart(Array.isArray(data) ? data : data.cart || []);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }
-  }, [show]);
+  if (!show) return null;
 
   if (!show) return null;
 
@@ -29,19 +14,17 @@ export default function CartModal({ show, onClose }) {
       <div className="cart-modal" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} style={{ float: "right" }}>Close</button>
         <h3>Your Cart</h3>
-        {loading ? (
-          <p>Loading...</p>
-        ) : !cart || cart.length === 0 ? (
+        {!cartProducts || cartProducts.length === 0 ? (
           <p>Your cart is empty.</p>
         ) : (
           <ul>
-            {cart.map((item) => (
-              <li key={item._id} style={{ marginBottom: 12 }}>
-                <b>{item.productId.title}</b> <br />
-                Size: {item.size?.name} <br />
-                Color: {item.color?.title} <br />
-                Quantity: {item.quantity} <br />
-                Price: ₹{item.productId.sellingPrice} <br />
+            {cartProducts.map((item, index) => (
+              <li key={item.id || item._id || index} style={{ marginBottom: 12 }}>
+                <b>{item.title || item.name || 'Product'}</b> <br />
+                Size: {item.selectedSize || 'N/A'} <br />
+                Color: {item.selectedColor || 'N/A'} <br />
+                Quantity: {item.quantity || 1} <br />
+                Price: ${item.price ? item.price.toFixed(2) : '0.00'} <br />
               </li>
             ))}
           </ul>

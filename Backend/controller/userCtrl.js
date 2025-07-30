@@ -139,9 +139,12 @@ const logout = asyncHandler(async (req, res) => {
     });
     return res.sendStatus(204); // forbidden
   }
-  await User.findOneAndUpdate(refreshToken, {
-    refreshToken: "",
-  });
+  await User.findOneAndUpdate(
+    { refreshToken },
+    {
+      refreshToken: "",
+    }
+  );
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: true,
@@ -171,6 +174,29 @@ const updatedUser = asyncHandler(async (req, res) => {
     res.json(updatedUser);
   } catch (error) {
     throw new Error(error);
+  }
+});
+
+// Get current user profile
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  
+  if (!_id) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    validateMongoDbId(_id);
+    const user = await User.findById(_id).select('-password -refreshToken');
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error("Get current user error:", error);
+    res.status(500).json({ message: "Failed to fetch user profile" });
   }
 });
 
@@ -340,6 +366,8 @@ const addToWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   validateMongoDbId(_id);
   
+  console.log("Adding to wishlist:", { productId, userId: _id });
+  
   const alreadyAdded = await Wishlist.findOne({ userId: _id, productId });
   if (alreadyAdded) {
     return res.status(400).json({ message: "Product already in wishlist" });
@@ -350,7 +378,12 @@ const addToWishlist = asyncHandler(async (req, res) => {
     productId,
   });
 
-  res.status(201).json(newWishlist);
+  console.log("Wishlist item created:", newWishlist);
+  res.status(201).json({ 
+    success: true, 
+    message: "Product added to wishlist successfully",
+    data: newWishlist 
+  });
 });
 
 // const getWishlist = asyncHandler(async (req, res) => {
@@ -406,6 +439,12 @@ const userCart = asyncHandler(async (req, res) => {
 
   const { _id } = req.user;
   validateMongoDbId(_id);
+  
+  // Validate all ObjectIds
+  validateMongoDbId(productId);
+  validateMongoDbId(color);
+  validateMongoDbId(size);
+  
   try {
     let newCart = await new Cart({
       userId: _id,
@@ -695,6 +734,7 @@ module.exports = {
   getsingleOrder,
   updateOrder,
   getYearlyTotalOrder,
+  getCurrentUser,
 
   removeProductFromCart,
   updateProductQuantityFromCart,

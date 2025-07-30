@@ -34,6 +34,7 @@ const {
   getsingleOrder,
   updateOrder,
   addToWishlist,
+  getCurrentUser,
 } = require("../controller/userCtrl");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const { checkout, paymentVerification } = require("../controller/paymentCtrl");
@@ -69,6 +70,9 @@ router.get("/wishlist", authMiddleware, getWishlist);
 router.delete("/wishlist/:wishlistItemId", authMiddleware, removeFromWishlist);
 router.delete("/wishlist", authMiddleware, emptyWishlist);
 router.get("/cart", authMiddleware, getUserCart);
+
+// Get current user profile
+router.get("/profile", authMiddleware, getCurrentUser);
 
 router.get("/:id", authMiddleware, isAdmin, getaUser);
 

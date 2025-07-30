@@ -2,27 +2,54 @@
 
 import { useState } from "react";
 
-const sizes = [
-  { id: "values-s", value: "S", price: 79.99, disabled: false },
-  { id: "values-m", value: "M", price: 79.99, disabled: false },
-  { id: "values-l", value: "L", price: 89.99, disabled: false },
-  { id: "values-xl", value: "XL", price: 89.99, disabled: false },
-  { id: "values-xxl", value: "XXL", price: 89.99, disabled: true },
-];
-
-export default function SizeSelect() {
-  const [selectedSize, setSelectedSize] = useState("L"); // Default value is "L"
-
+export default function SizeSelect({ sizes = [], selectedSize, setSelectedSize }) {
   const handleChange = (value) => {
     setSelectedSize(value);
   };
+
+  // If no sizes are available, don't render the component
+  if (!sizes || sizes.length === 0) {
+    return null;
+  }
+
+  // Transform backend sizes to match expected format
+  const transformedSizes = sizes.map((size, index) => {
+    // Handle different backend size structures
+    if (size._id) {
+      // Backend size structure: { _id, name, value, etc. }
+      return {
+        _id: size._id,
+        name: size.name || `Size ${index + 1}`,
+        value: size.value || size.name || `size-${index + 1}`,
+        disabled: size.disabled || false,
+        originalSize: size
+      };
+    } else if (size.id) {
+      // Already in correct format
+      return size;
+    } else {
+      // Fallback for other structures
+      return {
+        _id: `size-${index}`,
+        name: size.name || size.value || `Size ${index + 1}`,
+        value: size.value || size.name || `size-${index}`,
+        disabled: size.disabled || false,
+        originalSize: size
+      };
+    }
+  });
+
+  console.log("SizeSelect - Available sizes:", sizes);
+  console.log("SizeSelect - Transformed sizes:", transformedSizes);
+  console.log("SizeSelect - Selected size:", selectedSize);
+
   return (
     <div className="variant-picker-item">
       <div className="d-flex justify-content-between mb_12">
         <div className="variant-picker-label">
           selected size:
           <span className="text-title variant-picker-label-value">
-            {selectedSize}
+            {selectedSize || transformedSizes[0]?.value || "Select Size"}
           </span>
         </div>
         <a
@@ -34,24 +61,23 @@ export default function SizeSelect() {
         </a>
       </div>
       <div className="variant-picker-values gap12">
-        {sizes.map(({ id, value, price, disabled }) => (
-          <div key={id} onClick={() => handleChange(value)}>
+        {transformedSizes.map((size) => (
+          <div key={size._id || size.value} onClick={() => handleChange(size.value)}>
             <input
               type="radio"
-              id={id}
-              checked={selectedSize === value}
-              disabled={disabled}
+              id={`size-${size._id || size.value}`}
+              checked={selectedSize === size.value}
+              disabled={size.disabled || false}
               readOnly
             />
             <label
               className={`style-text size-btn ${
-                disabled ? "type-disable" : ""
+                size.disabled ? "type-disable" : ""
               }`}
-              htmlFor={id}
-              data-value={value}
-              data-price={price}
+              htmlFor={`size-${size._id || size.value}`}
+              data-value={size.value}
             >
-              <span className="text-title">{value}</span>
+              <span className="text-title">{size.name || size.value}</span>
             </label>
           </div>
         ))}

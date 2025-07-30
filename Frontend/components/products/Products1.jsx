@@ -7,32 +7,104 @@ import GridView from "./GridView";
 import { useEffect, useReducer, useState } from "react";
 import FilterModal from "./FilterModal";
 import { initialState, reducer } from "@/reducer/filterReducer";
-import { productMain } from "@/data/products";
 import FilterMeta from "./FilterMeta";
 
 export default function Products1({ parentClass = "flat-spacing" }) {
   const [activeLayout, setActiveLayout] = useState(4);
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const {
     price,
     availability,
     color,
     size,
     brands,
-
     filtered,
     sortingOption,
     sorted,
-
     activeFilterOnSale,
     currentPage,
     itemPerPage,
   } = state;
 
+  // Fetch products from backend API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/frontend/product/lists');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        console.log('API Response:', data);
+        console.log('First product sample:', data[0]);
+        console.log('First product images:', data[0]?.images);
+        
+        // Transform backend data to match frontend expectations
+        const transformedProducts = data.map(product => {
+          // Handle image transformation with better error handling
+          let imgSrc = '/images/products/product-1.jpg'; // Default fallback
+          
+          if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            const firstImage = product.images[0];
+            if (firstImage && firstImage.url && firstImage.url.trim() !== '') {
+              imgSrc = firstImage.url.startsWith('/uploads/') ? 
+                `http://localhost:5000${firstImage.url}` : 
+                firstImage.url;
+            }
+          }
+          
+          return {
+            id: product._id,
+            title: product.title,
+            price: Number(product.sellingPrice),
+            oldPrice: Number(product.MRP),
+            discount: product.MRP && product.sellingPrice
+              ? Math.round(100 - (product.sellingPrice / product.MRP) * 100)
+              : 0,
+            imgSrc: imgSrc,
+            alt: product.title || "Product Image",
+            width: 600,
+            height: 800,
+            // Add slug for proper linking
+            slug: product.slug,
+            // Add short description
+            shortDescription: product.shortDescription || product.description || '',
+            // Add filter properties for compatibility
+            filterBrands: [product.brand || 'Unknown'],
+            filterColor: product.color?.map(c => c.title) || [],
+            filterSizes: product.size?.map(s => s.name) || [],
+            inStock: product.quantity > 0,
+            onSale: product.MRP && product.sellingPrice && product.sellingPrice < product.MRP,
+            // Keep original data for reference
+            originalProduct: product
+          };
+        });
+        
+        setProducts(transformedProducts);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError('Failed to load products. Please try again later.');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const allProps = {
     ...state,
     setPrice: (value) => dispatch({ type: "SET_PRICE", payload: value }),
-
     setColor: (value) => {
       value == color
         ? dispatch({ type: "SET_COLOR", payload: "All" })
@@ -48,7 +120,6 @@ export default function Products1({ parentClass = "flat-spacing" }) {
         ? dispatch({ type: "SET_AVAILABILITY", payload: "All" })
         : dispatch({ type: "SET_AVAILABILITY", payload: value });
     },
-
     setBrands: (newBrand) => {
       const updated = [...brands].includes(newBrand)
         ? [...brands].filter((elm) => elm != newBrand)
@@ -57,7 +128,6 @@ export default function Products1({ parentClass = "flat-spacing" }) {
     },
     removeBrand: (newBrand) => {
       const updated = [...brands].filter((brand) => brand != newBrand);
-
       dispatch({ type: "SET_BRANDS", payload: updated });
     },
     setSortingOption: (value) =>
@@ -75,47 +145,49 @@ export default function Products1({ parentClass = "flat-spacing" }) {
   };
 
   useEffect(() => {
+    if (loading) return;
+    
     let filteredArrays = [];
 
     if (brands.length) {
-      const filteredByBrands = [...productMain].filter((elm) =>
+      const filteredByBrands = [...products].filter((elm) =>
         brands.every((el) => elm.filterBrands.includes(el))
       );
       filteredArrays = [...filteredArrays, filteredByBrands];
     }
     if (availability !== "All") {
-      const filteredByavailability = [...productMain].filter(
+      const filteredByavailability = [...products].filter(
         (elm) => availability.value === elm.inStock
       );
       filteredArrays = [...filteredArrays, filteredByavailability];
     }
     if (color !== "All") {
-      const filteredByColor = [...productMain].filter((elm) =>
+      const filteredByColor = [...products].filter((elm) =>
         elm.filterColor.includes(color.name)
       );
       filteredArrays = [...filteredArrays, filteredByColor];
     }
     if (size !== "All" && size !== "Free Size") {
-      const filteredBysize = [...productMain].filter((elm) =>
+      const filteredBysize = [...products].filter((elm) =>
         elm.filterSizes.includes(size)
       );
       filteredArrays = [...filteredArrays, filteredBysize];
     }
     if (activeFilterOnSale) {
-      const filteredByonSale = [...productMain].filter((elm) => elm.oldPrice);
+      const filteredByonSale = [...products].filter((elm) => elm.onSale);
       filteredArrays = [...filteredArrays, filteredByonSale];
     }
 
-    const filteredByPrice = [...productMain].filter(
+    const filteredByPrice = [...products].filter(
       (elm) => elm.price >= price[0] && elm.price <= price[1]
     );
     filteredArrays = [...filteredArrays, filteredByPrice];
 
-    const commonItems = [...productMain].filter((item) =>
+    const commonItems = [...products].filter((item) =>
       filteredArrays.every((array) => array.includes(item))
     );
     dispatch({ type: "SET_FILTERED", payload: commonItems });
-  }, [price, availability, color, size, brands, activeFilterOnSale]);
+  }, [price, availability, color, size, brands, activeFilterOnSale, products, loading]);
 
   useEffect(() => {
     if (sortingOption === "Price Ascending") {
@@ -143,6 +215,42 @@ export default function Products1({ parentClass = "flat-spacing" }) {
     }
     dispatch({ type: "SET_CURRENT_PAGE", payload: 1 });
   }, [filtered, sortingOption]);
+
+  if (loading) {
+    return (
+      <section className={parentClass}>
+        <div className="container">
+          <div className="text-center py-5">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">Loading products...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className={parentClass}>
+        <div className="container">
+          <div className="text-center py-5">
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+            <button 
+              className="btn btn-primary mt-3"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
       <section className={parentClass}>

@@ -1,18 +1,16 @@
 import Footer1 from "@/components/footers/Footer1";
-// import Header1 from "@/components/headers/Header1";
-// import Topbar6 from "@/components/headers/Topbar6";
 import AccountSidebar from "@/components/my-account/AccountSidebar";
-import Information from "@/components/my-account/Information";
+import CartContent from "@/components/my-account/CartContent";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import Link from "next/link";
 import React from "react";
 
 export const metadata = {
-  title: "My Account || Modave - Multipurpose React Nextjs eCommerce Template",
+  title: "My Cart || Modave - Multipurpose React Nextjs eCommerce Template",
   description: "Modave - Multipurpose React Nextjs eCommerce Template",
 };
 
-export default function MyAccountPage() {
+export default function MyAccountCartPage() {
   return (
     <ProtectedRoute>
       <>
@@ -24,7 +22,7 @@ export default function MyAccountPage() {
           <div className="container-full">
             <div className="row">
               <div className="col-12">
-                <h3 className="heading text-center">My Account</h3>
+                <h3 className="heading text-center">My Cart</h3>
                 <ul className="breadcrumbs d-flex align-items-center justify-content-center">
                   <li>
                     <Link className="link" href={`/`}>
@@ -42,7 +40,7 @@ export default function MyAccountPage() {
                   <li>
                     <i className="icon-arrRight" />
                   </li>
-                  <li>My Account</li>
+                  <li>My Cart</li>
                 </ul>
               </div>
             </div>
@@ -59,7 +57,7 @@ export default function MyAccountPage() {
           <div className="container">
             <div className="my-account-wrap">
               <AccountSidebar />
-              <Information />
+              <CartContent />
             </div>
           </div>
         </section>
@@ -67,4 +65,4 @@ export default function MyAccountPage() {
       </>
     </ProtectedRoute>
   );
-}
+} 

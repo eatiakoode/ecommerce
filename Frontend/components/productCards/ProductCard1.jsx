@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import CountdownTimer from "../common/Countdown";
 import { useContextElement } from "@/context/Context";
@@ -59,7 +58,8 @@ export default function ProductCard1({
       return product.imgSrc;
     }
     
-    return null;
+    // Final fallback
+    return '/images/products/product-1.jpg';
   };
 
   useEffect(() => {
@@ -111,6 +111,17 @@ export default function ProductCard1({
     );
   }
 
+  // Debug: Log product data
+  console.log('ProductCard1 - Product data:', {
+    id: product.id,
+    title: product.title,
+    price: product.price,
+    sellingPrice: product.sellingPrice,
+    MRP: product.MRP,
+    slug: product.slug,
+    shortDescription: product.shortDescription
+  });
+
   return (
     <div
       className={`${parentClass} ${gridClass} ${
@@ -140,9 +151,9 @@ export default function ProductCard1({
         )}
 
         {/* Product Image */}
-        <Link href={`/product-detail/${product.slug || product._id || product.id}`} className="product-img test">
+        <Link href={`/product-detail/${product.slug || product.id || product._id}`} className="product-img test">
           <img
-            src={currentImage}
+            src={currentImage || '/images/products/product-1.jpg'}
             alt={product.title || product.name || 'Product Image'}
             className="img-fluid"
             style={{
@@ -152,6 +163,7 @@ export default function ProductCard1({
               minHeight: '200px'
             }}
             onError={(e) => {
+              console.log('Image failed to load:', currentImage);
               e.target.src = '/images/products/product-1.jpg';
             }}
           />
@@ -250,7 +262,7 @@ export default function ProductCard1({
           zIndex: 10,
           marginTop: '10px'
         }}>
-          <Link href={`/product-detail/${product.slug || product._id || product.id}`} className="title link">
+          <Link href={`/product-detail/${product.slug || product.id || product._id}`} className="title link">
             <h5 style={{ 
               fontSize: '16px', 
               fontWeight: '600', 
@@ -264,13 +276,13 @@ export default function ProductCard1({
           </Link>
           
           <div className="price" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            {product.MRP && product.MRP > (product.sellingPrice || product.price) && (
+            {product.oldPrice && product.oldPrice > product.price && (
               <span className="old-price" style={{ 
                 color: '#999', 
                 textDecoration: 'line-through', 
                 fontSize: '14px' 
               }}>
-                ₹{product.MRP}
+                ₹{product.oldPrice}
               </span>
             )}
             <span className="current-price" style={{ 
@@ -278,9 +290,9 @@ export default function ProductCard1({
               fontSize: '18px', 
               fontWeight: 'bold' 
             }}>
-              ₹{product.sellingPrice || product.price || 0}
+              ₹{product.price || 0}
             </span>
-            {!product.sellingPrice && !product.price && (
+            {!product.price && (
               <span className="no-price" style={{ 
                 color: '#999', 
                 fontSize: '14px' 

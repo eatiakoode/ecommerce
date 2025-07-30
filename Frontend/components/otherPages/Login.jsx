@@ -65,6 +65,7 @@ export default function Login() {
     }
     
     setIsSubmitting(true);
+    setErrors({}); // Clear previous errors
     
     try {
       const result = await login(formData);
@@ -76,7 +77,10 @@ export default function Login() {
         setErrors({ general: result.error });
       }
     } catch (error) {
-      setErrors({ general: "An unexpected error occurred. Please try again." });
+      console.error("Login form error:", error);
+      setErrors({ 
+        general: error.message || "An unexpected error occurred. Please try again." 
+      });
     } finally {
       setIsSubmitting(false);
     }

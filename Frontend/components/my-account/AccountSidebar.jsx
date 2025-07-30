@@ -3,8 +3,16 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+
 export default function AccountSidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
     <div className="wrap-sidebar-account">
       <div className="sidebar-account">
@@ -17,8 +25,12 @@ export default function AccountSidebar() {
               height={280}
             />
           </div>
-          <h6 className="mb_4">Tony Nguyen</h6>
-          <div className="body-text-1">themesflat@gmail.com</div>
+          <h6 className="mb_4">
+            {user ? `${user.firstname} ${user.lastname}` : "Guest User"}
+          </h6>
+          <div className="body-text-1">
+            {user ? user.email : "Please log in"}
+          </div>
         </div>
         <ul className="my-account-nav">
           <li>
@@ -80,6 +92,70 @@ export default function AccountSidebar() {
           </li>
           <li>
             <Link
+              href={`/my-account-cart`}
+              className={`my-account-nav-item ${
+                pathname == "/my-account-cart" ? "active" : ""
+              } `}
+            >
+              <svg
+                width={24}
+                height={24}
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z"
+                  stroke="#181818"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z"
+                  stroke="#181818"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.21070 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6"
+                  stroke="#181818"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Shopping Cart
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={`/my-account-wishlist`}
+              className={`my-account-nav-item ${
+                pathname == "/my-account-wishlist" ? "active" : ""
+              } `}
+            >
+              <svg
+                width={24}
+                height={24}
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.5783 8.50903 2.9987 7.05 2.9987C5.59096 2.9987 4.19169 3.5783 3.16 4.61C2.1283 5.6417 1.5487 7.04097 1.5487 8.5C1.5487 9.95903 2.1283 11.3583 3.16 12.39L12 21.23L20.84 12.39C21.351 11.8792 21.7564 11.2728 22.0329 10.6054C22.3095 9.93789 22.4518 9.22249 22.4518 8.5C22.4518 7.77751 22.3095 7.0621 22.0329 6.39464C21.7564 5.72718 21.351 5.12075 20.84 4.61Z"
+                  stroke="#181818"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Wishlist
+            </Link>
+          </li>
+          <li>
+            <Link
               href={`/my-account-address`}
               className={`my-account-nav-item ${
                 pathname == "/my-account-address" ? "active" : ""
@@ -112,10 +188,47 @@ export default function AccountSidebar() {
           </li>
           <li>
             <Link
-              href={`/login`}
+              href={`/forgot-password`}
               className={`my-account-nav-item ${
-                pathname == "/login" ? "active" : ""
+                pathname == "/forgot-password" ? "active" : ""
               } `}
+            >
+              <svg
+                width={24}
+                height={24}
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 15V3M12 15L8 11M12 15L16 11"
+                  stroke="#181818"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 17L2.621 19.485C2.72915 19.9177 2.97882 20.3018 3.33033 20.5763C3.68184 20.8508 4.11501 20.9999 4.561 21H19.439C19.885 20.9999 20.3182 20.8508 20.6697 20.5763C21.0212 20.3018 21.2708 19.9177 21.379 19.485L22 17"
+                  stroke="#181818"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Forgot Password
+            </Link>
+          </li>
+          <li>
+            <button
+              onClick={handleLogout}
+              className="my-account-nav-item"
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                width: '100%', 
+                textAlign: 'left',
+                cursor: 'pointer'
+              }}
             >
               <svg
                 width={24}
@@ -147,7 +260,7 @@ export default function AccountSidebar() {
                 />
               </svg>
               Logout
-            </Link>
+            </button>
           </li>
         </ul>
       </div>

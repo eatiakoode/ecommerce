@@ -52,7 +52,11 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: result.error };
       }
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error("Login context error:", error);
+      return { 
+        success: false, 
+        error: error.message || "An unexpected error occurred. Please try again." 
+      };
     } finally {
       setLoading(false);
     }
@@ -81,8 +85,13 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // Call logout API
-      await logoutUser();
+      // Try to call logout API, but don't fail if it doesn't work
+      try {
+        await logoutUser();
+      } catch (apiError) {
+        console.error("Logout API error:", apiError);
+        // Continue with local logout even if API fails
+      }
       
       // Clear localStorage
       localStorage.removeItem("authToken");
@@ -95,7 +104,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
-      // Even if API call fails, clear local data
+      // Even if everything fails, clear local data
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       setToken(null);

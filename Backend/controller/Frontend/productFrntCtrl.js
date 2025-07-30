@@ -9,7 +9,7 @@ const Size = require('../../models/sizeModel')
 const getProducts = asyncHandler(async (req, res) => {
   try {
     const products = await Product.find({})
-      .select("title MRP sellingPrice images categories brand slug shortDescription")
+      .select("title MRP sellingPrice images categories brand slug shortDescription description")
       .populate("categories", "name")
       .populate("brand", "title");
 
@@ -22,16 +22,31 @@ const getProducts = asyncHandler(async (req, res) => {
 const getProductBySlug = asyncHandler(async (req, res) => {
   const { slug } = req.params;
 
-  const product = await Product.findOne({ slug })
+  // Try to find by slug first, then by ID if slug doesn't work
+  let product = await Product.findOne({ slug })
     .populate("categories", "name _id")
     .populate("color", "title _id")
     .populate("size", "name value _id");
+
+  // If not found by slug, try to find by ID
+  if (!product) {
+    // Check if the slug parameter is actually an ObjectId
+    const mongoose = require('mongoose');
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      product = await Product.findById(slug)
+        .populate("categories", "name _id")
+        .populate("color", "title _id")
+        .populate("size", "name value _id");
+    }
+  }
 
   if (!product) {
     return res.status(404).json({ message: "Product not found" });
   }
 
   res.status(200).json({
+    _id: product._id, // Add the product ID
+    slug: product.slug, // Add the slug
     // categories: {
     //   _id: product.categories?._id,
     //   name: product.categories?.name,
