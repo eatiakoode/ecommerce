@@ -3,6 +3,17 @@ const nodemailer = require("nodemailer");
 const asyncHandler = require("express-async-handler");
 
 const sendEmail = asyncHandler(async (data, req, res) => {
+  // Check if email credentials are configured
+  if (!process.env.MAIL_ID || !process.env.MP) {
+    console.log("Email credentials not configured. Skipping email send.");
+    console.log("Email that would have been sent:");
+    console.log("To:", data.to);
+    console.log("Subject:", data.subject);
+    console.log("Text:", data.text);
+    console.log("HTML:", data.htm);
+    return;
+  }
+
   // create reusable transporter object using the default SMTP transport
   let transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",

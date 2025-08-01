@@ -69,7 +69,7 @@ export default function Testimonials({ parentClass = "flat-spacing" }) {
           >
             {testimonials.length > 0 ? testimonials.map((testimonial, index) => {
               const imageUrl = getImageUrl(testimonial.image);
-              console.log('testimonial.image:', testimonial.image, 'imageUrl:', imageUrl);
+        
               // Only render <Image> if imageUrl is a valid http(s) URL and not just the base URL
               const isValidImageUrl = typeof imageUrl === 'string' &&
                 /^https?:\/\/.+\..+/.test(imageUrl) &&

@@ -2,12 +2,22 @@ import axiosInstance from "@/helpers/axiosInstance";
 
 // Blog Endpoints
 export async function getBlogs() {
-  const res = await axiosInstance.get("/blog");
+  const res = await axiosInstance.get("/frontend/blog/list");
   return res.data;
 }
 
 export async function getBlogById(id: string) {
   const res = await axiosInstance.get(`/blog/${id}`);
+  return res.data;
+}
+
+export async function getBlogBySlug(slug: string) {
+  const res = await axiosInstance.get(`/frontend/blog/${slug}`);
+  return res.data;
+}
+
+export async function getRelatedBlogs(slug: string) {
+  const res = await axiosInstance.get(`/frontend/blog/related/${slug}`);
   return res.data;
 }
 

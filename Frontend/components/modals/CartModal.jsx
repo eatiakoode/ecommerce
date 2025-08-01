@@ -6,10 +6,6 @@ import Link from "next/link";
 // import { useContextElement } from "@/context/Context";
 import { useContextElement } from "../../context/Context";
 
-
-// import { products41 } from "@/data/products";
-import { products41 } from "../../data/products";
-
 export default function CartModal() {
   const {
     cartProducts,
@@ -29,50 +25,6 @@ export default function CartModal() {
     <div className="modal fullRight fade modal-shopping-cart" id="shoppingCart">
       <div className="modal-dialog">
         <div className="modal-content">
-          <div className="tf-minicart-recommendations">
-            <h6 className="title">You May Also Like</h6>
-            <div className="wrap-recommendations">
-              <div className="list-cart">
-                {products41.map((product, index) => (
-                  <div className="list-cart-item" key={index}>
-                    <div className="image">
-                      <Image
-                        className="lazyload"
-                        data-src={product.imgSrc}
-                        alt={product.alt}
-                        src={product.imgSrc}
-                        width={600}
-                        height={800}
-                      />
-                    </div>
-                    <div className="content">
-                      <div className="name">
-                        <Link
-                          className="link text-line-clamp-1"
-                          href="/product-detail"
-                        >
-                          {product.title}
-                        </Link>
-                      </div>
-                      <div className="cart-item-bot">
-                        <div className="text-button price">
-                          ${product.price ? product.price.toFixed(2) : '0.00'}
-                        </div>
-                        <a
-                          className="link text-button"
-                          onClick={() => addProductToCart(product.id, 1, false)}
-                        >
-                          {isAddedToCartProducts(product.id)
-                            ? "Already Added"
-                            : "Add to cart"}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
           <div className="d-flex flex-column flex-grow-1 h-100">
             <div className="header">
               <h5 className="title">Shopping Cart</h5>
@@ -82,20 +34,6 @@ export default function CartModal() {
               />
             </div>
             <div className="wrap">
-              <div className="tf-mini-cart-threshold">
-                <div className="tf-progress-bar">
-                  <div
-                    className="value"
-                    style={{ width: "0%" }}
-                    data-progress={75}
-                  >
-                    <i className="icon icon-shipping" />
-                  </div>
-                </div>
-                <div className="text-caption-1">
-                  Congratulations! You've got free shipping!
-                </div>
-              </div>
               <div className="tf-mini-cart-wrap">
                 <div className="tf-mini-cart-main">
                   <div className="tf-mini-cart-sroll">
@@ -133,9 +71,11 @@ export default function CartModal() {
                                 </div>
                               </div>
                               <div className="d-flex align-items-center justify-content-between flex-wrap gap-12">
-                                <div className="text-secondary-2">XL/Blue</div>
+                                <div className="text-secondary-2">
+                                  {typeof product.selectedSize === 'object' ? product.selectedSize?.name || 'Size' : product.selectedSize || 'Size'}/{typeof product.selectedColor === 'object' ? product.selectedColor?.name || 'Color' : product.selectedColor || 'Color'}
+                                </div>
                                 <div className="text-button">
-                                  {product.quantity || 1} X $
+                                  {product.quantity || 1} X ₹
                                   {product.price ? product.price.toFixed(2) : '0.00'}
                                 </div>
                               </div>
@@ -271,7 +211,7 @@ export default function CartModal() {
                     <div className="tf-cart-totals-discounts">
                       <h5>Subtotal</h5>
                       <h5 className="tf-totals-total-value">
-                        ${totalPrice ? totalPrice.toFixed(2) : '0.00'}
+                        ₹{totalPrice ? totalPrice.toFixed(2) : '0.00'}
                       </h5>
                     </div>
                     <div className="tf-cart-checkbox">

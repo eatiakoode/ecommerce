@@ -1,9 +1,7 @@
 import Footer1 from "@/components/footers/Footer1";
-// import Header1 from "@/components/headers/Header1";
-// import Topbar6 from "@/components/headers/Topbar6";
 import AccountSidebar from "@/components/my-account/AccountSidebar";
-import Link from "next/link";
 import OrderDetails from "@/components/my-account/OrderDetails";
+import Link from "next/link";
 import React from "react";
 
 export const metadata = {
@@ -12,11 +10,11 @@ export const metadata = {
   description: "Modave - Multipurpose React Nextjs eCommerce Template",
 };
 
-export default function MyAccountOrdersDetailsPage() {
+export default function MyAccountOrdersDetailsPage({ params }) {
+  const { id } = params;
+
   return (
     <>
-      {/* <Topbar6 bgColor="bg-main" />
-      <Header1 /> */}
       <>
         {/* page-title */}
         <div
@@ -37,14 +35,14 @@ export default function MyAccountOrdersDetailsPage() {
                     <i className="icon-arrRight" />
                   </li>
                   <li>
-                    <a className="link" href="#">
-                      Pages
-                    </a>
+                    <Link className="link" href="/my-account-orders">
+                      Orders
+                    </Link>
                   </li>
                   <li>
                     <i className="icon-arrRight" />
                   </li>
-                  <li>My Account</li>
+                  <li>Order Details</li>
                 </ul>
               </div>
             </div>
@@ -62,11 +60,11 @@ export default function MyAccountOrdersDetailsPage() {
         <div className="container">
           <div className="my-account-wrap">
             <AccountSidebar />
-            <OrderDetails />
+            <OrderDetails orderId={id} />
           </div>
         </div>
       </section>
       <Footer1 />
     </>
   );
-}
+} 

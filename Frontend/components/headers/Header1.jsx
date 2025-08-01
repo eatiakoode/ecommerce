@@ -6,17 +6,29 @@ import Link from "next/link";
 import CartLength from "../common/CartLength";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
-import CartModal from "../common/CartModal"; // import the modal
+import { useRouter } from "next/navigation";
 import WishlistModal from "../common/WishlistModal"; // import the modal
 
 export default function Header1({ fullWidth = false }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { getWishlistCount } = useWishlist();
-  const [showCart, setShowCart] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false); // new state
-
+  const router = useRouter();
   const handleLogout = async () => {
-    await logout();
+    try {
+      // Show loading state
+      console.log("Logging out...");
+      
+      // Call logout function (this will clear localStorage and trigger page reload)
+      await logout();
+      
+      // The logout function will handle the page reload, so we don't need to navigate
+      // The page reload will clear all context states and redirect to home
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if there's an error, redirect to home
+      router.push("/");
+    }
   };
 
   return (
@@ -168,7 +180,6 @@ export default function Header1({ fullWidth = false }) {
                     </>
                   )}
                   <div className="sub-bot">
-                    <span className="body-text-">Support</span>
                   </div>
                 </div>
               </li>
@@ -206,7 +217,6 @@ export default function Header1({ fullWidth = false }) {
                   href="#shoppingCart"
                   data-bs-toggle="modal"
                   className="nav-icon-item"
-                  onClick={e => { e.preventDefault(); setShowCart(true); }}
                 >
                   <svg
                     className="icon"
@@ -233,7 +243,6 @@ export default function Header1({ fullWidth = false }) {
           </div>
         </div>
       </div>
-      <CartModal show={showCart} onClose={() => setShowCart(false)} />
       <WishlistModal show={showWishlist} onClose={() => setShowWishlist(false)} />
     </header>
   );

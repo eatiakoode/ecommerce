@@ -66,21 +66,18 @@ export default function Details1FullWidth({ product }) {
                 <div className="tf-product-info-desc">
                   <div className="tf-product-info-price">
                     <h5 className="price-on-sale font-2">
-                      {" "}
-                      ${product.price.toFixed(2)}
+                      ₹{product.price.toFixed(2)}
                     </h5>
-                    {product.oldPrice ? (
+                    {product.oldPrice && (
                       <>
                         <div className="compare-at-price font-2">
                           {" "}
-                          ${product.oldPrice.toFixed(2)}
+                          ₹{product.oldPrice.toFixed(2)}
                         </div>
                         <div className="badges-on-sale text-btn-uppercase">
                           -25%
                         </div>
                       </>
-                    ) : (
-                      ""
                     )}
                   </div>
                   <p>
@@ -133,7 +130,7 @@ export default function Details1FullWidth({ product }) {
                           : "Add to cart -"}
                       </span>
                       <span className="tf-qty-price total-price">
-                        $
+                        ₹
                         {isAddedToCartProducts(product.id)
                           ? (
                               product.price *

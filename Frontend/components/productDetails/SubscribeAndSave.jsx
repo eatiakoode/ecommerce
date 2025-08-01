@@ -31,7 +31,7 @@ export default function SubscribeAndSave() {
           <label htmlFor="subscribe-save" className="">
             Subscribe &amp;
             <span className="text-button text-primary">Save 10%</span>
-            ($31.47)
+            (₹31.47)
           </label>
           <input
             className=""

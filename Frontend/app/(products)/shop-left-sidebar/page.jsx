@@ -1,7 +1,5 @@
 import Footer1 from "@/components/footers/Footer1";
 import Products11 from "@/components/products/Products11";
-import WishlistTest from "@/components/test/WishlistTest";
-import ProductDebug from "@/components/test/ProductDebug";
 
 import Link from "next/link";
 import React from "react";
@@ -32,8 +30,6 @@ export default function ShopLeftSidebarPage() {
           </div>
         </div>
       </div>
-      <WishlistTest />
-      <ProductDebug />
       <Products11 />
       <Footer1 />
     </>

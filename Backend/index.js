@@ -23,6 +23,7 @@ const sizeRoute = require("./routes/sizeRoute");
 const dealRoute = require("./routes/dealRoute");
 const orderRoute = require("./routes/order");
 const faqRoutes = require("./routes/faqRoutes");
+const addressRouter = require("./routes/addressRoute");
 
 const categoryFrontendRouter = require("./routes/Frontend/categoryRoute");
 const instagramFrntRoutes = require("./routes/Frontend/instaFrntRoute");
@@ -32,15 +33,6 @@ const sliderFrntRoute = require("./routes/Frontend/sliderFrntRoute");
 const instapostRoutes = require('./routes/instaPostRoute');
 const testimonialRoutes = require("./routes/testimonialRoute");
 const testimonialFrntRoutes = require("./routes/Frontend/testimonialFrntRoute");
-const teamRoutes = require("./routes/teamRoutes");
-const aboutusFrntRoute = require("./routes/Frontend/aboutusFrntRoute");
-const faqFrntRoute = require("./routes/Frontend/faqFrntRoute");
-// const contactFormRoute = require("./routes/Frontend/contactFormRoute");
-// const contactFormRoutes = require('./routes/Frontend/contactFormRoute');
-const contactFormRoute = require('./routes/Frontend/contactFormRoute');
-
-const enqRoute = require('./routes/enqRoute');
-const checkoutRoute = require("./routes/Frontend/checkoutRoute")
 
 
 // eati test
@@ -48,11 +40,42 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const cors = require("cors");
 
-// FIX: Set up CORS to allow credentials and multiple frontend origins
+// Enhanced CORS configuration
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:4001"],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:4001',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:4001'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'X-HTTP-Method-Override'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // 24 hours
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 dbConnect();
 app.use(morgan("dev"));
@@ -77,6 +100,7 @@ app.use("/api/deal",dealRoute);
 // app.use("/api/product", productRoutes);
 app.use('/api/order', orderRoute);
 app.use("/api/faq", faqRoutes);
+app.use("/api/address", addressRouter);
 
 app.use("/api/frontend/category", categoryFrontendRouter);
 app.use("/api/frontend/instagram", instagramFrntRoutes);
@@ -87,18 +111,7 @@ app.use("/api/instapost", instapostRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/frontend/testimonials", testimonialFrntRoutes);
 app.use("/api/size", sizeRoute);
-app.use("/api/teams", teamRoutes);
-app.use("/api/frontend/aboutus", aboutusFrntRoute);
-app.use("/api/frontend/faq", faqFrntRoute);
-// app.use("/api/enquiry", enqRouter);
-// app.use('/api/frontend/contact-form', contactFormRoutes);
-app.use('/api/contact', contactFormRoute);
-app.use('/api/frontend/checkout', checkoutRoute);
 
-
-
-
-app.use('/api/enquiries', enqRoute);
 
 // app.use("/public", express.static(path.join(__dirname, "public")));
 // app.use(express.static("public"));
@@ -108,16 +121,11 @@ const fs = require('fs');
 const path = require("path");
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-// const testImagePath = path.join(__dirname, 'public/images/upload-1752933459572-592741853.jpg');
-// console.log('Checking for image at:', testImagePath);
-// console.log('Does image exist?', fs.existsSync(testImagePath));
-console.log("testimage");
+
 app.use(notFound);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running  at PORT ${PORT}`);
 });
-
-// const path = require("path");
 

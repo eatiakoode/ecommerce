@@ -14,7 +14,7 @@ export default function BlogDefault() {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/blog');
+        const response = await fetch('http://localhost:5000/api/frontend/blog/list');
         if (!response.ok) {
           throw new Error('Failed to fetch blogs');
         }
@@ -115,15 +115,15 @@ export default function BlogDefault() {
                 {i != 0 ? <div className="line-bt mb_40" /> : ""}
                 <div className="wg-blog hover-image mb_40">
                   <div className="image">
-                    {blog.images && blog.images.length > 0 ? (
+                    {blog.image ? (
                       <Image
                         className="lazyload"
                         alt={blog.title}
-                        src={blog.images[0].url.startsWith('http') ? blog.images[0].url : `http://localhost:5000${blog.images[0].url}`}
+                        src={blog.image.startsWith('http') ? blog.image : `http://localhost:5000${blog.image}`}
                         width={1275}
                         height={717}
                         onError={(e) => {
-                          console.log('Image failed to load:', blog.images[0].url);
+                          console.log('Image failed to load:', blog.image);
                           e.target.src = '/images/blog/blog-grid-1.jpg';
                         }}
                       />
@@ -132,9 +132,9 @@ export default function BlogDefault() {
                       className="lazyload"
                         alt="Default blog image"
                         src="/images/blog/blog-grid-1.jpg"
-                      width={1275}
-                      height={717}
-                    />
+                        width={1275}
+                        height={717}
+                      />
                     )}
                   </div>
                   <div className="content">
@@ -144,24 +144,15 @@ export default function BlogDefault() {
                           <div className="icon">
                             <i className="icon-calendar" />
                           </div>
-                          <p>
-                            {blog.date ? new Date(blog.date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            }) : 'No date'}
-                          </p>
+                          <div className="text-caption-1">
+                            {blog.date ? new Date(blog.date).toLocaleDateString() : "No Date"}
+                          </div>
                         </div>
                         <div className="meta-item gap-8">
                           <div className="icon">
                             <i className="icon-user" />
                           </div>
-                          <p>
-                            by{" "}
-                            <a className="link" href="#">
-                              {blog.author || 'Unknown Author'}
-                            </a>
-                          </p>
+                          <div className="text-caption-1">{blog.author || "No Author"}</div>
                         </div>
                       </div>
                       <div className="meta">
@@ -169,30 +160,20 @@ export default function BlogDefault() {
                           <div className="icon">
                             <i className="icon-comment" />
                           </div>
-                          <p>0</p>
+                          <div className="text-caption-1">0</div>
                         </div>
                         <div className="meta-item gap-4">
                           <div className="icon">
                             <i className="icon-eye" />
                           </div>
-                          <p>{blog.numViews || 0}</p>
+                          <div className="text-caption-1">0</div>
                         </div>
                       </div>
                     </div>
-                    <h4 className="title fw-5">
-                      <Link className="link" href={`/blog-detail/${blog._id}`}>
-                        {blog.title}
-                      </Link>
-                    </h4>
-                    <div className="body-text-1">
-                      {blog.description ? 
-                        (blog.description.length > 200 ? 
-                          `${blog.description.substring(0, 200)}...` : 
-                          blog.description
-                        ) : 
-                        'No description available'
-                      }
-                    </div>
+                    <h3 className="text-title-3">
+                      <Link href={`/blog-detail/${blog.slug || blog._id}`}>{blog.title}</Link>
+                    </h3>
+                    <p className="text-caption-1">{blog.description}</p>
                   </div>
                 </div>
               </React.Fragment>
@@ -214,3 +195,5 @@ export default function BlogDefault() {
     </div>
   );
 }
+
+

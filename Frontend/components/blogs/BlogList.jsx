@@ -14,7 +14,7 @@ export default function BlogList() {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/blog');
+        const response = await fetch('http://localhost:5000/api/frontend/blog/list');
         if (!response.ok) {
           throw new Error('Failed to fetch blogs');
         }
@@ -94,78 +94,73 @@ export default function BlogList() {
       <div className="container">
         <div className="row">
           <div className="col-lg-8 mb-lg-30">
-            {blogs.slice(0, 5).map((blog, i) => (
-              <div key={blog._id || i} className="wg-blog style-row hover-image mb_40">
-                <div className="image">
-                  {blog.images && blog.images.length > 0 ? (
+            {blogs.map((blog, i) => (
+              <React.Fragment key={blog._id || i}>
+                {i != 0 ? <div className="line-bt mb_40" /> : ""}
+                <div className="wg-blog hover-image mb_40">
+                  <div className="image">
+                    {blog.image ? (
+                      <Image
+                        className="lazyload"
+                        alt={blog.title}
+                        src={blog.image.startsWith('http') ? blog.image : `http://localhost:5000${blog.image}`}
+                        width={1275}
+                        height={717}
+                        onError={(e) => {
+                          console.log('Image failed to load:', blog.image);
+                          e.target.src = '/images/blog/blog-grid-1.jpg';
+                        }}
+                      />
+                    ) : (
                     <Image
                       className="lazyload"
-                      alt={blog.title}
-                      src={blog.images[0].url.startsWith('http') ? blog.images[0].url : `http://localhost:5000${blog.images[0].url}`}
-                      width={600}
-                      height={399}
-                      onError={(e) => {
-                        console.log('Image failed to load:', blog.images[0].url);
-                        e.target.src = '/images/blog/blog-grid-1.jpg';
-                      }}
-                    />
-                  ) : (
-                  <Image
-                    className="lazyload"
-                      alt="Default blog image"
-                      src="/images/blog/blog-grid-1.jpg"
-                    width={600}
-                    height={399}
-                  />
-                  )}
-                </div>
-                <div className="content">
-                  <div className="d-flex align-items-center justify-content-between flex-wrap gap-10">
-                    <div className="meta">
-                      <div className="meta-item gap-8">
-                        <div className="icon">
-                          <i className="icon-calendar" />
+                        alt="Default blog image"
+                        src="/images/blog/blog-grid-1.jpg"
+                        width={1275}
+                        height={717}
+                      />
+                    )}
+                  </div>
+                  <div className="content">
+                    <div className="d-flex align-items-center justify-content-between flex-wrap gap-10">
+                      <div className="meta">
+                        <div className="meta-item gap-8">
+                          <div className="icon">
+                            <i className="icon-calendar" />
+                          </div>
+                          <div className="text-caption-1">
+                            {blog.date ? new Date(blog.date).toLocaleDateString() : "No Date"}
+                          </div>
                         </div>
-                        <p className="text-caption-1">
-                          {blog.date ? new Date(blog.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          }) : 'No date'}
-                        </p>
+                        <div className="meta-item gap-8">
+                          <div className="icon">
+                            <i className="icon-user" />
+                          </div>
+                          <div className="text-caption-1">{blog.author || "No Author"}</div>
+                        </div>
                       </div>
-                      <div className="meta-item gap-8">
-                        <div className="icon">
-                          <i className="icon-user" />
+                      <div className="meta">
+                        <div className="meta-item gap-4">
+                          <div className="icon">
+                            <i className="icon-comment" />
+                          </div>
+                          <div className="text-caption-1">0</div>
                         </div>
-                        <p className="text-caption-1">
-                          by{" "}
-                          <a className="link" href="#">
-                            {blog.author || 'Unknown Author'}
-                          </a>
-                        </p>
+                        <div className="meta-item gap-4">
+                          <div className="icon">
+                            <i className="icon-eye" />
+                          </div>
+                          <div className="text-caption-1">0</div>
+                        </div>
                       </div>
                     </div>
+                    <h3 className="text-title-3">
+                      <Link href={`/blog-detail/${blog.slug || blog._id}`}>{blog.title}</Link>
+                    </h3>
+                    <p className="text-caption-1">{blog.description}</p>
                   </div>
-                  <h5 className="title">
-                    <Link className="link" href={`/blog-detail/${blog._id}`}>
-                      {blog.title}
-                    </Link>
-                  </h5>
-                  <p>
-                    {blog.description ? 
-                      blog.description.split(" ").slice(0, 10).join(" ") + "..." : 
-                      'No description available'
-                    }
-                  </p>
-                  <Link
-                    href={`/blog-detail/${blog._id}`}
-                    className="link text-button bot-button"
-                  >
-                    Read More
-                  </Link>
                 </div>
-              </div>
+              </React.Fragment>
             ))}
             {blogs.length === 0 && (
               <div className="text-center">

@@ -35,16 +35,16 @@ export const WishlistProvider = ({ children }) => {
       });
 
       if (!res.ok) {
-        console.error("Failed to fetch wishlist:", res.status);
+
         setWishlistItems([]);
         return;
       }
 
       const wishlistData = await res.json();
-      console.log("Wishlist data fetched:", wishlistData);
+      
       setWishlistItems(wishlistData);
     } catch (error) {
-      console.error("Error fetching wishlist:", error);
+      
       setWishlistItems([]);
     } finally {
       setLoading(false);
@@ -54,7 +54,8 @@ export const WishlistProvider = ({ children }) => {
   // Add item to wishlist
   const addToWishlist = async (productId) => {
     if (!isAuthenticated()) {
-      alert("Please login to add items to wishlist");
+      alert("Please login to add items to wishlist. You will be redirected to the login page.");
+      window.location.href = '/login';
       return false;
     }
 
@@ -85,13 +86,13 @@ export const WishlistProvider = ({ children }) => {
           return true;
         } else {
           // Handle other errors
-          console.error("Wishlist error response:", result);
+  
           alert("Error adding to wishlist: " + (result.message || "Unknown error"));
           return false;
         }
       }
     } catch (error) {
-      console.error("Wishlist error:", error);
+      
       alert("Error adding to wishlist: " + error.message);
       return false;
     } finally {
@@ -120,11 +121,11 @@ export const WishlistProvider = ({ children }) => {
         await fetchWishlist(); // Refresh wishlist
         return true;
       } else {
-        console.error("Failed to remove from wishlist:", res.status);
+
         return false;
       }
     } catch (error) {
-      console.error("Error removing from wishlist:", error);
+      
       return false;
     } finally {
       setLoading(false);
@@ -133,8 +134,7 @@ export const WishlistProvider = ({ children }) => {
 
   // Check if product is in wishlist
   const isInWishlist = (productId) => {
-    console.log("Checking if product is in wishlist:", productId);
-    console.log("Current wishlist items:", wishlistItems);
+
     
     const isInWishlist = wishlistItems.some(item => {
       // Handle populated productId (contains full product object)
@@ -145,7 +145,7 @@ export const WishlistProvider = ({ children }) => {
       return item.productId === productId;
     });
     
-    console.log("Is in wishlist:", isInWishlist);
+
     return isInWishlist;
   };
 
@@ -156,7 +156,12 @@ export const WishlistProvider = ({ children }) => {
 
   // Fetch wishlist when authentication changes
   useEffect(() => {
-    fetchWishlist();
+    if (isAuthenticated() && token) {
+      fetchWishlist();
+    } else {
+      // Clear wishlist when user is not authenticated
+      setWishlistItems([]);
+    }
   }, [token, isAuthenticated]);
 
   const value = {

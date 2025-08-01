@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import CountdownTimer from "../common/Countdown";
 import { useContextElement } from "@/context/Context";
@@ -21,7 +20,7 @@ export default function ProductCard1({
   const getSafeImageSrc = (src) => {
     // Handle null, undefined, or empty string
     if (!src || src === '' || src === 'null' || src === 'undefined') {
-      return '/images/products/product-1.jpg';
+      return '/images/products/womens/women-1.jpg';
     }
     
     // If it's already a full URL, return as is
@@ -59,7 +58,8 @@ export default function ProductCard1({
       return product.imgSrc;
     }
     
-    return null;
+    // Final fallback
+    return '/images/products/womens/women-1.jpg';
   };
 
   useEffect(() => {
@@ -101,15 +101,17 @@ export default function ProductCard1({
     return (
       <div className={`${parentClass} ${gridClass}`}>
         <div className={`card-product-wrapper ${isNotImageRatio ? "aspect-ratio-0" : ""} ${radiusClass}`}>
-          <div className="product-img test">
+          <div className="product-img">
             <div style={{ width: 300, height: 300, backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Loading...
+              <img src="/images/products/womens/women-1.jpg" alt="Loading..." style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           </div>
         </div>
       </div>
     );
   }
+
+
 
   return (
     <div
@@ -140,9 +142,9 @@ export default function ProductCard1({
         )}
 
         {/* Product Image */}
-        <Link href={`/product-detail/${product.slug || product._id || product.id}`} className="product-img test">
+        <Link href={`/product-detail/${product.slug || product.id || product._id || 'product'}`} className="product-img">
           <img
-            src={currentImage}
+            src={currentImage || '/images/products/womens/women-1.jpg'}
             alt={product.title || product.name || 'Product Image'}
             className="img-fluid"
             style={{
@@ -152,7 +154,7 @@ export default function ProductCard1({
               minHeight: '200px'
             }}
             onError={(e) => {
-              e.target.src = '/images/products/product-1.jpg';
+              e.target.src = '/images/products/womens/women-1.jpg';
             }}
           />
         </Link>
@@ -194,7 +196,7 @@ export default function ProductCard1({
             >
               <i className={`icon ${isInWishlist(product.id || product._id) ? "icon-heart-fill" : "icon-heart"}`} style={{ color: isInWishlist(product.id || product._id) ? '#dc3545' : '#333', fontSize: '14px' }} />
             </button>
-            <button
+            {/* <button
               className="list-btn"
               onClick={() => addToCompareItem(product.id || product._id)}
               title="Add to Compare"
@@ -215,7 +217,7 @@ export default function ProductCard1({
               }}
             >
               <i className={`icon ${isAddedtoCompareItem(product.id || product._id) ? "icon-refresh-fill" : "icon-refresh"}`} style={{ color: isAddedtoCompareItem(product.id || product._id) ? '#007bff' : '#333', fontSize: '14px' }} />
-            </button>
+            </button> */}
             <button
               className="list-btn"
               onClick={() => setQuickViewItem(product)}
@@ -250,7 +252,7 @@ export default function ProductCard1({
           zIndex: 10,
           marginTop: '10px'
         }}>
-          <Link href={`/product-detail/${product.slug || product._id || product.id}`} className="title link">
+          <Link href={`/product-detail/${product.slug || product.id || product._id || 'product'}`} className="title link">
             <h5 style={{ 
               fontSize: '16px', 
               fontWeight: '600', 
@@ -264,13 +266,13 @@ export default function ProductCard1({
           </Link>
           
           <div className="price" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            {product.MRP && product.MRP > (product.sellingPrice || product.price) && (
+            {product.oldPrice && product.oldPrice > product.price && (
               <span className="old-price" style={{ 
                 color: '#999', 
                 textDecoration: 'line-through', 
                 fontSize: '14px' 
               }}>
-                ₹{product.MRP}
+                ₹{product.oldPrice}
               </span>
             )}
             <span className="current-price" style={{ 
@@ -278,9 +280,9 @@ export default function ProductCard1({
               fontSize: '18px', 
               fontWeight: 'bold' 
             }}>
-              ₹{product.sellingPrice || product.price || 0}
+              ₹{product.price || 0}
             </span>
-            {!product.sellingPrice && !product.price && (
+            {!product.price && (
               <span className="no-price" style={{ 
                 color: '#999', 
                 fontSize: '14px' 

@@ -1,25 +1,44 @@
 "use client";
+import React, { useState } from "react";
+import ColorSelect from "../productDetails/ColorSelect";
+import SizeSelect from "../productDetails/SizeSelect";
+import QuantitySelect from "../productDetails/QuantitySelect";
 import { useContextElement } from "../../context/Context";
 import { allProducts } from "../../data/products";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import ColorSelect from "../productDetails/ColorSelect";
-import SizeSelect from "../productDetails/SizeSelect";
-import QuantitySelect from "../productDetails/QuantitySelect";
+import { useEffect } from "react";
+
 export default function QuickAdd() {
   const [quantity, setQuantity] = useState(1);
   const {
     quickAddItem,
     addProductToCart,
     isAddedToCartProducts,
-    addToCompareItem,
     addToWishlist,
     isAddedtoWishlist,
+    addToCompareItem,
     isAddedtoCompareItem,
     cartProducts,
     updateQuantity,
   } = useContextElement();
+
+  // Safe price handling
+  const getSafePrice = (price) => {
+    if (price === null || price === undefined || isNaN(price)) {
+      return 0;
+    }
+    return parseFloat(price);
+  };
+
+  // Don't render if quickAddItem is not available
+  if (!quickAddItem) {
+    return null;
+  }
+
+  const safePrice = getSafePrice(quickAddItem.price);
+  const safeOldPrice = getSafePrice(quickAddItem.oldPrice);
+
   const [item, setItem] = useState(allProducts[0]);
   useEffect(() => {
     const filtered = allProducts.filter((el) => el.id == quickAddItem);
@@ -47,12 +66,13 @@ export default function QuickAdd() {
                   <Link href={`/product-detail/${item.id}`}>{item.title}</Link>
                   <div className="tf-product-info-price">
                     <h5 className="price-on-sale font-2">
-                      ${item.price.toFixed(2)}
+                      ₹{safePrice.toFixed(2)}
                     </h5>
-                    {item.oldPrice ? (
+                    {safeOldPrice > 0 ? (
                       <>
                         <div className="compare-at-price font-2">
-                          ${item.oldPrice.toFixed(2)}
+                          {" "}
+                          ₹{safeOldPrice.toFixed(2)}
                         </div>
                         <div className="badges-on-sale text-btn-uppercase">
                           -25%
@@ -98,14 +118,13 @@ export default function QuickAdd() {
                         &nbsp;
                       </span>
                       <span className="tf-qty-price total-price">
-                        $
+                        ₹
                         {isAddedToCartProducts(item.id)
                           ? (
-                              item.price *
-                              cartProducts.filter((elm) => elm.id == item.id)[0]
-                                .quantity
-                            ).toFixed(2)
-                          : (item.price * quantity).toFixed(2)}
+                                safePrice *
+                                (cartProducts.filter((elm) => elm.id == item.id)[0]?.quantity || 1)
+                              ).toFixed(2)
+                            : (safePrice * quantity).toFixed(2)}
                       </span>
                     </a>
                     <a

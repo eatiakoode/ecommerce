@@ -139,9 +139,12 @@ const logout = asyncHandler(async (req, res) => {
     });
     return res.sendStatus(204); // forbidden
   }
-  await User.findOneAndUpdate(refreshToken, {
-    refreshToken: "",
-  });
+  await User.findOneAndUpdate(
+    { refreshToken },
+    {
+      refreshToken: "",
+    }
+  );
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: true,
@@ -171,6 +174,29 @@ const updatedUser = asyncHandler(async (req, res) => {
     res.json(updatedUser);
   } catch (error) {
     throw new Error(error);
+  }
+});
+
+// Get current user profile
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  
+  if (!_id) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    validateMongoDbId(_id);
+    const user = await User.findById(_id).select('-password -refreshToken');
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error("Get current user error:", error);
+    res.status(500).json({ message: "Failed to fetch user profile" });
   }
 });
 
@@ -303,7 +329,7 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
     const token = await user.createPasswordResetToken();
 
     await user.save();
-    console.log(token);
+    console.log("Password reset token generated:", token);
     const resetURL = `Hi, Please follow this link to reset Your Password. This link is valid till 10 minutes from now. <a href='http://localhost:3000/reset-password/${token}'>Click Here</>`;
 
     const data = {
@@ -312,10 +338,23 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
       subject: "Forgot Password Link",
       htm: resetURL,
     };
-    sendEmail(data);
-    res.json(token);
+    
+    try {
+      await sendEmail(data);
+      console.log("Password reset email sent successfully to:", email);
+    } catch (emailError) {
+      console.log("Email sending failed, but password reset token was generated successfully");
+      console.log("Reset URL:", `http://localhost:3000/reset-password/${token}`);
+    }
+    
+    res.json({ 
+      success: true, 
+      message: "Password reset token generated successfully",
+      token: token 
+    });
   } catch (error) {
-    throw new Error(error);
+    console.error("Forgot password error:", error);
+    throw new Error(error.message || "Failed to process password reset request");
   }
 });
 
@@ -340,6 +379,8 @@ const addToWishlist = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   validateMongoDbId(_id);
   
+  console.log("Adding to wishlist:", { productId, userId: _id });
+  
   const alreadyAdded = await Wishlist.findOne({ userId: _id, productId });
   if (alreadyAdded) {
     return res.status(400).json({ message: "Product already in wishlist" });
@@ -350,7 +391,12 @@ const addToWishlist = asyncHandler(async (req, res) => {
     productId,
   });
 
-  res.status(201).json(newWishlist);
+  console.log("Wishlist item created:", newWishlist);
+  res.status(201).json({ 
+    success: true, 
+    message: "Product added to wishlist successfully",
+    data: newWishlist 
+  });
 });
 
 // const getWishlist = asyncHandler(async (req, res) => {
@@ -406,6 +452,12 @@ const userCart = asyncHandler(async (req, res) => {
 
   const { _id } = req.user;
   validateMongoDbId(_id);
+  
+  // Validate all ObjectIds
+  validateMongoDbId(productId);
+  validateMongoDbId(color);
+  validateMongoDbId(size);
+  
   try {
     let newCart = await new Cart({
       userId: _id,
@@ -534,6 +586,35 @@ const getMyOrders = asyncHandler(async (req, res) => {
       orders,
     });
   } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const getMyOrderDetails = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { id } = req.params;
+  console.log("getMyOrderDetails called with:", { userId: _id, orderId: id });
+  
+  try {
+    const order = await Order.findOne({ _id: id, user: _id })
+      .populate("user")
+      .populate("orderItems.product")
+      .populate("orderItems.color")
+      .populate("orderItems.size");
+    
+    console.log("Found order:", order ? "Yes" : "No");
+    
+    if (!order) {
+      console.log("Order not found for user");
+      return res.status(404).json({ message: "Order not found" });
+    }
+    
+    console.log("Sending order response");
+    res.json({
+      order,
+    });
+  } catch (error) {
+    console.error("Error in getMyOrderDetails:", error);
     throw new Error(error);
   }
 });
@@ -695,6 +776,8 @@ module.exports = {
   getsingleOrder,
   updateOrder,
   getYearlyTotalOrder,
+  getCurrentUser,
+  getMyOrderDetails,
 
   removeProductFromCart,
   updateProductQuantityFromCart,

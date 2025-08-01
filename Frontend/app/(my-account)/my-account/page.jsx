@@ -3,6 +3,7 @@ import Footer1 from "@/components/footers/Footer1";
 // import Topbar6 from "@/components/headers/Topbar6";
 import AccountSidebar from "@/components/my-account/AccountSidebar";
 import Information from "@/components/my-account/Information";
+import ProtectedRoute from "@/components/common/ProtectedRoute";
 import Link from "next/link";
 import React from "react";
 
@@ -13,9 +14,7 @@ export const metadata = {
 
 export default function MyAccountPage() {
   return (
-    <>
-      {/* <Topbar6 bgColor="bg-main" />
-      <Header1 /> */}
+    <ProtectedRoute>
       <>
         {/* page-title */}
         <div
@@ -55,17 +54,17 @@ export default function MyAccountPage() {
             <i className="icon icon-squares-four" />
           </button>
         </div>
-      </>
 
-      <section className="flat-spacing">
-        <div className="container">
-          <div className="my-account-wrap">
-            <AccountSidebar />
-            <Information />
+        <section className="flat-spacing">
+          <div className="container">
+            <div className="my-account-wrap">
+              <AccountSidebar />
+              <Information />
+            </div>
           </div>
-        </div>
-      </section>
-      <Footer1 />
-    </>
+        </section>
+        <Footer1 />
+      </>
+    </ProtectedRoute>
   );
 }

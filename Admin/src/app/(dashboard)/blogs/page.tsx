@@ -31,13 +31,14 @@ export default function BlogsPage() {
     return blogs.filter((b: any) => {
       const search = filter.toLowerCase();
       const titleOrDescMatch = (b.title || "").toLowerCase().includes(search) || (b.description || "").toLowerCase().includes(search);
+      const authorMatch = (b.author || "").toLowerCase().includes(search);
       const categoryMatch =
         categoryFilter === "all" ||
         (b.category && (
           b.category._id === categoryFilter || 
           b.category.title?.toLowerCase().includes(categoryFilter.toLowerCase())
         ));
-      return titleOrDescMatch && categoryMatch;
+      return (titleOrDescMatch || authorMatch) && categoryMatch;
     });
   }, [blogs, filter, categoryFilter]);
 

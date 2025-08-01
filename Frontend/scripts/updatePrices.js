@@ -1,25 +1,23 @@
 const fs = require('fs');
 const path = require('path');
 
-// Currency conversion rate
-const USD_TO_INR_RATE = 83;
-
-// Function to convert USD to INR
-const convertUSDToINR = (usdAmount) => {
-  return Math.round(usdAmount * USD_TO_INR_RATE);
-};
-
 // Function to format INR
-const formatINR = (inrAmount) => {
-  return `₹${inrAmount.toLocaleString('en-IN')}`;
-};
+function formatINR(amount) {
+  if (!amount || isNaN(amount)) return '₹0.00';
+  
+  const formatted = parseFloat(amount).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  return `₹${formatted}`;
+}
 
-// Function to convert USD string to INR
-const convertUSDStringToINR = (usdString) => {
-  const numericValue = parseFloat(usdString.replace(/[$,]/g, ''));
-  if (isNaN(numericValue)) return '₹0';
-  return formatINR(convertUSDToINR(numericValue));
-};
+// Function to extract numeric value
+function extractNumericValue(priceString) {
+  // Remove ₹ and commas, then convert to number
+  const numericValue = parseFloat(priceString.replace(/[₹,]/g, ''));
+  return isNaN(numericValue) ? 0 : numericValue;
+}
 
 // Files to update
 const filesToUpdate = [
@@ -55,15 +53,15 @@ filesToUpdate.forEach(filePath => {
       
       // Replace USD patterns with INR
       content = content.replace(/\$(\d+(?:\.\d{2})?)/g, (match, amount) => {
-        const inrAmount = convertUSDToINR(parseFloat(amount));
-        return formatINR(inrAmount);
+        const inrAmount = formatINR(parseFloat(amount));
+        return inrAmount;
       });
       
       // Replace specific patterns
       content = content.replace(/\$(\d+,\d+)/g, (match, amount) => {
         const numericValue = parseFloat(amount.replace(/,/g, ''));
-        const inrAmount = convertUSDToINR(numericValue);
-        return formatINR(inrAmount);
+        const inrAmount = formatINR(numericValue);
+        return inrAmount;
       });
       
       fs.writeFileSync(filePath, content, 'utf8');

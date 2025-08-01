@@ -4,23 +4,28 @@ import Image from "next/image";
 import Link from "next/link";
 import CountdownTimer from "../common/Countdown";
 import { useContextElement } from "@/context/Context";
+
+// Commented out coupon section for future use
+/*
 const discounts = [
   {
     discount: "10% OFF",
-    details: "For all orders from 200$",
+    details: "For all orders from 200₹",
     code: "Mo234231",
   },
   {
     discount: "10% OFF",
-    details: "For all orders from 200$",
+    details: "For all orders from 200₹",
     code: "Mo234231",
   },
   {
     discount: "10% OFF",
-    details: "For all orders from 200$",
+    details: "For all orders from 200₹",
     code: "Mo234231",
   },
 ];
+*/
+
 const shippingOptions = [
   {
     id: "free",
@@ -42,7 +47,9 @@ const shippingOptions = [
 export default function ShopCart() {
   const [activeDiscountIndex, setActiveDiscountIndex] = useState(1);
   const [selectedOption, setSelectedOption] = useState(shippingOptions[0]);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { cartProducts, setCartProducts, totalPrice } = useContextElement();
+
   const setQuantity = (id, quantity) => {
     if (quantity >= 1) {
       const item = cartProducts.filter((elm) => elm.id == id)[0];
@@ -53,16 +60,41 @@ export default function ShopCart() {
       setCartProducts(items);
     }
   };
+
   const removeItem = (id) => {
     setCartProducts((pre) => [...pre.filter((elm) => elm.id != id)]);
   };
+
   const handleOptionChange = (elm) => {
     setSelectedOption(elm);
   };
 
-  useEffect(() => {
-    document.querySelector(".progress-cart .value").style.width = "70%";
-  }, []);
+  const handleColorChange = (productId, color) => {
+    const updatedCart = cartProducts.map(item => 
+      item.id === productId ? { ...item, selectedColor: color } : item
+    );
+    setCartProducts(updatedCart);
+  };
+
+  const handleSizeChange = (productId, size) => {
+    const updatedCart = cartProducts.map(item => 
+      item.id === productId ? { ...item, selectedSize: size } : item
+    );
+    setCartProducts(updatedCart);
+  };
+
+  const calculateSubtotal = () => {
+    return cartProducts.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    return subtotal + selectedOption.price;
+  };
+
+  const canProceedToCheckout = () => {
+    return cartProducts.length > 0 && agreedToTerms;
+  };
 
   return (
     <>
@@ -70,49 +102,6 @@ export default function ShopCart() {
         <div className="container">
           <div className="row">
             <div className="col-xl-8">
-              <div className="tf-cart-sold">
-                <div className="notification-sold bg-surface">
-                  <Image
-                    className="icon"
-                    alt="img"
-                    src="/images/logo/icon-fire.png"
-                    width={48}
-                    height={49}
-                  />
-                  <div className="count-text">
-                    Your cart will expire in
-                    <div
-                      className="js-countdown time-count"
-                      data-timer={600}
-                      data-labels=":,:,:,"
-                    >
-                      <CountdownTimer
-                        style={4}
-                        targetDate={new Date(new Date().getTime() - 30 * 60000)}
-                      />
-                    </div>
-                    minutes! Please checkout now before your items sell out!
-                  </div>
-                </div>
-                <div className="notification-progress">
-                  <div className="text">
-                    Buy
-                    <span className="fw-semibold text-primary">
-                      $70.00
-                    </span>{" "}
-                    more to get <span className="fw-semibold">Freeship</span>
-                  </div>
-                  <div className="progress-cart">
-                    <div
-                      className="value"
-                      style={{ width: "0%" }}
-                      data-progress={50}
-                    >
-                      <span className="round" />
-                    </div>
-                  </div>
-                </div>
-              </div>
               {cartProducts.length ? (
                 <form onSubmit={(e) => e.preventDefault()}>
                   <table className="tf-table-page-cart">
@@ -130,7 +119,7 @@ export default function ShopCart() {
                         <tr key={i} className="tf-cart-item file-delete">
                           <td className="tf-cart-item_product">
                             <Link
-                              href={`/product-detail/${elm.id}`}
+                              href={`/product-detail/${elm.slug || elm.id}`}
                               className="img-box"
                             >
                               <Image
@@ -142,31 +131,39 @@ export default function ShopCart() {
                             </Link>
                             <div className="cart-info">
                               <Link
-                                href={`/product-detail/${elm.id}`}
+                                href={`/product-detail/${elm.slug || elm.id}`}
                                 className="cart-title link"
                               >
                                 {elm.title}
                               </Link>
                               <div className="variant-box">
                                 <div className="tf-select">
-                                  <select>
-                                    <option>Blue</option>
-                                    <option>Black</option>
-                                    <option>White</option>
-                                    <option>Red</option>
-                                    <option>Beige</option>
-                                    <option>Pink</option>
+                                  <select 
+                                    value={typeof elm.selectedColor === 'object' ? elm.selectedColor?.name || 'Blue' : elm.selectedColor || 'Blue'}
+                                    onChange={(e) => handleColorChange(elm.id, e.target.value)}
+                                  >
+                                    <option value="Blue">Blue</option>
+                                    <option value="Black">Black</option>
+                                    <option value="White">White</option>
+                                    <option value="Red">Red</option>
+                                    <option value="Beige">Beige</option>
+                                    <option value="Pink">Pink</option>
+                                    <option value="Green">Green</option>
+                                    <option value="Yellow">Yellow</option>
                                   </select>
                                 </div>
                                 <div className="tf-select">
-                                  <select>
-                                    <option>XL</option>
-                                    <option>XS</option>
-                                    <option>S</option>
-                                    <option>M</option>
-                                    <option>L</option>
-                                    <option>XL</option>
-                                    <option>2XL</option>
+                                  <select 
+                                    value={typeof elm.selectedSize === 'object' ? elm.selectedSize?.name || 'L' : elm.selectedSize || 'L'}
+                                    onChange={(e) => handleSizeChange(elm.id, e.target.value)}
+                                  >
+                                    <option value="XS">XS</option>
+                                    <option value="S">S</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="XL">XL</option>
+                                    <option value="2XL">2XL</option>
+                                    <option value="Free Size">Free Size</option>
                                   </select>
                                 </div>
                               </div>
@@ -177,7 +174,7 @@ export default function ShopCart() {
                             className="tf-cart-item_price text-center"
                           >
                             <div className="cart-price text-button price-on-sale">
-                              ${elm.price.toFixed(2)}
+                              ₹{elm.price.toFixed(2)}
                             </div>
                           </td>
                           <td
@@ -215,7 +212,7 @@ export default function ShopCart() {
                             className="tf-cart-item_total text-center"
                           >
                             <div className="cart-total text-button total-price">
-                              ${(elm.price * elm.quantity).toFixed(2)}
+                              ₹{(elm.price * elm.quantity).toFixed(2)}
                             </div>
                           </td>
                           <td
@@ -229,6 +226,9 @@ export default function ShopCart() {
                       ))}
                     </tbody>
                   </table>
+                  
+                  {/* Commented out coupon section for future use */}
+                  {/*
                   <div className="ip-discount-code">
                     <input type="text" placeholder="Add voucher discount" />
                     <button className="tf-btn">
@@ -239,7 +239,7 @@ export default function ShopCart() {
                     {discounts.map((item, index) => (
                       <div
                         key={index}
-                        className={`box-discount ${
+                        className={`box-discount ₹{
                           activeDiscountIndex === index ? "active" : ""
                         }`}
                         onClick={() => setActiveDiscountIndex(index)}
@@ -266,16 +266,19 @@ export default function ShopCart() {
                       </div>
                     ))}
                   </div>
+                  */}
                 </form>
               ) : (
-                <div>
-                  Your wishlist is empty. Start adding your favorite products to
-                  save them for later!{" "}
+                <div className="text-center py-5">
+                  <h4>Your cart is empty</h4>
+                  <p>Start adding your favorite products to your cart!</p>
                   <Link className="btn-line" href="/shop-default-grid">
                     Explore Products
                   </Link>
                 </div>
               )}
+
+              {/* You May Also Like Section - REMOVED (duplicate of RecentProducts component) */}
             </div>
             <div className="col-xl-4">
               <div className="fl-sidebar-cart">
@@ -283,11 +286,11 @@ export default function ShopCart() {
                   <h5 className="title">Order Summary</h5>
                   <div className="subtotal text-button d-flex justify-content-between align-items-center">
                     <span>Subtotal</span>
-                    <span className="total">${totalPrice.toFixed(2)}</span>
+                    <span className="total">₹{calculateSubtotal().toFixed(2)}</span>
                   </div>
                   <div className="discount text-button d-flex justify-content-between align-items-center">
                     <span>Discounts</span>
-                    <span className="total">${totalPrice ? "20" : 0}</span>
+                    <span className="total">₹0.00</span>
                   </div>
                   <div className="ship">
                     <span className="text-button">Shipping</span>
@@ -299,13 +302,13 @@ export default function ShopCart() {
                             name="ship-check"
                             className="tf-check-rounded"
                             id={option.id}
-                            checked={selectedOption === option}
+                            checked={selectedOption.id === option.id}
                             onChange={() => handleOptionChange(option)}
                           />
                           <label htmlFor={option.id}>
                             <span>{option.label}</span>
                             <span className="price">
-                              ${option.price.toFixed(2)}
+                              ₹{option.price.toFixed(2)}
                             </span>
                           </label>
                         </fieldset>
@@ -315,10 +318,7 @@ export default function ShopCart() {
                   <h5 className="total-order d-flex justify-content-between align-items-center">
                     <span>Total</span>
                     <span className="total">
-                      $
-                      {totalPrice
-                        ? (selectedOption.price + totalPrice).toFixed(2)
-                        : 0}
+                      ₹{calculateTotal().toFixed(2)}
                     </span>
                   </h5>
                   <div className="box-progress-checkout">
@@ -327,13 +327,29 @@ export default function ShopCart() {
                         type="checkbox"
                         id="check-agree"
                         className="tf-check-rounded"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
                       />
                       <label htmlFor="check-agree">
                         I agree with the
                         <Link href={`/term-of-use`}>terms and conditions</Link>
                       </label>
                     </fieldset>
-                    <Link href={`/checkout`} className="tf-btn btn-reset">
+                    <Link 
+                      href={canProceedToCheckout() ? `/checkout` : '#'} 
+                      className={`tf-btn btn-reset ${!canProceedToCheckout() ? 'disabled' : ''}`}
+                      style={{
+                        opacity: canProceedToCheckout() ? 1 : 0.6,
+                        cursor: canProceedToCheckout() ? 'pointer' : 'not-allowed',
+                        pointerEvents: canProceedToCheckout() ? 'auto' : 'none'
+                      }}
+                      onClick={(e) => {
+                        if (!canProceedToCheckout()) {
+                          e.preventDefault();
+                          alert('Please agree to terms and conditions and ensure your cart is not empty.');
+                        }
+                      }}
+                    >
                       Process To Checkout
                     </Link>
                     <p className="text-button text-center">
