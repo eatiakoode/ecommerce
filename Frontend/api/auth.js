@@ -272,42 +272,27 @@ const getDefaultColorAndSize = async () => {
 
 export const addToCart = async (token, cartData) => {
   try {
-    console.log("Sending cart data:", cartData);
-    
-    // If color and size are not provided (wishlist case), get defaults
-    if (!cartData.color || !cartData.size) {
-      const { defaultColor, defaultSize } = await getDefaultColorAndSize();
-      
-      if (!defaultColor || !defaultSize) {
-        throw new Error("No default color or size available. Please contact support.");
-      }
-      
-      cartData.color = defaultColor;
-      cartData.size = defaultSize;
-      
-      console.log("Using default color/size:", { color: defaultColor, size: defaultSize });
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/cart`, {
-      method: "POST",
+    const response = await fetch(`${API_BASE_URL}/frontend/cart`, {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(cartData),
+      body: JSON.stringify(cartData)
     });
 
-    const responseData = await response.json();
-    console.log("Cart response:", responseData);
-
-    if (!response.ok) {
-      throw new Error(responseData.message || "Failed to add to cart");
-    }
-
-    return { success: true, data: responseData };
+    const data = await response.json();
+    
+    return {
+      success: response.ok,
+      data: data,
+      status: response.status
+    };
   } catch (error) {
-    console.error("Add to cart error:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message
+    };
   }
 };
 

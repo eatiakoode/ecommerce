@@ -47,6 +47,11 @@ export const AuthProvider = ({ children }) => {
         setToken(authToken);
         setUser(userData);
         
+        // Clear any existing cart data to ensure fresh load from backend
+        localStorage.removeItem("cartProducts");
+        
+        console.log("Login successful, cart will be loaded from backend");
+        
         return { success: true };
       } else {
         return { success: false, error: result.error };
@@ -96,17 +101,15 @@ export const AuthProvider = ({ children }) => {
       // Clear localStorage
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("cartProducts");
+      localStorage.removeItem("wishlistItems");
       
       // Clear state
       setToken(null);
       setUser(null);
       
-      // Clear cart and wishlist from localStorage
-      localStorage.removeItem("cartProducts");
-      localStorage.removeItem("wishlistItems");
-      
-      // Trigger page refresh to clear all context states
-      window.location.reload();
+      // Don't reload the page - let the context handle cart clearing
+      // This allows for better UX and proper state management
       
       return { success: true };
     } catch (error) {
@@ -118,9 +121,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("wishlistItems");
       setToken(null);
       setUser(null);
-      
-      // Trigger page refresh to clear all context states
-      window.location.reload();
       
       return { success: true };
     } finally {

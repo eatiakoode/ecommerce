@@ -447,28 +447,62 @@ const emptyWishlist = asyncHandler(async (req, res) => {
 });
 
 
+// const userCart = asyncHandler(async (req, res) => {
+//   const { productId, color, quantity, size } = req.body;
+
+//   const { _id } = req.user;
+//   validateMongoDbId(_id);
+  
+//   // Validate all ObjectIds
+//   validateMongoDbId(productId);
+//   validateMongoDbId(color);
+//   validateMongoDbId(size);
+  
+//   try {
+//     let newCart = await new Cart({
+//       userId: _id,
+//       productId,
+//       color,
+//       size,
+//       quantity,
+//     }).save();
+//     res.json(newCart);
+//   } catch (error) {
+//     throw new Error(error);
+//   }
+// });
+
 const userCart = asyncHandler(async (req, res) => {
   const { productId, color, quantity, size } = req.body;
+  const userId = req.user._id;
 
-  const { _id } = req.user;
-  validateMongoDbId(_id);
-  
-  // Validate all ObjectIds
-  validateMongoDbId(productId);
-  validateMongoDbId(color);
-  validateMongoDbId(size);
-  
+  validateMongoDbId(userId);
+
   try {
-    let newCart = await new Cart({
-      userId: _id,
+    const existingCartItem = await Cart.findOne({
+      userId,
+      productId,
+      color,
+      size,
+    });
+
+    if (existingCartItem) {
+      existingCartItem.quantity += quantity;
+      await existingCartItem.save();
+      return res.status(200).json({ message: "Quantity updated", cart: existingCartItem });
+    }
+
+    const newCart = await Cart.create({
+      userId,
       productId,
       color,
       size,
       quantity,
-    }).save();
-    res.json(newCart);
+    });
+
+    res.status(201).json({ message: "Product added to cart", cart: newCart });
   } catch (error) {
-    throw new Error(error);
+    throw new Error(error.message);
   }
 });
 

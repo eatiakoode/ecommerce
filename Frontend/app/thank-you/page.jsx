@@ -30,18 +30,46 @@ const ThankYouPage = () => {
     return String(value);
   };
 
+  // Enhanced function to handle color and size specifically
+  const renderColorOrSize = (value, type = "value") => {
+    if (!value) return "N/A";
+    
+    // If it's already a string, return it
+    if (typeof value === "string") {
+      return value;
+    }
+    
+    // If it's an object, try to get the name/title/value
+    if (typeof value === "object") {
+      return value.name || value.title || value.value || "N/A";
+    }
+    
+    // If it's an array, get the first item
+    if (Array.isArray(value)) {
+      if (value.length === 0) return "N/A";
+      const firstItem = value[0];
+      if (typeof firstItem === "object") {
+        return firstItem.name || firstItem.title || firstItem.value || "N/A";
+      }
+      return String(firstItem);
+    }
+    
+    return String(value);
+  };
+
   useEffect(() => {
     const orderId = searchParams.get("orderId");
     const invoiceNo = searchParams.get("invoiceNo");
 
     if (orderId && invoiceNo) {
       const savedOrderDetails = localStorage.getItem("lastOrderDetails");
+      
       if (savedOrderDetails) {
         try {
           const parsed = JSON.parse(savedOrderDetails);
           setOrderDetails(parsed);
         } catch (error) {
-  
+          console.error("Error parsing order details:", error);
         }
       }
     }
@@ -118,8 +146,8 @@ const ThankYouPage = () => {
                     <div className="flex-1">
                       <h3 className="text-xs font-medium text-gray-900">{safeRender(item.name)}</h3>
                       <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                      {item.size && <p className="text-xs text-gray-500">Size: {safeRender(item.size)}</p>}
-                      {item.color && <p className="text-xs text-gray-500">Color: {safeRender(item.color)}</p>}
+                      <p className="text-xs text-gray-500">Size: {renderColorOrSize(item.size || item.selectedSize)}</p>
+                      <p className="text-xs text-gray-500">Color: {renderColorOrSize(item.color || item.selectedColor)}</p>
                     </div>
                     <div className="text-xs font-semibold text-gray-800">
                       {formatToINR(item.price)}

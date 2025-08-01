@@ -13,10 +13,33 @@ export default function CartModal() {
     totalPrice,
     addProductToCart,
     isAddedToCartProducts,
+    cartLoading,
+    removeFromCartLocal,
   } = useContextElement();
 
-  const removeItem = (id) => {
-    setCartProducts((pre) => [...pre.filter((elm) => elm.id != id && elm._id != id)]);
+  const [removingItems, setRemovingItems] = useState(new Set());
+
+  const removeItem = async (index) => {
+    const item = cartProducts[index];
+    if (item && item.cartItemId) {
+      // Set loading state for this specific item
+      setRemovingItems(prev => new Set(prev).add(item.cartItemId));
+      
+      try {
+        // Use the backend-synced removal function
+        await removeFromCartLocal(item.cartItemId);
+      } finally {
+        // Clear loading state
+        setRemovingItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(item.cartItemId);
+          return newSet;
+        });
+      }
+    } else {
+      // Fallback to local removal if no cartItemId
+      setCartProducts((pre) => pre.filter((_, i) => i !== index));
+    }
   };
 
   const [currentOpenPopup, setCurrentOpenPopup] = useState("");
@@ -37,7 +60,27 @@ export default function CartModal() {
               <div className="tf-mini-cart-wrap">
                 <div className="tf-mini-cart-main">
                   <div className="tf-mini-cart-sroll">
-                    {cartProducts.length ? (
+                    {cartLoading ? (
+                      <div className="p-4 text-center">
+                        <div className="loading-spinner" style={{ 
+                          display: "inline-block",
+                          width: "20px", 
+                          height: "20px", 
+                          border: "2px solid #f3f3f3",
+                          borderTop: "2px solid #3498db",
+                          borderRadius: "50%",
+                          animation: "spin 1s linear infinite",
+                          marginBottom: "10px"
+                        }}></div>
+                        <div>Loading your cart...</div>
+                        <style jsx>{`
+                          @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                          }
+                        `}</style>
+                      </div>
+                    ) : cartProducts.length ? (
                       <div className="tf-mini-cart-items">
                         {cartProducts.map((product, i) => (
                           <div
@@ -65,9 +108,13 @@ export default function CartModal() {
                                 </div>
                                 <div
                                   className="text-button tf-btn-remove remove"
-                                  onClick={() => removeItem(product.id)}
+                                  onClick={() => removeItem(i)}
+                                  style={{ 
+                                    cursor: removingItems.has(product.cartItemId) ? "not-allowed" : "pointer",
+                                    opacity: removingItems.has(product.cartItemId) ? 0.6 : 1
+                                  }}
                                 >
-                                  Remove
+                                  {removingItems.has(product.cartItemId) ? "Removing..." : "Remove"}
                                 </div>
                               </div>
                               <div className="d-flex align-items-center justify-content-between flex-wrap gap-12">

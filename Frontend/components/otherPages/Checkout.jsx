@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { getUserAddresses } from "@/api/address";
 import { countries } from "@/data/countries";
@@ -34,6 +34,7 @@ const discounts = [
 
 export default function Checkout() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, token, loading: authLoading, isAuthenticated } = useAuth();
   const [activeDiscountIndex, setActiveDiscountIndex] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,7 @@ export default function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [addressLoading, setAddressLoading] = useState(true);
+  const [isDirectPurchase, setIsDirectPurchase] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -62,7 +64,59 @@ export default function Checkout() {
     // saveCard: false
   });
 
-  const { cartProducts, totalPrice, clearCart } = useContextElement();
+  const { cartProducts, totalPrice, clearCart, setCartProducts } = useContextElement();
+
+  // Handle direct product purchase from BUY IT NOW
+  useEffect(() => {
+    const productId = searchParams.get('productId');
+    const color = searchParams.get('color');
+    const size = searchParams.get('size');
+    const quantity = searchParams.get('quantity');
+
+    if (productId && quantity) {
+      // This is a direct purchase, not from cart
+      // We need to fetch the product details and add it to a temporary cart
+      const handleDirectPurchase = async () => {
+        try {
+          // Fetch product details
+          const response = await fetch(`http://localhost:5000/api/frontend/product/${productId}`);
+          if (response.ok) {
+            const productData = await response.json();
+            
+            if (productData.success) {
+              const product = productData.data;
+              
+              // Create a cart item for direct purchase
+              const directPurchaseItem = {
+                id: product._id,
+                _id: product._id,
+                title: product.title || product.name,
+                name: product.title || product.name,
+                price: product.price || product.sellingPrice,
+                sellingPrice: product.price || product.sellingPrice,
+                images: product.images || [],
+                imgSrc: product.images?.[0]?.url || product.images?.[0]?.src || '/images/products/no-image.png',
+                quantity: parseInt(quantity) || 1,
+                selectedColor: color || null,
+                selectedSize: size || null,
+                // For direct purchase, we don't have cartItemId since it's not in the cart
+              };
+              
+              // Set this as the only item in cart for checkout
+              setCartProducts([directPurchaseItem]);
+              setIsDirectPurchase(true);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching product for direct purchase:', error);
+          alert('Error loading product details. Please try again.');
+          router.push('/');
+        }
+      };
+      
+      handleDirectPurchase();
+    }
+  }, [searchParams, setCartProducts, router]);
 
   // Check authentication and pre-fill form data
   useEffect(() => {
@@ -270,12 +324,12 @@ export default function Checkout() {
             name: item.title || item.name || 'Product',
             price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
             quantity: typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1,
-            size: typeof item.size === 'object' ? item.size?.name || item.size?.value || 'N/A' : (item.size || 'N/A'),
-            color: typeof item.color === 'object' ? item.color?.name || item.color?.value || 'N/A' : (item.color || 'N/A'),
+            size: item.selectedSize || 'N/A',
+            color: item.selectedColor || 'N/A',
             image: item.imgSrc || item.image || '/images/products/no-image.png'
           }))
         };
-  
+        
         localStorage.setItem('lastOrderDetails', JSON.stringify(orderDetails));
         
         // Send confirmation email
@@ -286,7 +340,9 @@ export default function Checkout() {
         });
 
         // Clear cart after successful order
-        clearCart();
+        if (!isDirectPurchase) {
+          clearCart();
+        }
 
         // Redirect to thank you page with order details
         router.push(`/thank-you?orderId=${result.orderId}&invoiceNo=${result.invoiceNo}`);
@@ -331,6 +387,11 @@ export default function Checkout() {
                 <div className="title-login">
                   <p>Welcome back, {user?.firstName || 'User'}!</p>
                   <p className="text-secondary">Your information is pre-filled below</p>
+                  {isDirectPurchase && (
+                    <div className="alert alert-info" style={{ marginTop: '10px', padding: '10px', backgroundColor: '#d1ecf1', border: '1px solid #bee5eb', borderRadius: '4px', color: '#0c5460' }}>
+                      <strong>Direct Purchase:</strong> You're purchasing this item directly without adding it to your cart.
+                    </div>
+                  )}
                 </div>
                 {/* Login section is hidden for logged-in users */}
               </div>

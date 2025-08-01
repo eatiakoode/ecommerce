@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import CountdownTimer from "../common/Countdown";
 import { useContextElement } from "@/context/Context";
+import { useAuth } from "@/context/AuthContext";
+import { removeFromCart, updateCartItem } from "@/api/auth";
 
 // Commented out coupon section for future use
 /*
@@ -48,21 +50,56 @@ export default function ShopCart() {
   const [activeDiscountIndex, setActiveDiscountIndex] = useState(1);
   const [selectedOption, setSelectedOption] = useState(shippingOptions[0]);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const { cartProducts, setCartProducts, totalPrice } = useContextElement();
+  const { cartProducts, setCartProducts, totalPrice, removeFromCartLocal, updateQuantity } = useContextElement();
+  const { token, isAuthenticated } = useAuth();
 
-  const setQuantity = (id, quantity) => {
+  const setQuantity = async (id, quantity) => {
     if (quantity >= 1) {
-      const item = cartProducts.filter((elm) => elm.id == id)[0];
-      const items = [...cartProducts];
-      const itemIndex = items.indexOf(item);
-      item.quantity = quantity;
-      items[itemIndex] = item;
-      setCartProducts(items);
+      // Find the cart item
+      const item = cartProducts.find(elm => elm.id == id || elm._id == id);
+      if (item) {
+        // Update local state immediately for better UX
+        const updatedCart = cartProducts.map(cartItem => 
+          (cartItem.id == id || cartItem._id == id) ? { ...cartItem, quantity } : cartItem
+        );
+        setCartProducts(updatedCart);
+        
+        // Sync with backend if user is authenticated and item has cartItemId
+        if (isAuthenticated() && token && item.cartItemId) {
+          try {
+            const result = await updateCartItem(token, item.cartItemId, quantity);
+            
+            if (!result.success) {
+              console.error("Failed to update quantity in backend:", result.error);
+            }
+          } catch (error) {
+            console.error("Error updating quantity in backend:", error);
+          }
+        }
+      }
     }
   };
 
-  const removeItem = (id) => {
-    setCartProducts((pre) => [...pre.filter((elm) => elm.id != id)]);
+  const removeItem = async (id) => {
+    // Find the cart item
+    const item = cartProducts.find(elm => elm.id == id || elm._id == id);
+    if (item) {
+      // Remove from local state immediately for better UX
+      setCartProducts((pre) => [...pre.filter((elm) => elm.id != id && elm._id != id)]);
+      
+      // Sync with backend if user is authenticated and item has cartItemId
+      if (isAuthenticated() && token && item.cartItemId) {
+        try {
+          const result = await removeFromCart(token, item.cartItemId);
+          
+          if (!result.success) {
+            console.error("Failed to remove item from backend:", result.error);
+          }
+        } catch (error) {
+          console.error("Error removing item from backend:", error);
+        }
+      }
+    }
   };
 
   const handleOptionChange = (elm) => {
@@ -104,20 +141,20 @@ export default function ShopCart() {
             <div className="col-xl-8">
               {cartProducts.length ? (
                 <form onSubmit={(e) => e.preventDefault()}>
-                  <table className="tf-table-page-cart">
+                  <table className="tf-table-page-cart" style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <th>Products</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th>Total Price</th>
-                        <th />
+                        <th className="text-left" style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #eee' }}>Products</th>
+                        <th className="text-center" style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #eee' }}>Price</th>
+                        <th className="text-center" style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #eee' }}>Quantity</th>
+                        <th className="text-center" style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #eee' }}>Total Price</th>
+                        <th className="text-center" style={{ textAlign: 'center', padding: '12px', borderBottom: '1px solid #eee' }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {cartProducts.map((elm, i) => (
                         <tr key={i} className="tf-cart-item file-delete">
-                          <td className="tf-cart-item_product">
+                          <td className="tf-cart-item_product text-left">
                             <Link
                               href={`/product-detail/${elm.slug || elm.id}`}
                               className="img-box"
@@ -137,34 +174,22 @@ export default function ShopCart() {
                                 {elm.title}
                               </Link>
                               <div className="variant-box">
-                                <div className="tf-select">
-                                  <select 
-                                    value={typeof elm.selectedColor === 'object' ? elm.selectedColor?.name || 'Blue' : elm.selectedColor || 'Blue'}
-                                    onChange={(e) => handleColorChange(elm.id, e.target.value)}
-                                  >
-                                    <option value="Blue">Blue</option>
-                                    <option value="Black">Black</option>
-                                    <option value="White">White</option>
-                                    <option value="Red">Red</option>
-                                    <option value="Beige">Beige</option>
-                                    <option value="Pink">Pink</option>
-                                    <option value="Green">Green</option>
-                                    <option value="Yellow">Yellow</option>
-                                  </select>
-                                </div>
-                                <div className="tf-select">
-                                  <select 
-                                    value={typeof elm.selectedSize === 'object' ? elm.selectedSize?.name || 'L' : elm.selectedSize || 'L'}
-                                    onChange={(e) => handleSizeChange(elm.id, e.target.value)}
-                                  >
-                                    <option value="XS">XS</option>
-                                    <option value="S">S</option>
-                                    <option value="M">M</option>
-                                    <option value="L">L</option>
-                                    <option value="XL">XL</option>
-                                    <option value="2XL">2XL</option>
-                                    <option value="Free Size">Free Size</option>
-                                  </select>
+                                <div className="selected-options" style={{ marginTop: '8px' }}>
+                                  <span className="selected-color" style={{ 
+                                    display: 'block', 
+                                    fontSize: '14px', 
+                                    color: '#666', 
+                                    marginBottom: '4px' 
+                                  }}>
+                                    Color: {typeof elm.selectedColor === 'object' ? elm.selectedColor?.name || elm.selectedColor?.title || elm.selectedColor?.value : elm.selectedColor || 'Not selected'}
+                                  </span>
+                                  <span className="selected-size" style={{ 
+                                    display: 'block', 
+                                    fontSize: '14px', 
+                                    color: '#666' 
+                                  }}>
+                                    Size: {typeof elm.selectedSize === 'object' ? elm.selectedSize?.name || elm.selectedSize?.title || elm.selectedSize?.value : elm.selectedSize || 'Not selected'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -172,6 +197,7 @@ export default function ShopCart() {
                           <td
                             data-cart-title="Price"
                             className="tf-cart-item_price text-center"
+                            style={{ textAlign: 'center', padding: '12px', verticalAlign: 'middle' }}
                           >
                             <div className="cart-price text-button price-on-sale">
                               ₹{elm.price.toFixed(2)}
@@ -179,9 +205,10 @@ export default function ShopCart() {
                           </td>
                           <td
                             data-cart-title="Quantity"
-                            className="tf-cart-item_quantity"
+                            className="tf-cart-item_quantity text-center"
+                            style={{ textAlign: 'center', padding: '12px', verticalAlign: 'middle' }}
                           >
-                            <div className="wg-quantity mx-md-auto">
+                            <div className="wg-quantity mx-auto">
                               <span
                                 className="btn-quantity btn-decrease"
                                 onClick={() =>
@@ -210,6 +237,7 @@ export default function ShopCart() {
                           <td
                             data-cart-title="Total"
                             className="tf-cart-item_total text-center"
+                            style={{ textAlign: 'center', padding: '12px', verticalAlign: 'middle' }}
                           >
                             <div className="cart-total text-button total-price">
                               ₹{(elm.price * elm.quantity).toFixed(2)}
@@ -217,7 +245,8 @@ export default function ShopCart() {
                           </td>
                           <td
                             data-cart-title="Remove"
-                            className="remove-cart"
+                            className="remove-cart text-center"
+                            style={{ textAlign: 'center', padding: '12px', verticalAlign: 'middle' }}
                             onClick={() => removeItem(elm.id)}
                           >
                             <span className="remove icon icon-close" />
