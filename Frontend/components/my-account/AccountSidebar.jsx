@@ -10,7 +10,19 @@ export default function AccountSidebar() {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      // Show loading state
+      console.log("Logging out...");
+      
+      // Call logout function (this will clear localStorage and trigger page reload)
+      await logout();
+      
+      // The logout function will handle the page reload, so we don't need to navigate
+      // The page reload will clear all context states and redirect to home
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if there's an error, the logout function should still work
+    }
   };
 
   return (
@@ -19,10 +31,20 @@ export default function AccountSidebar() {
         <div className="account-avatar">
           <div className="image">
             <Image
-              alt=""
+              alt="User Avatar"
               src="/images/avatar/user-account.jpg"
               width={281}
               height={280}
+              onError={(e) => {
+                // Fallback to a default avatar if the image fails to load
+                e.target.src = "/images/avatar/user-default.jpg";
+              }}
+              onLoad={(e) => {
+                // Ensure the image loaded successfully
+                if (!e.target.src || e.target.src.trim() === "") {
+                  e.target.src = "/images/avatar/user-default.jpg";
+                }
+              }}
             />
           </div>
           <h6 className="mb_4">
@@ -188,10 +210,12 @@ export default function AccountSidebar() {
           </li>
           <li>
             <Link
-              href={`/forgot-password`}
-              className={`my-account-nav-item ${
-                pathname == "/forgot-password" ? "active" : ""
-              } `}
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogout();
+              }}
+              className="my-account-nav-item"
             >
               <svg
                 width={24}
@@ -215,52 +239,8 @@ export default function AccountSidebar() {
                   strokeLinejoin="round"
                 />
               </svg>
-              Forgot Password
-            </Link>
-          </li>
-          <li>
-            <button
-              onClick={handleLogout}
-              className="my-account-nav-item"
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                width: '100%', 
-                textAlign: 'left',
-                cursor: 'pointer'
-              }}
-            >
-              <svg
-                width={24}
-                height={24}
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9"
-                  stroke="#181818"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M16 17L21 12L16 7"
-                  stroke="#181818"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M21 12H9"
-                  stroke="#181818"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
               Logout
-            </button>
+            </Link>
           </li>
         </ul>
       </div>

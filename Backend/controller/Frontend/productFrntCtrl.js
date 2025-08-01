@@ -9,9 +9,11 @@ const Size = require('../../models/sizeModel')
 const getProducts = asyncHandler(async (req, res) => {
   try {
     const products = await Product.find({})
-      .select("title MRP sellingPrice images categories brand slug shortDescription description")
+      .select("title MRP sellingPrice images categories brand slug shortDescription description quantity color size")
       .populate("categories", "name")
-      .populate("brand", "title");
+      .populate("brand", "title")
+      .populate("color", "title")
+      .populate("size", "name value title");
 
     res.status(200).json(products);
   } catch (error) {
@@ -26,7 +28,8 @@ const getProductBySlug = asyncHandler(async (req, res) => {
   let product = await Product.findOne({ slug })
     .populate("categories", "name _id")
     .populate("color", "title _id")
-    .populate("size", "name value _id");
+    .populate("size", "name value _id")
+    .populate("brand", "title _id");
 
   // If not found by slug, try to find by ID
   if (!product) {
@@ -36,7 +39,8 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       product = await Product.findById(slug)
         .populate("categories", "name _id")
         .populate("color", "title _id")
-        .populate("size", "name value _id");
+        .populate("size", "name value _id")
+        .populate("brand", "title _id");
     }
   }
 
@@ -69,7 +73,6 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
   const { slug } = req.params;
 
   const currentProduct = await Product.findOne({ slug });
-  console.log("currentProduct", currentProduct);
 
   if (!currentProduct) {
     return res.status(404).json({ message: "Product not found" });
@@ -83,7 +86,6 @@ const getRelatedProducts = asyncHandler(async (req, res) => {
   })
     .select("title MRP sellingPrice images")
     .limit(4);
-  console.log(typeof currentProduct._id);
 
   res.status(200).json(relatedProducts);
 });
@@ -147,31 +149,90 @@ const getFilteredProducts = asyncHandler(async (req, res) => {
   //   query.color = { $in: Array.isArray(color) ? color : [color] };
   // }
   if (color) {
-    const colorDocs = await Color.find({
+    // First try to find exact match
+    let colorDocs = await Color.find({
       title: { $in: Array.isArray(color) ? color : [color] }
     });
 
+    // If no exact match found, try to find partial matches
     if (colorDocs.length === 0) {
-      return res.status(400).json({
-        status: "fail",
-        message: "Color not found"
+      colorDocs = await Color.find({
+        $or: [
+          { title: { $regex: color, $options: 'i' } },
+          { name: { $regex: color, $options: 'i' } },
+          { value: { $regex: color, $options: 'i' } }
+        ]
       });
     }
 
-    const colorIds = colorDocs.map(c => c._id);
-    query.color = { $in: colorIds };
+    // If still no matches, try to find colors that contain the search term
+    if (colorDocs.length === 0) {
+      colorDocs = await Color.find({
+        $or: [
+          { title: { $regex: `.*${color}.*`, $options: 'i' } },
+          { name: { $regex: `.*${color}.*`, $options: 'i' } },
+          { value: { $regex: `.*${color}.*`, $options: 'i' } }
+        ]
+      });
+    }
+
+    if (colorDocs.length > 0) {
+      const colorIds = colorDocs.map(c => c._id);
+      query.color = { $in: colorIds };
+    } else {
+      // If no color matches found, return empty result
+      return res.status(200).json({
+        total: 0,
+        page: parseInt(page),
+        pages: 0,
+        data: []
+      });
+    }
   }
 
   // if (size) {
   //   query.size = { $in: Array.isArray(size) ? size : [size] };
   // }
   if (size) {
-    const sizeDocs = await Size.find({
+    // First try to find exact match
+    let sizeDocs = await Size.find({
       name: { $in: Array.isArray(size) ? size : [size] }
     });
 
-    const sizeIds = sizeDocs.map(s => s._id);
-    query.size = { $in: sizeIds };
+    // If no exact match found, try to find partial matches
+    if (sizeDocs.length === 0) {
+      sizeDocs = await Size.find({
+        $or: [
+          { name: { $regex: size, $options: 'i' } },
+          { value: { $regex: size, $options: 'i' } },
+          { title: { $regex: size, $options: 'i' } }
+        ]
+      });
+    }
+
+    // If still no matches, try to find sizes that contain the search term
+    if (sizeDocs.length === 0) {
+      sizeDocs = await Size.find({
+        $or: [
+          { name: { $regex: `.*${size}.*`, $options: 'i' } },
+          { value: { $regex: `.*${size}.*`, $options: 'i' } },
+          { title: { $regex: `.*${size}.*`, $options: 'i' } }
+        ]
+      });
+    }
+
+    if (sizeDocs.length > 0) {
+      const sizeIds = sizeDocs.map(s => s._id);
+      query.size = { $in: sizeIds };
+    } else {
+      // If no size matches found, return empty result
+      return res.status(200).json({
+        total: 0,
+        page: parseInt(page),
+        pages: 0,
+        data: []
+      });
+    }
   }
 
   if (minPrice || maxPrice) {

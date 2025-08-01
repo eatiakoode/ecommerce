@@ -51,19 +51,31 @@ export default function WishlistContent() {
   };
 
   const handleAddToCart = async (productId) => {
+    // Validate product ID
+    if (!productId) {
+      setMessage({ type: "error", text: "Invalid product ID. Please try refreshing the page." });
+      return;
+    }
+
     try {
+      console.log("Adding to cart with productId:", productId);
+      
+      // Show loading message
+      setMessage({ type: "info", text: "Adding to cart..." });
+      
       const result = await addToCart(token, {
-        productId,
+        productId: productId.toString(), // Ensure it's a string
         quantity: 1
       });
       
       if (result.success) {
-        setMessage({ type: "success", text: "Item added to cart successfully!" });
+        setMessage({ type: "success", text: "Item added to cart successfully! You can now view it in your cart." });
       } else {
-        setMessage({ type: "error", text: result.error });
+        setMessage({ type: "error", text: result.error || "Failed to add item to cart" });
       }
     } catch (error) {
-      setMessage({ type: "error", text: "Failed to add item to cart" });
+      console.error("Add to cart error:", error);
+      setMessage({ type: "error", text: "Failed to add item to cart. Please try again." });
     }
   };
 
@@ -86,14 +98,26 @@ export default function WishlistContent() {
         
         {/* Message Display */}
         {message.text && (
-          <div className={`alert ${message.type === "success" ? "alert-success" : "alert-danger"}`} 
+          <div className={`alert ${
+            message.type === "success" ? "alert-success" : 
+            message.type === "error" ? "alert-danger" : 
+            message.type === "info" ? "alert-info" : "alert-danger"
+          }`} 
                style={{ 
-                 backgroundColor: message.type === "success" ? "#d4edda" : "#f8d7da", 
-                 color: message.type === "success" ? "#155724" : "#721c24", 
+                 backgroundColor: message.type === "success" ? "#d4edda" : 
+                               message.type === "error" ? "#f8d7da" : 
+                               message.type === "info" ? "#d1ecf1" : "#f8d7da", 
+                 color: message.type === "success" ? "#155724" : 
+                       message.type === "error" ? "#721c24" : 
+                       message.type === "info" ? "#0c5460" : "#721c24", 
                  padding: "10px", 
                  borderRadius: "4px", 
                  marginBottom: "20px",
-                 border: `1px solid ${message.type === "success" ? "#c3e6cb" : "#f5c6cb"}`
+                 border: `1px solid ${
+                   message.type === "success" ? "#c3e6cb" : 
+                   message.type === "error" ? "#f5c6cb" : 
+                   message.type === "info" ? "#bee5eb" : "#f5c6cb"
+                 }`
                }}>
             {message.text}
           </div>
@@ -118,6 +142,9 @@ export default function WishlistContent() {
             {wishlistItems.map((item) => {
               const product = item.productId;
               const price = product?.price || product?.sellingPrice || 0;
+              
+              // Get the correct product ID
+              const productId = product?._id || product?.id || item?.productId || product?.productId;
 
               return (
                 <div key={item._id} className="wishlist-item" style={{ 
@@ -155,7 +182,16 @@ export default function WishlistContent() {
                       color: "#666",
                       lineHeight: "1.4"
                     }}>
-                      {product?.description?.substring(0, 100)}...
+                      {product?.description 
+                        ? (product.description.length > 100 
+                            ? product.description.substring(0, 100) + "..." 
+                            : product.description)
+                        : product?.shortDescription 
+                          ? (product.shortDescription.length > 100 
+                              ? product.shortDescription.substring(0, 100) + "..." 
+                              : product.shortDescription)
+                          : "No description available for this product."
+                      }
                     </p>
                     
                     <div style={{ 
@@ -165,16 +201,21 @@ export default function WishlistContent() {
                       marginBottom: "15px"
                     }}>
                       <span style={{ 
-                        fontSize: "18px", 
-                        fontWeight: "bold", 
-                        color: "#333" 
+                        fontSize: '18px', 
+                        fontWeight: 'bold', 
+                        color: '#333' 
                       }}>
-                        ${price.toFixed(2)}
+                        ₹{price.toFixed(2)}
                       </span>
                       
                       <div style={{ display: "flex", gap: "10px" }}>
-                        <button
-                          onClick={() => handleAddToCart(product._id)}
+                        {/* <button
+                          onClick={() => {
+                            console.log("Product data:", product);
+                            console.log("Wishlist item:", item);
+                            console.log("Product ID:", productId);
+                            handleAddToCart(productId);
+                          }}
                           style={{
                             padding: "8px 16px",
                             backgroundColor: "#007bff",
@@ -186,7 +227,7 @@ export default function WishlistContent() {
                           }}
                         >
                           Add to Cart
-                        </button>
+                        </button> */}
                         
                         <button
                           onClick={() => handleRemoveFromWishlist(item._id)}

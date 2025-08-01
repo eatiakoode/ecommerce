@@ -8,7 +8,7 @@ export default function MarqueeSection2({ parentClass = "tf-marquee" }) {
         <div className="initial-child-container">
           <div className="marquee-child-item">
             <p className="text-btn-uppercase">
-              Free shipping on all orders over $20.00
+              Free shipping on all orders over ₹20.00
             </p>
           </div>
           <div className="marquee-child-item">
@@ -25,7 +25,7 @@ export default function MarqueeSection2({ parentClass = "tf-marquee" }) {
           {/* 2 */}
           {/* <div className="marquee-child-item">
             <p className="text-btn-uppercase">
-              Free shipping on all orders over $20.00
+              Free shipping on all orders over ₹20.00
             </p>
           </div>
           <div className="marquee-child-item">
@@ -42,7 +42,7 @@ export default function MarqueeSection2({ parentClass = "tf-marquee" }) {
           {/* 3 */}
           {/* <div className="marquee-child-item">
             <p className="text-btn-uppercase">
-              Free shipping on all orders over $20.00
+              Free shipping on all orders over ₹20.00
             </p>
           </div>
           <div className="marquee-child-item">
@@ -59,7 +59,7 @@ export default function MarqueeSection2({ parentClass = "tf-marquee" }) {
           {/* 4 */}
           {/* <div className="marquee-child-item">
             <p className="text-btn-uppercase">
-              Free shipping on all orders over $20.00
+              Free shipping on all orders over ₹20.00
             </p>
           </div>
           <div className="marquee-child-item">
@@ -76,7 +76,7 @@ export default function MarqueeSection2({ parentClass = "tf-marquee" }) {
           {/* 5 */}
           {/* <div className="marquee-child-item">
             <p className="text-btn-uppercase">
-              Free shipping on all orders over $20.00
+              Free shipping on all orders over ₹20.00
             </p>
           </div>
           <div className="marquee-child-item">
@@ -93,7 +93,7 @@ export default function MarqueeSection2({ parentClass = "tf-marquee" }) {
           {/* 6 */}
           {/* <div className="marquee-child-item">
             <p className="text-btn-uppercase">
-              Free shipping on all orders over $20.00
+              Free shipping on all orders over ₹20.00
             </p>
           </div>
           <div className="marquee-child-item">

@@ -94,9 +94,7 @@ export default function ColorSelect({
     }
   });
 
-  console.log("ColorSelect - Available colors:", colors);
-  console.log("ColorSelect - Transformed colors:", transformedColors);
-  console.log("ColorSelect - Active color:", activeColor);
+  
 
   return (
     <div className="variant-picker-item">
@@ -126,7 +124,7 @@ export default function ColorSelect({
             }
           }
           
-          console.log(`Color: ${color}, Display Color: ${displayColor}, Value: ${value}`);
+  
           
           return (
             <React.Fragment key={id}>

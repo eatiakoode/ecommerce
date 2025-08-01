@@ -224,10 +224,8 @@ export default function ProductCard9({ product, gridClass = "" }) {
           {product.title}
         </Link>
         <span className="price">
-          {product.oldPrice && (
-            <span className="old-price">${product.oldPrice.toFixed(2)}</span>
-          )}{" "}
-          ${product.price?.toFixed(2)}
+          <span className="old-price">₹{product.oldPrice.toFixed(2)}</span>
+          <span className="new-price">₹{product.price?.toFixed(2)}</span>
         </span>
         {product.colors && (
           <ul className="list-color-product">

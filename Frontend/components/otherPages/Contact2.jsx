@@ -31,7 +31,7 @@ export default function Contact2() {
         }
       })
       .catch((err) => {
-        console.log(err);
+
       });
   };
   return (

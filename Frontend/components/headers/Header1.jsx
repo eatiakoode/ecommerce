@@ -6,16 +6,29 @@ import Link from "next/link";
 import CartLength from "../common/CartLength";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
-
+import { useRouter } from "next/navigation";
 import WishlistModal from "../common/WishlistModal"; // import the modal
 
 export default function Header1({ fullWidth = false }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { getWishlistCount } = useWishlist();
   const [showWishlist, setShowWishlist] = useState(false); // new state
-
+  const router = useRouter();
   const handleLogout = async () => {
-    await logout();
+    try {
+      // Show loading state
+      console.log("Logging out...");
+      
+      // Call logout function (this will clear localStorage and trigger page reload)
+      await logout();
+      
+      // The logout function will handle the page reload, so we don't need to navigate
+      // The page reload will clear all context states and redirect to home
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if there's an error, redirect to home
+      router.push("/");
+    }
   };
 
   return (
@@ -87,7 +100,7 @@ export default function Header1({ fullWidth = false }) {
                 </a>
               </li>
               <li className="nav-account">
-                <a href="my-account" className="nav-icon-item">
+                <a href="#" className="nav-icon-item">
                   <svg
                     className="icon"
                     width={24}

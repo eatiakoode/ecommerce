@@ -43,9 +43,7 @@ export default function Products1({ parentClass = "flat-spacing" }) {
         
         const data = await response.json();
         
-        console.log('API Response:', data);
-        console.log('First product sample:', data[0]);
-        console.log('First product images:', data[0]?.images);
+
         
         // Transform backend data to match frontend expectations
         const transformedProducts = data.map(product => {
@@ -91,7 +89,7 @@ export default function Products1({ parentClass = "flat-spacing" }) {
         setProducts(transformedProducts);
         setError(null);
       } catch (err) {
-        console.error('Error fetching products:', err);
+
         setError('Failed to load products. Please try again later.');
         setProducts([]);
       } finally {

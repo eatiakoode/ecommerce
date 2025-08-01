@@ -1,0 +1,70 @@
+import Footer1 from "@/components/footers/Footer1";
+import AccountSidebar from "@/components/my-account/AccountSidebar";
+import OrderDetails from "@/components/my-account/OrderDetails";
+import Link from "next/link";
+import React from "react";
+
+export const metadata = {
+  title:
+    "My Account Order Details || Modave - Multipurpose React Nextjs eCommerce Template",
+  description: "Modave - Multipurpose React Nextjs eCommerce Template",
+};
+
+export default function MyAccountOrdersDetailsPage({ params }) {
+  const { id } = params;
+
+  return (
+    <>
+      <>
+        {/* page-title */}
+        <div
+          className="page-title"
+          style={{ backgroundImage: "url(/images/section/page-title.jpg)" }}
+        >
+          <div className="container-full">
+            <div className="row">
+              <div className="col-12">
+                <h3 className="heading text-center">My Account</h3>
+                <ul className="breadcrumbs d-flex align-items-center justify-content-center">
+                  <li>
+                    <Link className="link" href={`/`}>
+                      Homepage
+                    </Link>
+                  </li>
+                  <li>
+                    <i className="icon-arrRight" />
+                  </li>
+                  <li>
+                    <Link className="link" href="/my-account-orders">
+                      Orders
+                    </Link>
+                  </li>
+                  <li>
+                    <i className="icon-arrRight" />
+                  </li>
+                  <li>Order Details</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* /page-title */}
+        <div className="btn-sidebar-account">
+          <button data-bs-toggle="offcanvas" data-bs-target="#mbAccount">
+            <i className="icon icon-squares-four" />
+          </button>
+        </div>
+      </>
+
+      <section className="flat-spacing">
+        <div className="container">
+          <div className="my-account-wrap">
+            <AccountSidebar />
+            <OrderDetails orderId={id} />
+          </div>
+        </div>
+      </section>
+      <Footer1 />
+    </>
+  );
+} 

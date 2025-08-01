@@ -21,25 +21,48 @@ export default function QuickView() {
     updateQuantity,
   } = useContextElement();
 
-  const openModalSizeChoice = () => {
-    const bootstrap = require("bootstrap"); // dynamically import bootstrap
-    var myModal = new bootstrap.Modal(document.getElementById("size-guide"), {
-      keyboard: false,
-    });
+  // Safe price handling
+  const getSafePrice = (price) => {
+    if (price === null || price === undefined || isNaN(price)) {
+      return 0;
+    }
+    return parseFloat(price);
+  };
 
-    myModal.show();
-    document
-      .getElementById("size-guide")
-      .addEventListener("hidden.bs.modal", () => {
-        myModal.hide();
+  const openModalSizeChoice = () => {
+    try {
+      const bootstrap = require("bootstrap"); // dynamically import bootstrap
+      var myModal = new bootstrap.Modal(document.getElementById("size-guide"), {
+        keyboard: false,
       });
-    const backdrops = document.querySelectorAll(".modal-backdrop");
-    if (backdrops.length > 1) {
-      // Apply z-index to the last backdrop
-      const lastBackdrop = backdrops[backdrops.length - 1];
-      lastBackdrop.style.zIndex = "1057";
+
+      myModal.show();
+      document
+        .getElementById("size-guide")
+        .addEventListener("hidden.bs.modal", () => {
+          myModal.hide();
+        });
+      const backdrops = document.querySelectorAll(".modal-backdrop");
+      if (backdrops.length > 1) {
+        // Apply z-index to the last backdrop
+        const lastBackdrop = backdrops[backdrops.length - 1];
+        lastBackdrop.style.zIndex = "1057";
+      }
+    } catch (error) {
+
+      // Fallback: show size guide in a different way or alert
+      alert('Size guide is not available. Please check the product details page.');
     }
   };
+
+  // Don't render if quickViewItem is not available
+  if (!quickViewItem) {
+    return null;
+  }
+
+  const safePrice = getSafePrice(quickViewItem.price);
+  const safeOldPrice = getSafePrice(quickViewItem.oldPrice);
+
   return (
     <div className="modal fullRight fade modal-quick-view" id="quickView">
       <div className="modal-dialog">
@@ -61,7 +84,7 @@ export default function QuickView() {
               <div className="tf-product-info-heading">
                 <div className="tf-product-info-name">
                   <div className="text text-btn-uppercase">Clothing</div>
-                  <h3 className="name">{quickViewItem.title}</h3>
+                  <h3 className="name">{quickViewItem.title || 'Product Title'}</h3>
                   <div className="sub">
                     <div className="tf-product-info-rate">
                       <div className="list-star">
@@ -84,13 +107,13 @@ export default function QuickView() {
                 <div className="tf-product-info-desc">
                   <div className="tf-product-info-price">
                     <h5 className="price-on-sale font-2">
-                      ${quickViewItem.price.toFixed(2)}
+                      ₹{safePrice.toFixed(2)}
                     </h5>
-                    {quickViewItem.oldPrice ? (
+                    {safeOldPrice > 0 ? (
                       <>
                         <div className="compare-at-price font-2">
                           {" "}
-                          ${quickViewItem.oldPrice.toFixed(2)}
+                          ₹{safeOldPrice.toFixed(2)}
                         </div>
                         <div className="badges-on-sale text-btn-uppercase">
                           -25%
@@ -127,7 +150,7 @@ export default function QuickView() {
                       isAddedToCartProducts(quickViewItem.id)
                         ? cartProducts.filter(
                             (elm) => elm.id == quickViewItem.id
-                          )[0].quantity
+                          )[0]?.quantity || quantity
                         : quantity
                     }
                     setQuantity={(qty) => {
@@ -153,15 +176,15 @@ export default function QuickView() {
                           : "Add to cart -"}
                       </span>
                       <span className="tf-qty-price total-price">
-                        $
+                        ₹
                         {isAddedToCartProducts(quickViewItem.id)
                           ? (
-                              quickViewItem.price *
-                              cartProducts.filter(
+                              safePrice *
+                              (cartProducts.filter(
                                 (elm) => elm.id == quickViewItem.id
-                              )[0].quantity
+                              )[0]?.quantity || 1)
                             ).toFixed(2)
-                          : (quickViewItem.price * quantity).toFixed(2)}
+                          : (safePrice * quantity).toFixed(2)}
                       </span>
                     </a>
                     <a
@@ -186,7 +209,7 @@ export default function QuickView() {
                       <span className="icon icon-heart" />
                       <span className="tooltip text-caption-2">
                         {isAddedtoWishlist(quickViewItem.id)
-                          ? "Already Wishlished"
+                          ? "Already Wishlisted"
                           : "Wishlist"}
                       </span>
                     </a>

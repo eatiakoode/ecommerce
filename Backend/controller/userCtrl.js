@@ -329,7 +329,7 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
     const token = await user.createPasswordResetToken();
 
     await user.save();
-    console.log(token);
+    console.log("Password reset token generated:", token);
     const resetURL = `Hi, Please follow this link to reset Your Password. This link is valid till 10 minutes from now. <a href='http://localhost:3000/reset-password/${token}'>Click Here</>`;
 
     const data = {
@@ -338,10 +338,23 @@ const forgotPasswordToken = asyncHandler(async (req, res) => {
       subject: "Forgot Password Link",
       htm: resetURL,
     };
-    sendEmail(data);
-    res.json(token);
+    
+    try {
+      await sendEmail(data);
+      console.log("Password reset email sent successfully to:", email);
+    } catch (emailError) {
+      console.log("Email sending failed, but password reset token was generated successfully");
+      console.log("Reset URL:", `http://localhost:3000/reset-password/${token}`);
+    }
+    
+    res.json({ 
+      success: true, 
+      message: "Password reset token generated successfully",
+      token: token 
+    });
   } catch (error) {
-    throw new Error(error);
+    console.error("Forgot password error:", error);
+    throw new Error(error.message || "Failed to process password reset request");
   }
 });
 
@@ -577,6 +590,35 @@ const getMyOrders = asyncHandler(async (req, res) => {
   }
 });
 
+const getMyOrderDetails = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { id } = req.params;
+  console.log("getMyOrderDetails called with:", { userId: _id, orderId: id });
+  
+  try {
+    const order = await Order.findOne({ _id: id, user: _id })
+      .populate("user")
+      .populate("orderItems.product")
+      .populate("orderItems.color")
+      .populate("orderItems.size");
+    
+    console.log("Found order:", order ? "Yes" : "No");
+    
+    if (!order) {
+      console.log("Order not found for user");
+      return res.status(404).json({ message: "Order not found" });
+    }
+    
+    console.log("Sending order response");
+    res.json({
+      order,
+    });
+  } catch (error) {
+    console.error("Error in getMyOrderDetails:", error);
+    throw new Error(error);
+  }
+});
+
 const getAllOrders = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   try {
@@ -735,6 +777,7 @@ module.exports = {
   updateOrder,
   getYearlyTotalOrder,
   getCurrentUser,
+  getMyOrderDetails,
 
   removeProductFromCart,
   updateProductQuantityFromCart,

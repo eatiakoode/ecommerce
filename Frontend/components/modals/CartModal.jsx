@@ -34,20 +34,6 @@ export default function CartModal() {
               />
             </div>
             <div className="wrap">
-              <div className="tf-mini-cart-threshold">
-                <div className="tf-progress-bar">
-                  <div
-                    className="value"
-                    style={{ width: "0%" }}
-                    data-progress={75}
-                  >
-                    <i className="icon icon-shipping" />
-                  </div>
-                </div>
-                <div className="text-caption-1">
-                  Congratulations! You've got free shipping!
-                </div>
-              </div>
               <div className="tf-mini-cart-wrap">
                 <div className="tf-mini-cart-main">
                   <div className="tf-mini-cart-sroll">
@@ -86,10 +72,10 @@ export default function CartModal() {
                               </div>
                               <div className="d-flex align-items-center justify-content-between flex-wrap gap-12">
                                 <div className="text-secondary-2">
-                                  {product.selectedSize || 'Size'}/{product.selectedColor || 'Color'}
+                                  {typeof product.selectedSize === 'object' ? product.selectedSize?.name || 'Size' : product.selectedSize || 'Size'}/{typeof product.selectedColor === 'object' ? product.selectedColor?.name || 'Color' : product.selectedColor || 'Color'}
                                 </div>
                                 <div className="text-button">
-                                  {product.quantity || 1} X $
+                                  {product.quantity || 1} X ₹
                                   {product.price ? product.price.toFixed(2) : '0.00'}
                                 </div>
                               </div>
@@ -225,7 +211,7 @@ export default function CartModal() {
                     <div className="tf-cart-totals-discounts">
                       <h5>Subtotal</h5>
                       <h5 className="tf-totals-total-value">
-                        ${totalPrice ? totalPrice.toFixed(2) : '0.00'}
+                        ₹{totalPrice ? totalPrice.toFixed(2) : '0.00'}
                       </h5>
                     </div>
                     <div className="tf-cart-checkbox">

@@ -187,7 +187,7 @@ export default function CartContent() {
                   </div>
 
                   <div className="price">
-                    ${price.toFixed(2)}
+                    ₹{price.toFixed(2)}
                   </div>
 
                   <div className="quantity">
@@ -225,7 +225,7 @@ export default function CartContent() {
                   </div>
 
                   <div className="total">
-                    ${total.toFixed(2)}
+                    ₹{total.toFixed(2)}
                   </div>
 
                   <div className="action">
@@ -254,11 +254,11 @@ export default function CartContent() {
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
                 <span>Subtotal:</span>
-                <span>${calculateSubtotal().toFixed(2)}</span>
+                <span>₹{calculateSubtotal().toFixed(2)}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
                 <span>Shipping:</span>
-                <span>{calculateSubtotal() > 0 ? "$10.00" : "Free"}</span>
+                <span>{calculateSubtotal() > 0 ? "₹10.00" : "Free"}</span>
               </div>
               <div style={{ 
                 display: "flex", 
@@ -270,7 +270,7 @@ export default function CartContent() {
                 fontSize: "18px"
               }}>
                 <span>Total:</span>
-                <span>${calculateTotal().toFixed(2)}</span>
+                <span>₹{calculateTotal().toFixed(2)}</span>
               </div>
               
               <div style={{ marginTop: "20px", display: "flex", gap: "15px" }}>

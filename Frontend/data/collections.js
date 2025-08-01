@@ -99,7 +99,7 @@ export const collectionItems = [
     lookbook: {
       imgSrc: "/images/gallery/lookbook-1.jpg",
       productTitle: "Rattan bag with handle",
-      price: "$159.99",
+      price: "₹159.99",
       quickViewLink: "#quickView",
     },
   },
@@ -296,7 +296,7 @@ export const collectionItems2 = [
     imgSrc: "/images/collections/banner-collection/banner-cls15.jpg",
     alt: "banner-cls",
     title: "Capsule Collection",
-    desc: "Start From $199",
+    desc: "Start From ₹199",
     btnText: "Shop Now",
   },
   {
@@ -304,7 +304,7 @@ export const collectionItems2 = [
     imgSrc: "/images/collections/banner-collection/banner-cls13.jpg",
     alt: "banner-cls",
     title: "Dresses and jumpsuits",
-    desc: "Start From $199",
+    desc: "Start From ₹199",
     btnText: "Shop Now",
   },
   {
@@ -312,7 +312,7 @@ export const collectionItems2 = [
     imgSrc: "/images/collections/banner-collection/banner-cls16.jpg",
     alt: "banner-cls",
     title: "New Arrivals",
-    desc: "Start From $199",
+    desc: "Start From ₹199",
     btnText: "Shop Now",
   },
 ];
@@ -491,14 +491,14 @@ export const collectionItems3 = [
     imgSrc: "/images/collections/cls-beauty2.jpg",
     alt: "banner-cls",
     title: "Glow Beyond Ordinary",
-    subtitle: "Start From $199",
+    subtitle: "Start From ₹199",
     delay: "0.1s",
   },
   {
     imgSrc: "/images/collections/cls-beauty3.jpg",
     alt: "banner-cls",
     title: "Hydrating skincare",
-    subtitle: "Save up to $50",
+    subtitle: "Save up to ₹50",
     delay: "0.2s",
   },
 ];
@@ -839,21 +839,21 @@ export const collectionItems5 = [
     imgSrc: "/images/collections/cls-organic-1.jpg",
     alt: "banner-cls",
     title: "Pure Organic-Vegan",
-    description: "Fresh Veggie Combos Start from $22",
+    description: "Fresh Veggie Combos Start from ₹22",
     delay: "0s",
   },
   {
     imgSrc: "/images/collections/cls-organic-2.jpg",
     alt: "banner-cls",
     title: "Top-quality nuts and grains.",
-    description: "Nut & Grain Combos Start from $22",
+    description: "Nut & Grain Combos Start from ₹22",
     delay: "0.1s",
   },
   {
     imgSrc: "/images/collections/cls-organic-3.jpg",
     alt: "banner-cls",
     title: "Delicious and nutritious blends.",
-    description: "Smoothie Essentials Bundle Start from $22",
+    description: "Smoothie Essentials Bundle Start from ₹22",
     delay: "0.2s",
   },
 ];

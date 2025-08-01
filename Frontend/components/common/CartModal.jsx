@@ -21,8 +21,8 @@ export default function CartModal({ show, onClose }) {
             {cartProducts.map((item, index) => (
               <li key={item.id || item._id || index} style={{ marginBottom: 12 }}>
                 <b>{item.title || item.name || 'Product'}</b> <br />
-                Size: {item.selectedSize || 'N/A'} <br />
-                Color: {item.selectedColor || 'N/A'} <br />
+                Size: {typeof item.selectedSize === 'object' ? item.selectedSize?.name || 'N/A' : item.selectedSize || 'N/A'} <br />
+                Color: {typeof item.selectedColor === 'object' ? item.selectedColor?.name || 'N/A' : item.selectedColor || 'N/A'} <br />
                 Quantity: {item.quantity || 1} <br />
                 Price: ${item.price ? item.price.toFixed(2) : '0.00'} <br />
               </li>

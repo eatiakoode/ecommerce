@@ -247,8 +247,47 @@ export const getCart = async (token) => {
   }
 };
 
+// Get default color and size IDs
+const getDefaultColorAndSize = async () => {
+  try {
+    // Get all colors and sizes
+    const [colorResponse, sizeResponse] = await Promise.all([
+      fetch(`${API_BASE_URL}/color`),
+      fetch(`${API_BASE_URL}/size`)
+    ]);
+
+    const colors = await colorResponse.json();
+    const sizes = await sizeResponse.json();
+
+    // Get first available color and size, or create defaults if none exist
+    const defaultColor = colors.length > 0 ? colors[0]._id : null;
+    const defaultSize = sizes.length > 0 ? sizes[0]._id : null;
+
+    return { defaultColor, defaultSize };
+  } catch (error) {
+    console.error("Error getting default color/size:", error);
+    return { defaultColor: null, defaultSize: null };
+  }
+};
+
 export const addToCart = async (token, cartData) => {
   try {
+    console.log("Sending cart data:", cartData);
+    
+    // If color and size are not provided (wishlist case), get defaults
+    if (!cartData.color || !cartData.size) {
+      const { defaultColor, defaultSize } = await getDefaultColorAndSize();
+      
+      if (!defaultColor || !defaultSize) {
+        throw new Error("No default color or size available. Please contact support.");
+      }
+      
+      cartData.color = defaultColor;
+      cartData.size = defaultSize;
+      
+      console.log("Using default color/size:", { color: defaultColor, size: defaultSize });
+    }
+    
     const response = await fetch(`${API_BASE_URL}/cart`, {
       method: "POST",
       headers: {
@@ -258,13 +297,14 @@ export const addToCart = async (token, cartData) => {
       body: JSON.stringify(cartData),
     });
 
+    const responseData = await response.json();
+    console.log("Cart response:", responseData);
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to add to cart");
+      throw new Error(responseData.message || "Failed to add to cart");
     }
 
-    const data = await response.json();
-    return { success: true, data };
+    return { success: true, data: responseData };
   } catch (error) {
     console.error("Add to cart error:", error);
     return { success: false, error: error.message };
@@ -386,6 +426,52 @@ export const removeFromWishlist = async (token, wishlistItemId) => {
     return { success: true, data };
   } catch (error) {
     console.error("Remove from wishlist error:", error);
+    return { success: false, error: error.message };
+  }
+}; 
+
+// Order API functions
+export const getUserOrders = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/getmyorders`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user orders");
+    }
+
+    const data = await response.json();
+    return { success: true, data: data.orders };
+  } catch (error) {
+    console.error("Get user orders error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getOrderDetails = async (token, orderId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/getmyorder/${orderId}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch order details: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    return { success: true, data: data.order };
+  } catch (error) {
+    console.error("Get order details error:", error);
     return { success: false, error: error.message };
   }
 }; 

@@ -17,6 +17,7 @@ export default function Details1({ product }) {
   const [loading, setLoading] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [loginModalMessage, setLoginModalMessage] = useState("Please login to add items to your cart.");
+  const [brandName, setBrandName] = useState("");
 
   // Set default size and color when product data is available
   useEffect(() => {
@@ -35,6 +36,38 @@ export default function Details1({ product }) {
       setActiveColor(colorValue);
     }
   }, [product.size, product.color, selectedSize, activeColor]);
+
+  // Fetch brand name when product data is available
+  useEffect(() => {
+    const fetchBrandName = async () => {
+      if (product.brand && typeof product.brand === 'object' && product.brand.title) {
+        // Brand is already populated from the API
+        setBrandName(product.brand.title);
+      } else if (product.brand && typeof product.brand === 'string' && product.brand.length > 0) {
+        // Brand is an ID, need to fetch the brand name
+        try {
+          const response = await fetch(`http://localhost:5000/api/brand/${product.brand}`);
+          if (response.ok) {
+            const brandData = await response.json();
+            if (brandData && brandData.title) {
+              setBrandName(brandData.title);
+            } else {
+              setBrandName("Unknown Brand");
+            }
+          } else {
+            setBrandName("Unknown Brand");
+          }
+        } catch (error) {
+          console.error("Error fetching brand:", error);
+          setBrandName("Unknown Brand");
+        }
+      } else {
+        setBrandName("Unknown Brand");
+      }
+    };
+
+    fetchBrandName();
+  }, [product.brand]);
   const {
     addProductToCart,
     isAddedToCartProducts,
@@ -54,10 +87,17 @@ export default function Details1({ product }) {
       // Set message and show login modal
       setLoginModalMessage("Please login to add items to your cart.");
       const loginModal = document.getElementById('loginModal');
-      if (loginModal) {
+      if (loginModal && typeof bootstrap !== 'undefined') {
         // Use Bootstrap modal if available
-        const modal = new bootstrap.Modal(loginModal);
-        modal.show();
+        try {
+          const modal = new bootstrap.Modal(loginModal);
+          modal.show();
+        } catch (error) {
+          console.error('Bootstrap modal error:', error);
+          // Fallback to alert
+          alert("Please login to add items to cart. You will be redirected to the login page.");
+          window.location.href = '/login';
+        }
       } else {
         // Fallback to alert with login link
         alert("Please login to add items to cart. You will be redirected to the login page.");
@@ -167,10 +207,17 @@ export default function Details1({ product }) {
       // Set message and show login modal
       setLoginModalMessage("Please login to add items to your wishlist.");
       const loginModal = document.getElementById('loginModal');
-      if (loginModal) {
+      if (loginModal && typeof bootstrap !== 'undefined') {
         // Use Bootstrap modal if available
-        const modal = new bootstrap.Modal(loginModal);
-        modal.show();
+        try {
+          const modal = new bootstrap.Modal(loginModal);
+          modal.show();
+        } catch (error) {
+          console.error('Bootstrap modal error:', error);
+          // Fallback to alert
+          alert("Please login to add items to wishlist. You will be redirected to the login page.");
+          window.location.href = '/login';
+        }
       } else {
         // Fallback to alert with login link
         alert("Please login to add items to wishlist. You will be redirected to the login page.");
@@ -452,8 +499,8 @@ export default function Details1({ product }) {
                         <p className="text-caption-1 text-1">{product.SKU}</p>
                       </li>
                       <li>
-                        <p className="text-caption-1">Vendor:</p>
-                        <p className="text-caption-1 text-1">{product.brand}</p>
+                        <p className="text-caption-1">Brand:</p>
+                        <p className="text-caption-1 text-1">{brandName}</p>
                       </li>
                       <li>
                         <p className="text-caption-1">Available:</p>

@@ -18,12 +18,22 @@ export default function DetailsFixedprice({ product = allProducts[0] }) {
     addProductToCart,
     isAddedToCartProducts,
     addToWishlist,
-    addToCompareItem,
     isAddedtoWishlist,
+    addToCompareItem,
     isAddedtoCompareItem,
     cartProducts,
     updateQuantity,
   } = useContextElement();
+
+  // Safe price handling
+  const getSafePrice = (price) => {
+    if (price === null || price === undefined || isNaN(price)) {
+      return 0;
+    }
+    return parseFloat(price);
+  };
+
+  const safePrice = getSafePrice(product.price);
   return (
     <section className="flat-spacing product-fixed-price">
       <div className="container">
@@ -326,13 +336,13 @@ export default function DetailsFixedprice({ product = allProducts[0] }) {
                     <div className="tf-product-info-price">
                       <h5 className="price-on-sale font-2">
                         {" "}
-                        ${product.price.toFixed(2)}
+                        ₹{product.price.toFixed(2)}
                       </h5>
                       {product.oldPrice ? (
                         <>
                           <div className="compare-at-price font-2">
                             {" "}
-                            ${product.oldPrice.toFixed(2)}
+                            ₹{product.oldPrice.toFixed(2)}
                           </div>
                           <div className="badges-on-sale text-btn-uppercase">
                             -25%
@@ -393,15 +403,15 @@ export default function DetailsFixedprice({ product = allProducts[0] }) {
                             : "Add to cart -"}
                         </span>
                         <span className="tf-qty-price total-price">
-                          $
+                        ₹
                           {isAddedToCartProducts(product.id)
                             ? (
-                                product.price *
-                                cartProducts.filter(
+                                safePrice *
+                                (cartProducts.filter(
                                   (elm) => elm.id == product.id
-                                )[0].quantity
+                                )[0]?.quantity || 1)
                               ).toFixed(2)
-                            : (product.price * quantity).toFixed(2)}{" "}
+                            : (safePrice * quantity).toFixed(2)}{" "}
                         </span>
                       </a>
                       <a

@@ -20,7 +20,7 @@ export default function ProductCard1({
   const getSafeImageSrc = (src) => {
     // Handle null, undefined, or empty string
     if (!src || src === '' || src === 'null' || src === 'undefined') {
-      return '/images/products/product-1.jpg';
+      return '/images/products/womens/women-1.jpg';
     }
     
     // If it's already a full URL, return as is
@@ -59,7 +59,7 @@ export default function ProductCard1({
     }
     
     // Final fallback
-    return '/images/products/product-1.jpg';
+    return '/images/products/womens/women-1.jpg';
   };
 
   useEffect(() => {
@@ -101,9 +101,9 @@ export default function ProductCard1({
     return (
       <div className={`${parentClass} ${gridClass}`}>
         <div className={`card-product-wrapper ${isNotImageRatio ? "aspect-ratio-0" : ""} ${radiusClass}`}>
-          <div className="product-img test">
+          <div className="product-img">
             <div style={{ width: 300, height: 300, backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Loading...
+              <img src="/images/products/womens/women-1.jpg" alt="Loading..." style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           </div>
         </div>
@@ -111,16 +111,7 @@ export default function ProductCard1({
     );
   }
 
-  // Debug: Log product data
-  console.log('ProductCard1 - Product data:', {
-    id: product.id,
-    title: product.title,
-    price: product.price,
-    sellingPrice: product.sellingPrice,
-    MRP: product.MRP,
-    slug: product.slug,
-    shortDescription: product.shortDescription
-  });
+
 
   return (
     <div
@@ -151,9 +142,9 @@ export default function ProductCard1({
         )}
 
         {/* Product Image */}
-        <Link href={`/product-detail/${product.slug || product.id || product._id}`} className="product-img test">
+        <Link href={`/product-detail/${product.slug || product.id || product._id || 'product'}`} className="product-img">
           <img
-            src={currentImage || '/images/products/product-1.jpg'}
+            src={currentImage || '/images/products/womens/women-1.jpg'}
             alt={product.title || product.name || 'Product Image'}
             className="img-fluid"
             style={{
@@ -163,8 +154,7 @@ export default function ProductCard1({
               minHeight: '200px'
             }}
             onError={(e) => {
-              console.log('Image failed to load:', currentImage);
-              e.target.src = '/images/products/product-1.jpg';
+              e.target.src = '/images/products/womens/women-1.jpg';
             }}
           />
         </Link>
@@ -262,7 +252,7 @@ export default function ProductCard1({
           zIndex: 10,
           marginTop: '10px'
         }}>
-          <Link href={`/product-detail/${product.slug || product.id || product._id}`} className="title link">
+          <Link href={`/product-detail/${product.slug || product.id || product._id || 'product'}`} className="title link">
             <h5 style={{ 
               fontSize: '16px', 
               fontWeight: '600', 

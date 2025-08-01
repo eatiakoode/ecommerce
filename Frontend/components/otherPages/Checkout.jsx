@@ -1,30 +1,326 @@
 "use client";
 
 import { useContextElement } from "@/context/Context";
+import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { getUserAddresses } from "@/api/address";
+import { countries } from "@/data/countries";
+import { indianStates } from "@/data/states";
+
+// Commented out discount section for future use
+/*
 const discounts = [
   {
     discount: "10% OFF",
-    details: "For all orders from 200$",
+    details: "For all orders from 200₹",
     code: "Mo234231",
   },
   {
     discount: "10% OFF",
-    details: "For all orders from 200$",
+    details: "For all orders from 200₹",
     code: "Mo234231",
   },
   {
     discount: "10% OFF",
-    details: "For all orders from 200$",
+    details: "For all orders from 200₹",
     code: "Mo234231",
   },
 ];
+*/
+
 export default function Checkout() {
+  const router = useRouter();
+  const { user, token, loading: authLoading, isAuthenticated } = useAuth();
   const [activeDiscountIndex, setActiveDiscountIndex] = useState(1);
-  const { cartProducts, totalPrice } = useContextElement();
+  const [loading, setLoading] = useState(true);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
+  const [useNewAddress, setUseNewAddress] = useState(false);
+  const [addressLoading, setAddressLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    country: 'India',
+    state: '',
+    city: '',
+    street: '',
+    postalCode: '',
+    note: '',
+    // Payment fields - commented out since only COD is available
+    // cardName: '',
+    // cardNumber: '',
+    // expiryDate: '',
+    // cvv: '',
+    // saveCard: false
+  });
+
+  const { cartProducts, totalPrice, clearCart } = useContextElement();
+
+  // Check authentication and pre-fill form data
+  useEffect(() => {
+    if (!authLoading) {
+  
+      if (isAuthenticated() && user) {
+        
+        // Pre-fill form with user data
+        setFormData(prev => ({
+          ...prev,
+          firstName: user.firstName || user.firstname || '',
+          lastName: user.lastName || user.lastname || '',
+          email: user.email || '',
+          phone: user.phone || user.mobile || ''
+        }));
+      }
+      setLoading(false);
+    }
+  }, [authLoading, user, isAuthenticated]);
+
+  // Fetch saved addresses
+  useEffect(() => {
+    if (isAuthenticated() && token) {
+      fetchSavedAddresses();
+    }
+  }, [isAuthenticated, token]);
+
+  const fetchSavedAddresses = async () => {
+    try {
+      setAddressLoading(true);
+      const result = await getUserAddresses(token);
+      
+      if (result.success) {
+        setSavedAddresses(result.data || []);
+        // Auto-select default address if available
+        const defaultAddress = result.data?.find(addr => addr.isDefault);
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress._id);
+          fillFormWithAddress(defaultAddress);
+        }
+      } else {
+
+      }
+    } catch (error) {
+      
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  const fillFormWithAddress = (address) => {
+    setFormData(prev => ({
+      ...prev,
+      firstName: address.firstName,
+      lastName: address.lastName,
+      email: address.email,
+      phone: address.phone,
+      country: address.country,
+      state: address.state,
+      city: address.city,
+      street: address.address,
+      postalCode: address.zipCode
+    }));
+  };
+
+  const handleAddressSelection = (addressId) => {
+    setSelectedAddressId(addressId);
+    setUseNewAddress(false);
+    
+    const selectedAddress = savedAddresses.find(addr => addr._id === addressId);
+    if (selectedAddress) {
+      fillFormWithAddress(selectedAddress);
+    }
+  };
+
+  const handleUseNewAddress = () => {
+    setUseNewAddress(true);
+    setSelectedAddressId('');
+    // Reset form to user's basic info
+    setFormData(prev => ({
+      ...prev,
+      firstName: user?.firstName || user?.firstname || '',
+      lastName: user?.lastName || user?.lastname || '',
+      email: user?.email || '',
+      phone: user?.phone || user?.mobile || '',
+      country: 'India',
+      state: '',
+      city: '',
+      street: '',
+      postalCode: '',
+      note: ''
+    }));
+  };
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated()) {
+      router.push('/login?redirect=checkout');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePaymentMethodChange = (method) => {
+    setPaymentMethod(method);
+  };
+
+  const validateForm = () => {
+    const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'city', 'postalCode'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      return false;
+    }
+
+    // Only COD is available for now
+    if (paymentMethod !== 'cod') {
+      alert('Only Cash on Delivery is available at the moment');
+      return false;
+    }
+
+    return true;
+  };
+
+  const sendOrderConfirmationEmail = async (orderData) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/orders/send-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userEmail: formData.email,
+          orderData: orderData
+        })
+      });
+
+      if (!response.ok) {
+
+      }
+    } catch (error) {
+      
+    }
+  };
+
+  const handlePayment = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    if (cartProducts.length === 0) {
+      alert('Your cart is empty');
+      return;
+    }
+
+    setProcessingPayment(true);
+
+    try {
+      // Prepare order data according to backend structure
+      const orderData = {
+        firstname: formData.firstName,
+        lastname: formData.lastName,
+        address: formData.street,
+        city: formData.city,
+        state: formData.state,
+        other: formData.note,
+        pincode: parseInt(formData.postalCode) || 0
+      };
+
+      // Create order using the checkout endpoint
+      const response = await fetch('http://localhost:5000/api/frontend/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Save order details to localStorage for thank you page
+        const orderDetails = {
+          orderId: result.orderId,
+          invoiceNo: result.invoiceNo,
+          orderDate: new Date().toISOString(),
+          amount: cartProducts.reduce((total, item) => total + (item.price * item.quantity), 0),
+          firstname: formData.firstName,
+          lastname: formData.lastName,
+          address: formData.street,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.postalCode,
+          items: cartProducts.map(item => ({
+            name: item.title || item.name || 'Product',
+            price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
+            quantity: typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1,
+            size: typeof item.size === 'object' ? item.size?.name || item.size?.value || 'N/A' : (item.size || 'N/A'),
+            color: typeof item.color === 'object' ? item.color?.name || item.color?.value || 'N/A' : (item.color || 'N/A'),
+            image: item.imgSrc || item.image || '/images/products/no-image.png'
+          }))
+        };
+  
+        localStorage.setItem('lastOrderDetails', JSON.stringify(orderDetails));
+        
+        // Send confirmation email
+        await sendOrderConfirmationEmail({
+          ...orderData,
+          orderId: result.orderId,
+          invoiceNo: result.invoiceNo
+        });
+
+        // Clear cart after successful order
+        clearCart();
+
+        // Redirect to thank you page with order details
+        router.push(`/thank-you?orderId=${result.orderId}&invoiceNo=${result.invoiceNo}`);
+      } else {
+        const error = await response.json();
+        alert(`Order failed: ${error.message}`);
+      }
+    } catch (error) {
+      
+      alert('Order processing failed. Please try again.');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  // Check if India is selected to show states dropdown
+  const isIndiaSelected = formData.country === "India";
+
+  if (authLoading || loading) {
+    return (
+      <section>
+        <div className="container">
+          <div className="text-center py-5">
+            <h4>Loading checkout...</h4>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!isAuthenticated()) {
+    return null; // Will redirect to login
+  }
+
   return (
     <section>
       <div className="container">
@@ -33,238 +329,195 @@ export default function Checkout() {
             <div className="flat-spacing tf-page-checkout">
               <div className="wrap">
                 <div className="title-login">
-                  <p>Already have an account?</p>{" "}
-                  <Link href={`/login`} className="text-button">
-                    Login here
-                  </Link>
+                  <p>Welcome back, {user?.firstName || 'User'}!</p>
+                  <p className="text-secondary">Your information is pre-filled below</p>
                 </div>
-                <form
-                  className="login-box"
-                  onSubmit={(e) => e.preventDefault()}
-                >
-                  <div className="grid-2">
-                    <input type="text" placeholder="Your name/Email" />
-                    <input type="password" placeholder="Password" />
-                  </div>
-                  <button className="tf-btn" type="submit">
-                    <span className="text">Login</span>
-                  </button>
-                </form>
+                {/* Login section is hidden for logged-in users */}
               </div>
+              
               <div className="wrap">
-                <h5 className="title">Information</h5>
+                <h5 className="title">Shipping Address</h5>
+                
+                {/* Saved Addresses Section */}
+                {savedAddresses.length > 0 && (
+                  <div className="saved-addresses-section" style={{ marginBottom: '20px' }}>
+                    <div className="address-selection" style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
+                        Choose a saved address:
+                      </label>
+                      <div className="saved-addresses-list">
+                        {savedAddresses.map((address) => (
+                          <div 
+                            key={address._id} 
+                            className={`saved-address-item ${selectedAddressId === address._id ? 'selected' : ''}`}
+                            style={{
+                              border: selectedAddressId === address._id ? '2px solid #007bff' : '1px solid #ddd',
+                              borderRadius: '8px',
+                              padding: '12px',
+                              marginBottom: '8px',
+                              cursor: 'pointer',
+                              backgroundColor: selectedAddressId === address._id ? '#f8f9fa' : 'white'
+                            }}
+                            onClick={() => handleAddressSelection(address._id)}
+                          >
+                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                              {address.title} {address.isDefault && <span style={{ color: '#007bff', fontSize: '12px' }}>(Default)</span>}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#666' }}>
+                              {address.firstName} {address.lastName}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#666' }}>
+                              {address.address}, {address.city}, {address.state}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#666' }}>
+                              {address.country} {address.zipCode}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#666' }}>
+                              {address.phone}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="new-address-option" style={{ marginTop: '15px' }}>
+                      <button
+                        type="button"
+                        onClick={handleUseNewAddress}
+                        style={{
+                          background: 'none',
+                          border: '1px solid #007bff',
+                          color: '#007bff',
+                          padding: '8px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Use New Address
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
                 <form className="info-box" onSubmit={(e) => e.preventDefault()}>
                   <div className="grid-2">
-                    <input type="text" placeholder="First Name*" />
-                    <input type="text" placeholder="Last Name*" />
+                    <input 
+                      type="text" 
+                      placeholder="First Name*" 
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Last Name*" 
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    />
                   </div>
                   <div className="grid-2">
-                    <input type="text" placeholder="Email Address*" />
-                    <input type="text" placeholder="Phone Number*" />
+                    <input 
+                      type="email" 
+                      placeholder="Email Address*" 
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                    />
+                    <input 
+                      type="tel" 
+                      placeholder="Phone Number*" 
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                    />
                   </div>
                   <div className="tf-select">
                     <select
                       className="text-title"
-                      name="address[country]"
-                      data-default=""
+                      value={formData.country}
+                      onChange={(e) => handleInputChange('country', e.target.value)}
                     >
-                      <option
-                        selected=""
-                        value="Choose Country/Region"
-                        data-provinces="[]"
-                      >
-                        Choose Country/Region
-                      </option>
-                      <option
-                        value="United States"
-                        data-provinces="[['Alabama','Alabama'],['Alaska','Alaska'],['American Samoa','American Samoa'],['Arizona','Arizona'],['Arkansas','Arkansas'],['Armed Forces Americas','Armed Forces Americas'],['Armed Forces Europe','Armed Forces Europe'],['Armed Forces Pacific','Armed Forces Pacific'],['California','California'],['Colorado','Colorado'],['Connecticut','Connecticut'],['Delaware','Delaware'],['District of Columbia','Washington DC'],['Federated States of Micronesia','Micronesia'],['Florida','Florida'],['Georgia','Georgia'],['Guam','Guam'],['Hawaii','Hawaii'],['Idaho','Idaho'],['Illinois','Illinois'],['Indiana','Indiana'],['Iowa','Iowa'],['Kansas','Kansas'],['Kentucky','Kentucky'],['Louisiana','Louisiana'],['Maine','Maine'],['Marshall Islands','Marshall Islands'],['Maryland','Maryland'],['Massachusetts','Massachusetts'],['Michigan','Michigan'],['Minnesota','Minnesota'],['Mississippi','Mississippi'],['Missouri','Missouri'],['Montana','Montana'],['Nebraska','Nebraska'],['Nevada','Nevada'],['New Hampshire','New Hampshire'],['New Jersey','New Jersey'],['New Mexico','New Mexico'],['New York','New York'],['North Carolina','North Carolina'],['North Dakota','North Dakota'],['Northern Mariana Islands','Northern Mariana Islands'],['Ohio','Ohio'],['Oklahoma','Oklahoma'],['Oregon','Oregon'],['Palau','Palau'],['Pennsylvania','Pennsylvania'],['Puerto Rico','Puerto Rico'],['Rhode Island','Rhode Island'],['South Carolina','South Carolina'],['South Dakota','South Dakota'],['Tennessee','Tennessee'],['Texas','Texas'],['Utah','Utah'],['Vermont','Vermont'],['Virgin Islands','U.S. Virgin Islands'],['Virginia','Virginia'],['Washington','Washington'],['West Virginia','West Virginia'],['Wisconsin','Wisconsin'],['Wyoming','Wyoming']]"
-                      >
-                        United States
-                      </option>
-                      <option
-                        value="Australia"
-                        data-provinces="[['Australian Capital Territory','Australian Capital Territory'],['New South Wales','New South Wales'],['Northern Territory','Northern Territory'],['Queensland','Queensland'],['South Australia','South Australia'],['Tasmania','Tasmania'],['Victoria','Victoria'],['Western Australia','Western Australia']]"
-                      >
-                        Australia
-                      </option>
-                      <option value="Austria" data-provinces="[]">
-                        Austria
-                      </option>
-                      <option value="Belgium" data-provinces="[]">
-                        Belgium
-                      </option>
-                      <option
-                        value="Canada"
-                        data-provinces="[['Alberta','Alberta'],['British Columbia','British Columbia'],['Manitoba','Manitoba'],['New Brunswick','New Brunswick'],['Newfoundland and Labrador','Newfoundland and Labrador'],['Northwest Territories','Northwest Territories'],['Nova Scotia','Nova Scotia'],['Nunavut','Nunavut'],['Ontario','Ontario'],['Prince Edward Island','Prince Edward Island'],['Quebec','Quebec'],['Saskatchewan','Saskatchewan'],['Yukon','Yukon']]"
-                      >
-                        Canada
-                      </option>
-                      <option value="Czech Republic" data-provinces="[]">
-                        Czechia
-                      </option>
-                      <option value="Denmark" data-provinces="[]">
-                        Denmark
-                      </option>
-                      <option value="Finland" data-provinces="[]">
-                        Finland
-                      </option>
-                      <option value="France" data-provinces="[]">
-                        France
-                      </option>
-                      <option value="Germany" data-provinces="[]">
-                        Germany
-                      </option>
-                      <option
-                        value="Hong Kong"
-                        data-provinces="[['Hong Kong Island','Hong Kong Island'],['Kowloon','Kowloon'],['New Territories','New Territories']]"
-                      >
-                        Hong Kong SAR
-                      </option>
-                      <option
-                        value="Ireland"
-                        data-provinces="[['Carlow','Carlow'],['Cavan','Cavan'],['Clare','Clare'],['Cork','Cork'],['Donegal','Donegal'],['Dublin','Dublin'],['Galway','Galway'],['Kerry','Kerry'],['Kildare','Kildare'],['Kilkenny','Kilkenny'],['Laois','Laois'],['Leitrim','Leitrim'],['Limerick','Limerick'],['Longford','Longford'],['Louth','Louth'],['Mayo','Mayo'],['Meath','Meath'],['Monaghan','Monaghan'],['Offaly','Offaly'],['Roscommon','Roscommon'],['Sligo','Sligo'],['Tipperary','Tipperary'],['Waterford','Waterford'],['Westmeath','Westmeath'],['Wexford','Wexford'],['Wicklow','Wicklow']]"
-                      >
-                        Ireland
-                      </option>
-                      <option value="Israel" data-provinces="[]">
-                        Israel
-                      </option>
-                      <option
-                        value="Italy"
-                        data-provinces="[['Agrigento','Agrigento'],['Alessandria','Alessandria'],['Ancona','Ancona'],['Aosta','Aosta Valley'],['Arezzo','Arezzo'],['Ascoli Piceno','Ascoli Piceno'],['Asti','Asti'],['Avellino','Avellino'],['Bari','Bari'],['Barletta-Andria-Trani','Barletta-Andria-Trani'],['Belluno','Belluno'],['Benevento','Benevento'],['Bergamo','Bergamo'],['Biella','Biella'],['Bologna','Bologna'],['Bolzano','South Tyrol'],['Brescia','Brescia'],['Brindisi','Brindisi'],['Cagliari','Cagliari'],['Caltanissetta','Caltanissetta'],['Campobasso','Campobasso'],['Carbonia-Iglesias','Carbonia-Iglesias'],['Caserta','Caserta'],['Catania','Catania'],['Catanzaro','Catanzaro'],['Chieti','Chieti'],['Como','Como'],['Cosenza','Cosenza'],['Cremona','Cremona'],['Crotone','Crotone'],['Cuneo','Cuneo'],['Enna','Enna'],['Fermo','Fermo'],['Ferrara','Ferrara'],['Firenze','Florence'],['Foggia','Foggia'],['Forlì-Cesena','Forlì-Cesena'],['Frosinone','Frosinone'],['Genova','Genoa'],['Gorizia','Gorizia'],['Grosseto','Grosseto'],['Imperia','Imperia'],['Isernia','Isernia'],['L'Aquila','L’Aquila'],['La Spezia','La Spezia'],['Latina','Latina'],['Lecce','Lecce'],['Lecco','Lecco'],['Livorno','Livorno'],['Lodi','Lodi'],['Lucca','Lucca'],['Macerata','Macerata'],['Mantova','Mantua'],['Massa-Carrara','Massa and Carrara'],['Matera','Matera'],['Medio Campidano','Medio Campidano'],['Messina','Messina'],['Milano','Milan'],['Modena','Modena'],['Monza e Brianza','Monza and Brianza'],['Napoli','Naples'],['Novara','Novara'],['Nuoro','Nuoro'],['Ogliastra','Ogliastra'],['Olbia-Tempio','Olbia-Tempio'],['Oristano','Oristano'],['Padova','Padua'],['Palermo','Palermo'],['Parma','Parma'],['Pavia','Pavia'],['Perugia','Perugia'],['Pesaro e Urbino','Pesaro and Urbino'],['Pescara','Pescara'],['Piacenza','Piacenza'],['Pisa','Pisa'],['Pistoia','Pistoia'],['Pordenone','Pordenone'],['Potenza','Potenza'],['Prato','Prato'],['Ragusa','Ragusa'],['Ravenna','Ravenna'],['Reggio Calabria','Reggio Calabria'],['Reggio Emilia','Reggio Emilia'],['Rieti','Rieti'],['Rimini','Rimini'],['Roma','Rome'],['Rovigo','Rovigo'],['Salerno','Salerno'],['Sassari','Sassari'],['Savona','Savona'],['Siena','Siena'],['Siracusa','Syracuse'],['Sondrio','Sondrio'],['Taranto','Taranto'],['Teramo','Teramo'],['Terni','Terni'],['Torino','Turin'],['Trapani','Trapani'],['Trento','Trentino'],['Treviso','Treviso'],['Trieste','Trieste'],['Udine','Udine'],['Varese','Varese'],['Venezia','Venice'],['Verbano-Cusio-Ossola','Verbano-Cusio-Ossola'],['Vercelli','Vercelli'],['Verona','Verona'],['Vibo Valentia','Vibo Valentia'],['Vicenza','Vicenza'],['Viterbo','Viterbo']]"
-                      >
-                        Italy
-                      </option>
-                      <option
-                        value="Japan"
-                        data-provinces="[['Aichi','Aichi'],['Akita','Akita'],['Aomori','Aomori'],['Chiba','Chiba'],['Ehime','Ehime'],['Fukui','Fukui'],['Fukuoka','Fukuoka'],['Fukushima','Fukushima'],['Gifu','Gifu'],['Gunma','Gunma'],['Hiroshima','Hiroshima'],['Hokkaidō','Hokkaido'],['Hyōgo','Hyogo'],['Ibaraki','Ibaraki'],['Ishikawa','Ishikawa'],['Iwate','Iwate'],['Kagawa','Kagawa'],['Kagoshima','Kagoshima'],['Kanagawa','Kanagawa'],['Kumamoto','Kumamoto'],['Kyōto','Kyoto'],['Kōchi','Kochi'],['Mie','Mie'],['Miyagi','Miyagi'],['Miyazaki','Miyazaki'],['Nagano','Nagano'],['Nagasaki','Nagasaki'],['Nara','Nara'],['Niigata','Niigata'],['Okayama','Okayama'],['Okinawa','Okinawa'],['Saga','Saga'],['Saitama','Saitama'],['Shiga','Shiga'],['Shimane','Shimane'],['Shizuoka','Shizuoka'],['Tochigi','Tochigi'],['Tokushima','Tokushima'],['Tottori','Tottori'],['Toyama','Toyama'],['Tōkyō','Tokyo'],['Wakayama','Wakayama'],['Yamagata','Yamagata'],['Yamaguchi','Yamaguchi'],['Yamanashi','Yamanashi'],['Ōita','Oita'],['Ōsaka','Osaka']]"
-                      >
-                        Japan
-                      </option>
-                      <option
-                        value="Malaysia"
-                        data-provinces="[['Johor','Johor'],['Kedah','Kedah'],['Kelantan','Kelantan'],['Kuala Lumpur','Kuala Lumpur'],['Labuan','Labuan'],['Melaka','Malacca'],['Negeri Sembilan','Negeri Sembilan'],['Pahang','Pahang'],['Penang','Penang'],['Perak','Perak'],['Perlis','Perlis'],['Putrajaya','Putrajaya'],['Sabah','Sabah'],['Sarawak','Sarawak'],['Selangor','Selangor'],['Terengganu','Terengganu']]"
-                      >
-                        Malaysia
-                      </option>
-                      <option value="Netherlands" data-provinces="[]">
-                        Netherlands
-                      </option>
-                      <option
-                        value="New Zealand"
-                        data-provinces="[['Auckland','Auckland'],['Bay of Plenty','Bay of Plenty'],['Canterbury','Canterbury'],['Chatham Islands','Chatham Islands'],['Gisborne','Gisborne'],['Hawke's Bay','Hawke’s Bay'],['Manawatu-Wanganui','Manawatū-Whanganui'],['Marlborough','Marlborough'],['Nelson','Nelson'],['Northland','Northland'],['Otago','Otago'],['Southland','Southland'],['Taranaki','Taranaki'],['Tasman','Tasman'],['Waikato','Waikato'],['Wellington','Wellington'],['West Coast','West Coast']]"
-                      >
-                        New Zealand
-                      </option>
-                      <option value="Norway" data-provinces="[]">
-                        Norway
-                      </option>
-                      <option value="Poland" data-provinces="[]">
-                        Poland
-                      </option>
-                      <option
-                        value="Portugal"
-                        data-provinces="[['Aveiro','Aveiro'],['Açores','Azores'],['Beja','Beja'],['Braga','Braga'],['Bragança','Bragança'],['Castelo Branco','Castelo Branco'],['Coimbra','Coimbra'],['Faro','Faro'],['Guarda','Guarda'],['Leiria','Leiria'],['Lisboa','Lisbon'],['Madeira','Madeira'],['Portalegre','Portalegre'],['Porto','Porto'],['Santarém','Santarém'],['Setúbal','Setúbal'],['Viana do Castelo','Viana do Castelo'],['Vila Real','Vila Real'],['Viseu','Viseu'],['Évora','Évora']]"
-                      >
-                        Portugal
-                      </option>
-                      <option value="Singapore" data-provinces="[]">
-                        Singapore
-                      </option>
-                      <option
-                        value="South Korea"
-                        data-provinces="[['Busan','Busan'],['Chungbuk','North Chungcheong'],['Chungnam','South Chungcheong'],['Daegu','Daegu'],['Daejeon','Daejeon'],['Gangwon','Gangwon'],['Gwangju','Gwangju City'],['Gyeongbuk','North Gyeongsang'],['Gyeonggi','Gyeonggi'],['Gyeongnam','South Gyeongsang'],['Incheon','Incheon'],['Jeju','Jeju'],['Jeonbuk','North Jeolla'],['Jeonnam','South Jeolla'],['Sejong','Sejong'],['Seoul','Seoul'],['Ulsan','Ulsan']]"
-                      >
-                        South Korea
-                      </option>
-                      <option
-                        value="Spain"
-                        data-provinces="[['A Coruña','A Coruña'],['Albacete','Albacete'],['Alicante','Alicante'],['Almería','Almería'],['Asturias','Asturias Province'],['Badajoz','Badajoz'],['Balears','Balears Province'],['Barcelona','Barcelona'],['Burgos','Burgos'],['Cantabria','Cantabria Province'],['Castellón','Castellón'],['Ceuta','Ceuta'],['Ciudad Real','Ciudad Real'],['Cuenca','Cuenca'],['Cáceres','Cáceres'],['Cádiz','Cádiz'],['Córdoba','Córdoba'],['Girona','Girona'],['Granada','Granada'],['Guadalajara','Guadalajara'],['Guipúzcoa','Gipuzkoa'],['Huelva','Huelva'],['Huesca','Huesca'],['Jaén','Jaén'],['La Rioja','La Rioja Province'],['Las Palmas','Las Palmas'],['León','León'],['Lleida','Lleida'],['Lugo','Lugo'],['Madrid','Madrid Province'],['Melilla','Melilla'],['Murcia','Murcia'],['Málaga','Málaga'],['Navarra','Navarra'],['Ourense','Ourense'],['Palencia','Palencia'],['Pontevedra','Pontevedra'],['Salamanca','Salamanca'],['Santa Cruz de Tenerife','Santa Cruz de Tenerife'],['Segovia','Segovia'],['Sevilla','Seville'],['Soria','Soria'],['Tarragona','Tarragona'],['Teruel','Teruel'],['Toledo','Toledo'],['Valencia','Valencia'],['Valladolid','Valladolid'],['Vizcaya','Biscay'],['Zamora','Zamora'],['Zaragoza','Zaragoza'],['Álava','Álava'],['Ávila','Ávila']]"
-                      >
-                        Spain
-                      </option>
-                      <option value="Sweden" data-provinces="[]">
-                        Sweden
-                      </option>
-                      <option value="Switzerland" data-provinces="[]">
-                        Switzerland
-                      </option>
-                      <option
-                        value="United Arab Emirates"
-                        data-provinces="[['Abu Dhabi','Abu Dhabi'],['Ajman','Ajman'],['Dubai','Dubai'],['Fujairah','Fujairah'],['Ras al-Khaimah','Ras al-Khaimah'],['Sharjah','Sharjah'],['Umm al-Quwain','Umm al-Quwain']]"
-                      >
-                        United Arab Emirates
-                      </option>
-                      <option
-                        value="United Kingdom"
-                        data-provinces="[['British Forces','British Forces'],['England','England'],['Northern Ireland','Northern Ireland'],['Scotland','Scotland'],['Wales','Wales']]"
-                      >
-                        United Kingdom
-                      </option>
-                      <option value="Vietnam" data-provinces="[]">
-                        Vietnam
-                      </option>
+                      <option value="">Select Country*</option>
+                      {countries.map((country) => (
+                        <option key={country.code} value={country.name}>
+                          {country.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="grid-2">
-                    <input type="text" placeholder="Town/City*" />
-                    <input type="text" placeholder="Street,..." />
+                    <input 
+                      type="text" 
+                      placeholder="Town/City*" 
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Street Address*" 
+                      value={formData.street}
+                      onChange={(e) => handleInputChange('street', e.target.value)}
+                    />
                   </div>
                   <div className="grid-2">
-                    <div className="tf-select">
-                      <select className="text-title" data-default="">
-                        <option selected="" value="Choose State">
-                          Choose State
-                        </option>
-                        <option value="California">California</option>
-                        <option value="Alabama">Alabam</option>
-                        <option value="Alaska">Alaska</option>
-                        <option value="Arizona">Arizona</option>
-                        <option value="Arkansas">Arkansas</option>
-                        <option value="Florida">Florida</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Hawaii">Hawaii</option>
-                        <option value="Washington">Washington</option>
-                        <option value="Texas">Texas</option>
-                        <option value="Iowa">Iowa</option>
-                        <option value="Nevada">Nevada</option>
-                        <option value="Illinois">Illinois</option>
-                      </select>
-                    </div>
-                    <input type="text" placeholder="Postal Code*" />
+                    {isIndiaSelected ? (
+                      <div className="tf-select">
+                        <select 
+                          className="text-title" 
+                          value={formData.state}
+                          onChange={(e) => handleInputChange('state', e.target.value)}
+                        >
+                          <option value="">Choose State</option>
+                          {indianStates.map((state) => (
+                            <option key={state.code} value={state.name}>
+                              {state.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <input 
+                        type="text" 
+                        placeholder="State/Province" 
+                        value={formData.state}
+                        onChange={(e) => handleInputChange('state', e.target.value)}
+                      />
+                    )}
+                    <input 
+                      type="text" 
+                      placeholder="Postal Code*" 
+                      value={formData.postalCode}
+                      onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                    />
                   </div>
-                  <textarea placeholder="Write note..." defaultValue={""} />
+                  <textarea 
+                    placeholder="Write note..." 
+                    value={formData.note}
+                    onChange={(e) => handleInputChange('note', e.target.value)}
+                  />
                 </form>
               </div>
+              
               <div className="wrap">
                 <h5 className="title">Choose payment Option:</h5>
-                <form
-                  className="form-payment"
-                  onSubmit={(e) => e.preventDefault()}
-                >
+                <form className="form-payment" onSubmit={handlePayment}>
                   <div className="payment-box" id="payment-box">
-                    <div className="payment-item payment-choose-card active">
+                    {/* Credit Card Payment - Commented out for now */}
+                    {/*
+                    <div className={`payment-item payment-choose-card ${paymentMethod === 'credit-card' ? 'active' : ''}`}>
                       <label
                         htmlFor="credit-card-method"
                         className="payment-header"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#credit-card-payment"
-                        aria-controls="credit-card-payment"
                       >
                         <input
                           type="radio"
                           name="payment-method"
                           className="tf-check-rounded"
                           id="credit-card-method"
-                          defaultChecked
+                          checked={paymentMethod === 'credit-card'}
+                          onChange={() => handlePaymentMethodChange('credit-card')}
                         />
                         <span className="text-title">Credit Card</span>
                       </label>
-                      <div
-                        id="credit-card-payment"
-                        className="collapse show"
-                        data-bs-parent="#payment-box"
-                      >
+                      {paymentMethod === 'credit-card' && (
                         <div className="payment-body">
                           <p className="text-secondary">
                             Make your payment directly into our bank account.
@@ -272,9 +525,20 @@ export default function Checkout() {
                             cleared in our account.
                           </p>
                           <div className="input-payment-box">
-                            <input type="text" placeholder="Name On Card*" />
+                            <input 
+                              type="text" 
+                              placeholder="Name On Card*" 
+                              value={formData.cardName}
+                              onChange={(e) => handleInputChange('cardName', e.target.value)}
+                            />
                             <div className="ip-card">
-                              <input type="text" placeholder="Card Numbers*" />
+                              <input 
+                                type="text" 
+                                placeholder="Card Numbers*" 
+                                value={formData.cardNumber}
+                                onChange={(e) => handleInputChange('cardNumber', e.target.value)}
+                                maxLength="16"
+                              />
                               <div className="list-card">
                                 <Image
                                   width={48}
@@ -303,8 +567,18 @@ export default function Checkout() {
                               </div>
                             </div>
                             <div className="grid-2">
-                              <input type="date" />
-                              <input type="text" placeholder="CVV*" />
+                              <input 
+                                type="month" 
+                                value={formData.expiryDate}
+                                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                              />
+                              <input 
+                                type="text" 
+                                placeholder="CVV*" 
+                                value={formData.cvv}
+                                onChange={(e) => handleInputChange('cvv', e.target.value)}
+                                maxLength="4"
+                              />
                             </div>
                           </div>
                           <div className="check-save">
@@ -312,50 +586,57 @@ export default function Checkout() {
                               type="checkbox"
                               className="tf-check"
                               id="check-card"
-                              defaultChecked
+                              checked={formData.saveCard}
+                              onChange={(e) => handleInputChange('saveCard', e.target.checked)}
                             />
                             <label htmlFor="check-card">
                               Save Card Details
                             </label>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
-                    <div className="payment-item">
+                    */}
+                    
+                    <div className={`payment-item ${paymentMethod === 'cod' ? 'active' : ''}`}>
                       <label
                         htmlFor="delivery-method"
-                        className="payment-header collapsed"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#delivery-payment"
-                        aria-controls="delivery-payment"
+                        className="payment-header"
                       >
                         <input
                           type="radio"
                           name="payment-method"
                           className="tf-check-rounded"
                           id="delivery-method"
+                          checked={paymentMethod === 'cod'}
+                          onChange={() => handlePaymentMethodChange('cod')}
                         />
                         <span className="text-title">Cash on delivery</span>
                       </label>
-                      <div
-                        id="delivery-payment"
-                        className="collapse"
-                        data-bs-parent="#payment-box"
-                      />
+                      {paymentMethod === 'cod' && (
+                        <div className="payment-body">
+                          <p className="text-secondary">
+                            Pay with cash when your order is delivered. You will receive an email confirmation once your order is placed. 
+                            This is the only payment method currently available.
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div className="payment-item">
+                    
+                    {/* Apple Pay - Commented out for now */}
+                    {/*
+                    <div className={`payment-item ${paymentMethod === 'apple-pay' ? 'active' : ''}`}>
                       <label
                         htmlFor="apple-method"
-                        className="payment-header collapsed"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#apple-payment"
-                        aria-controls="apple-payment"
+                        className="payment-header"
                       >
                         <input
                           type="radio"
                           name="payment-method"
                           className="tf-check-rounded"
                           id="apple-method"
+                          checked={paymentMethod === 'apple-pay'}
+                          onChange={() => handlePaymentMethodChange('apple-pay')}
                         />
                         <span className="text-title apple-pay-title">
                           <Image
@@ -367,50 +648,52 @@ export default function Checkout() {
                           Apple Pay
                         </span>
                       </label>
-                      <div
-                        id="apple-payment"
-                        className="collapse"
-                        data-bs-parent="#payment-box"
-                      />
                     </div>
-                    <div className="payment-item paypal-item">
+                    */}
+                    
+                    {/* PayPal - Commented out for now */}
+                    {/*
+                    <div className={`payment-item paypal-item ${paymentMethod === 'paypal' ? 'active' : ''}`}>
                       <label
                         htmlFor="paypal-method"
-                        className="payment-header collapsed"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#paypal-method-payment"
-                        aria-controls="paypal-method-payment"
+                        className="payment-header"
                       >
                         <input
                           type="radio"
                           name="payment-method"
                           className="tf-check-rounded"
                           id="paypal-method"
+                          checked={paymentMethod === 'paypal'}
+                          onChange={() => handlePaymentMethodChange('paypal')}
                         />
                         <span className="paypal-title">
                           <Image
-                            alt="apple"
+                            alt="paypal"
                             src="/images/payment/paypal.png"
                             width={90}
                             height={23}
                           />
                         </span>
                       </label>
-                      <div
-                        id="paypal-method-payment"
-                        className="collapse"
-                        data-bs-parent="#payment-box"
-                      />
                     </div>
+                    */}
                   </div>
-                  <button className="tf-btn btn-reset">Payment</button>
+                  <button 
+                    className="tf-btn btn-reset" 
+                    type="submit"
+                    disabled={processingPayment}
+                  >
+                    {processingPayment ? 'Processing Order...' : 'Place Order (COD)'}
+                  </button>
                 </form>
               </div>
             </div>
           </div>
+          
           <div className="col-xl-1">
             <div className="line-separation" />
           </div>
+          
           <div className="col-xl-5">
             <div className="flat-spacing flat-sidebar-checkout">
               <div className="sidebar-checkout-content">
@@ -419,7 +702,7 @@ export default function Checkout() {
                   {cartProducts.map((elm, i) => (
                     <div key={i} className="item-product">
                       <Link
-                        href={`/product-detail/${elm.id}`}
+                        href={`/product-detail/${elm.slug || elm.id}`}
                         className="img-product"
                       >
                         <Image
@@ -432,42 +715,37 @@ export default function Checkout() {
                       <div className="content-box">
                         <div className="info">
                           <Link
-                            href={`/product-detail/${elm.id}`}
+                            href={`/product-detail/${elm.slug || elm.id}`}
                             className="name-product link text-title"
                           >
                             {elm.title}
                           </Link>
                           <div className="variant text-caption-1 text-secondary">
-                            <span className="size">XL</span>/
-                            <span className="color">Blue</span>
+                            <span className="size">{typeof elm.selectedSize === 'object' ? elm.selectedSize?.name || 'L' : elm.selectedSize || 'L'}</span>/
+                            <span className="color">{typeof elm.selectedColor === 'object' ? elm.selectedColor?.name || 'Blue' : elm.selectedColor || 'Blue'}</span>
                           </div>
                         </div>
                         <div className="total-price text-button">
                           <span className="count">{elm.quantity}</span>X
-                          <span className="price">${elm.price.toFixed(2)}</span>
+                          <span className="price">₹{elm.price.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
+                
+                {/* Commented out discount section for future use */}
+                {/*
                 <div className="sec-discount">
                   <Swiper
-                    dir="ltr"
+                    // dir="ltr"
                     className="swiper tf-sw-categories"
-                    slidesPerView={2.25} // data-preview="2.25"
+                    slidesPerView={2.25}
                     breakpoints={{
-                      1024: {
-                        slidesPerView: 2.25, // data-tablet={3}
-                      },
-                      768: {
-                        slidesPerView: 3, // data-tablet={3}
-                      },
-                      640: {
-                        slidesPerView: 2.5, // data-mobile-sm="2.5"
-                      },
-                      0: {
-                        slidesPerView: 1.2, // data-mobile="1.2"
-                      },
+                      1024: { slidesPerView: 2.25 },
+                      768: { slidesPerView: 3 },
+                      640: { slidesPerView: 2.5 },
+                      0: { slidesPerView: 1.2 },
                     }}
                     spaceBetween={20}
                   >
@@ -498,7 +776,7 @@ export default function Checkout() {
                               <span className="text">Apply Code</span>
                             </button>
                           </div>
-                        </div>{" "}
+                        </div>
                       </SwiperSlide>
                     ))}
                   </Swiper>
@@ -510,9 +788,11 @@ export default function Checkout() {
                   </div>
                   <p>
                     Discount code is only used for orders with a total value of
-                    products over $500.00
+                    products over ₹500.00
                   </p>
                 </div>
+                */}
+                
                 <div className="sec-total-price">
                   <div className="top">
                     <div className="item d-flex align-items-center justify-content-between text-button">
@@ -521,14 +801,14 @@ export default function Checkout() {
                     </div>
                     <div className="item d-flex align-items-center justify-content-between text-button">
                       <span>Discounts</span>
-                      <span>-$80.00</span>
+                      <span>₹0.00</span>
                     </div>
                   </div>
                   <div className="bottom">
                     <h5 className="d-flex justify-content-between">
                       <span>Total</span>
                       <span className="total-price-checkout">
-                        ${totalPrice.toFixed(2)}
+                        ₹{totalPrice.toFixed(2)}
                       </span>
                     </h5>
                   </div>

@@ -101,14 +101,27 @@ export const AuthProvider = ({ children }) => {
       setToken(null);
       setUser(null);
       
+      // Clear cart and wishlist from localStorage
+      localStorage.removeItem("cartProducts");
+      localStorage.removeItem("wishlistItems");
+      
+      // Trigger page refresh to clear all context states
+      window.location.reload();
+      
       return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
       // Even if everything fails, clear local data
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("cartProducts");
+      localStorage.removeItem("wishlistItems");
       setToken(null);
       setUser(null);
+      
+      // Trigger page refresh to clear all context states
+      window.location.reload();
+      
       return { success: true };
     } finally {
       setLoading(false);

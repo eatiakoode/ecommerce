@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useContextElement } from "@/context/Context";
 import CountdownTimer from "../common/Countdown";
 export default function ProductCard3({ product }) {
-  const [currentImage, setCurrentImage] = useState(product.imgSrc);
+  const [currentImage, setCurrentImage] = useState('/images/products/womens/women-1.jpg');
 
   const {
     setQuickAddItem,
@@ -18,9 +18,56 @@ export default function ProductCard3({ product }) {
     isAddedToCartProducts,
   } = useContextElement();
 
+  // Safe image src handling
+  const getSafeImageSrc = (src) => {
+    if (!src || src === '' || src === 'null' || src === 'undefined') {
+      return '/images/products/womens/women-1.jpg';
+    }
+    
+    // If it's already a full URL, return as is
+    if (src.startsWith('http')) return src;
+    
+    // If it starts with /uploads/, it's from backend - prepend backend URL
+    if (src.startsWith('/uploads/')) {
+      return `http://localhost:5000${src}`;
+    }
+    
+    // If it starts with upload-, it's from backend uploads - use proxy
+    if (src.startsWith('upload-')) {
+      return `http://localhost:5000/uploads/${src}`;
+    }
+    
+    // If it starts with /, it's a relative path
+    if (src.startsWith('/')) return src;
+    
+    // Default case - treat as relative path
+    return `/${src}`;
+  };
+
+  // Get the initial image source from backend data
+  const getInitialImageSrc = () => {
+    // Check if product has images array from backend
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      const firstImage = product.images[0];
+      if (firstImage && firstImage.url) {
+        return firstImage.url;
+      }
+    }
+    
+    // Fallback to old structure
+    if (product.imgSrc) {
+      return product.imgSrc;
+    }
+    
+    // Final fallback
+    return '/images/products/womens/women-1.jpg';
+  };
+
   useEffect(() => {
-    setCurrentImage(product.imgSrc);
+    const imageSrc = getSafeImageSrc(getInitialImageSrc());
+    setCurrentImage(imageSrc);
   }, [product]);
+
   return (
     <div
       className={`card-product wow fadeInUp ${
@@ -32,17 +79,27 @@ export default function ProductCard3({ product }) {
           <Image
             className="lazyload img-product"
             src={currentImage}
-            alt={product.title}
+            alt={product.title || 'Product Image'}
             width={600}
             height={800}
+            onError={(e) => {
+      
+              e.target.src = '/images/products/womens/women-1.jpg';
+            }}
           />
-          <Image
-            className="lazyload img-hover"
-            src={product.imgHover}
-            alt={product.title}
-            width={600}
-            height={800}
-          />
+          {product.imgHover && (
+            <Image
+              className="lazyload img-hover"
+              src={getSafeImageSrc(product.imgHover)}
+              alt={product.title || 'Product Image'}
+              width={600}
+              height={800}
+              onError={(e) => {
+        
+                e.target.src = '/images/products/womens/women-1.jpg';
+              }}
+            />
+          )}
         </Link>
         {product.hotSale && (
           <div className="marquee-product bg-main">
@@ -138,87 +195,22 @@ export default function ProductCard3({ product }) {
         )}
         {product.isOnSale && (
           <div className="on-sale-wrap">
-            <span className="on-sale-item">-{product.salePercentage}</span>
-          </div>
-        )}
-        {product.sizes && (
-          <div className="variant-wrap size-list">
-            <ul className="variant-box">
-              {product.sizes.map((size) => (
-                <li key={size} className="size-item">
-                  {size}
-                </li>
-              ))}
-            </ul>
+            <span className="on-sale-item">-25%</span>
           </div>
         )}
         {product.countdown && (
-          <div className="variant-wrap countdown-wrap">
-            <div className="variant-box">
-              <div
-                className="js-countdown"
-                data-timer={product.countdown}
-                data-labels="D :,H :,M :,S"
-              >
-                <CountdownTimer />
-              </div>
-            </div>
+          <div className="countdown-wrap">
+            <CountdownTimer endDate={product.countdown} />
           </div>
         )}
-        {product.oldPrice ? (
-          <div className="on-sale-wrap">
-            <span className="on-sale-item">-25%</span>
-          </div>
-        ) : (
-          ""
-        )}
-        <div className="list-product-btn">
-          <a
-            onClick={() => addToWishlist(product.id)}
-            className="box-icon wishlist btn-icon-action"
-          >
-            <span className="icon icon-heart" />
-            <span className="tooltip">
-              {isAddedtoWishlist(product.id)
-                ? "Already Wishlished"
-                : "Wishlist"}
-            </span>
-          </a>
-          <a
-            href="#compare"
-            data-bs-toggle="offcanvas"
-            aria-controls="compare"
-            onClick={() => addToCompareItem(product.id)}
-            className="box-icon compare btn-icon-action"
-          >
-            <span className="icon icon-gitDiff" />
-            <span className="tooltip">
-              {" "}
-              {isAddedtoCompareItem(product.id)
-                ? "Already compared"
-                : "Compare"}
-            </span>
-          </a>
+        <div className="list-btn-main">
           <a
             href="#quickView"
             onClick={() => setQuickViewItem(product)}
             data-bs-toggle="modal"
-            className="box-icon quickview tf-btn-loading"
-          >
-            <span className="icon icon-eye" />
-            <span className="tooltip">Quick View</span>
-          </a>
-        </div>
-        <div className="list-btn-main">
-          <a
-            href="#shoppingCart"
-            data-bs-toggle="modal"
             className="btn-main-product"
-            onClick={() => addProductToCart(product.id)}
           >
-            {isAddedToCartProducts(product.id)
-              ? "Already Added"
-              : "ADD TO CART"}
+            Quick View
           </a>
         </div>
       </div>
@@ -226,41 +218,99 @@ export default function ProductCard3({ product }) {
         <Link href={`/product-detail/${product.id}`} className="title link">
           {product.title}
         </Link>
-        <div className="box-rating">
-          <ul className="list-star">
-            {Array.from({ length: product.rating }).map((_, i) => (
-              <li key={i} className="icon icon-star" />
+        <span className="price current-price">
+          {product.oldPrice && (
+            <span className="old-price">₹{product.oldPrice?.toFixed(2) || '0.00'}</span>
+          )}{" "}
+          ₹{product.price?.toFixed(2) || '0.00'}
+        </span>
+        {product.colors && (
+          <ul className="list-color-product">
+            {product.colors.map((color, index) => (
+              <li
+                key={index}
+                className={`list-color-item color-swatch ${
+                  currentImage == color.imgSrc ? "active" : ""
+                } `}
+                onMouseOver={() => setCurrentImage(getSafeImageSrc(color.imgSrc))}
+              >
+                <span className={`swatch-value ${color.bgColor}`} />
+                <Image
+                  className="lazyload"
+                  src={getSafeImageSrc(color.imgSrc)}
+                  alt="color variant"
+                  width={600}
+                  height={800}
+                  onError={(e) => {
+            
+                    e.target.src = '/images/products/womens/women-1.jpg';
+                  }}
+                />
+              </li>
             ))}
           </ul>
-          <span className="text-caption-1 text-secondary"> (1.234) </span>
+        )}
+        {product.sizes && (
+          <div className="size-box">
+            {product.sizes.map((size, index) => (
+              <span
+                key={index}
+                className={`size-item box-icon ${
+                  size.isAvailable ? "" : "disable"
+                }`}
+              >
+                {size.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="card-product-actions">
+        <div className="card-product-actions-top">
+          <button
+            onClick={() => addToWishlist(product.id)}
+            className="box-icon wishlist btn-icon-action"
+          >
+            <i className="icon icon-heart" />
+            <span className="tooltip">
+              {isAddedtoWishlist(product.id)
+                ? "Already Wishlisted"
+                : "Wishlist"}
+            </span>
+          </button>
+          <button
+            onClick={() => addToCompareItem(product.id)}
+            className="box-icon compare btn-icon-action"
+          >
+            <i className="icon icon-compare" />
+            <span className="tooltip">
+              {isAddedtoCompareItem(product.id)
+                ? "Already Compare"
+                : "Compare"}
+            </span>
+          </button>
+          <button
+            onClick={() => setQuickViewItem(product)}
+            data-bs-toggle="modal"
+            data-bs-target="#quickView"
+            className="box-icon quick-view btn-icon-action"
+          >
+            <i className="icon icon-eye" />
+            <span className="tooltip">Quick View</span>
+          </button>
         </div>
-        <span className="price">
-          {product.oldPrice && (
-            <span className="old-price">${product.oldPrice.toFixed(2)}</span>
-          )}{" "}
-          ${product.price.toFixed(2)}
-        </span>
-        <div className="box-progress-stock">
-          <div className="progress">
-            <div
-              className="progress-bar"
-              role="progressbar"
-              style={{ width: `${product.progressBar}%` }}
-              aria-valuenow={product.progressBar}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-          </div>
-          <div className="stock-status d-flex justify-content-between align-items-center">
-            <div className="stock-item text-caption-1">
-              <span className="stock-label text-secondary-2"> Available: </span>
-              <span className="stock-value">{product.available}</span>
-            </div>
-            <div className="stock-item text-caption-1">
-              <span className="stock-label text-secondary-2"> Sold: </span>
-              <span className="stock-value">{product.sold}</span>
-            </div>
-          </div>
+        <div className="card-product-actions-bottom">
+          <button
+            onClick={() => addProductToCart(product.id)}
+            className="box-icon cart btn-icon-action"
+          >
+            <i className="icon icon-cart" />
+            <span className="tooltip">
+              {isAddedToCartProducts(product.id)
+                ? "Already Cart"
+                : "Add to Cart"}
+            </span>
+          </button>
         </div>
       </div>
     </div>

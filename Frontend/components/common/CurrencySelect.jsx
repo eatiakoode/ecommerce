@@ -5,17 +5,13 @@ import { useEffect, useRef, useState } from "react";
 
 const optionsData = [
   {
-    value: "us",
-    thumbnail: "/images/country/us.svg",
-    text: "USD",
+    value: "in",
+    thumbnail: "/images/country/in.svg",
+    text: "INR",
     selected: true,
   },
-  {
-    value: "vn",
-    thumbnail: "/images/country/vn.svg",
-    text: "VND",
-  },
 ];
+
 export default function CurrencySelect({ topStart = false, light = false }) {
   const [selected, setSelected] = useState(optionsData[0]);
   const [isDDOpen, setIsDDOpen] = useState(false);
@@ -38,6 +34,7 @@ export default function CurrencySelect({ topStart = false, light = false }) {
       document.removeEventListener("click", handleClickOutside);
     };
   }, []);
+  
   return (
     <div
       ref={languageSelect}
@@ -50,7 +47,7 @@ export default function CurrencySelect({ topStart = false, light = false }) {
         type="button"
         tabIndex={-1}
         className={`btn dropdown-toggle btn-light  ${isDDOpen ? "show" : ""} `}
-        title="USD $ | United States"
+        title="INR ₹ | India"
       >
         <div className="filter-option">
           <div className="filter-option-inner">

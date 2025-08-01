@@ -39,9 +39,7 @@ export default function SizeSelect({ sizes = [], selectedSize, setSelectedSize }
     }
   });
 
-  console.log("SizeSelect - Available sizes:", sizes);
-  console.log("SizeSelect - Transformed sizes:", transformedSizes);
-  console.log("SizeSelect - Selected size:", selectedSize);
+  
 
   return (
     <div className="variant-picker-item">
@@ -77,7 +75,7 @@ export default function SizeSelect({ sizes = [], selectedSize, setSelectedSize }
               htmlFor={`size-${size._id || size.value}`}
               data-value={size.value}
             >
-              <span className="text-title">{size.name || size.value}</span>
+              <span className="text-title">{size.value || size.name || size.value}</span>
             </label>
           </div>
         ))}

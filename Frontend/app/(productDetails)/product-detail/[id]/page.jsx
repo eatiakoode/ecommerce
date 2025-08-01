@@ -99,6 +99,8 @@ export default async function ProductDetailPage({ params }) {
         name: size.name,
         value: size.value,
       })) : [],
+      // Keep brand information as populated from backend
+      brand: apiProduct.brand,
     };
 
     return (

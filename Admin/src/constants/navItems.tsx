@@ -13,7 +13,7 @@ import { MdSlideshow } from "react-icons/md";
 import { FaInstagram } from "react-icons/fa";
 import { RiArticleLine } from "react-icons/ri";
 import { RiQuestionAnswerLine } from "react-icons/ri";
-
+import { RiTeamLine } from "react-icons/ri";
 
 export const navItems = [
   {
@@ -54,12 +54,18 @@ export const navItems = [
   {
     title: "Sliders",
     url: "/sliders",
-    icon: <MdSlideshow/>,
+    icon: <MdSlideshow />,
   },
   {
     title: "Staff",
     url: "/staff",
     icon: <TbBriefcase />,
+  },
+
+  {
+    title: "Teams",
+    url: "/teams",
+    icon: <RiTeamLine />,
   },
   {
     title: "Customers",
@@ -82,13 +88,18 @@ export const navItems = [
     icon: <RiCoupon2Line />,
   },
   {
-  title: "FAQ",
-  url: "/faq",
-  icon: <RiQuestionAnswerLine />,
+    title: "FAQ",
+    url: "/faq",
+    icon: <RiQuestionAnswerLine />,
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: <TbSettings />,
+    title: "Enquiries",
+    url: "/enquiries",
+    icon: <RiQuestionAnswerLine />,
   },
+  // {
+  //   title: "Settings",
+  //   url: "/settings",
+  //   icon: <TbSettings />,
+  // },
 ];

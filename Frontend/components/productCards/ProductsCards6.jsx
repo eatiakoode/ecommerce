@@ -6,7 +6,7 @@ import CountdownTimer from "../common/Countdown";
 
 import { useContextElement } from "@/context/Context";
 export default function ProductsCards6({ product }) {
-  const [currentImage, setCurrentImage] = useState(product.imgSrc);
+  const [currentImage, setCurrentImage] = useState('/images/products/womens/women-1.jpg');
 
   const {
     setQuickAddItem,
@@ -19,9 +19,56 @@ export default function ProductsCards6({ product }) {
     isAddedToCartProducts,
   } = useContextElement();
 
+  // Safe image src handling
+  const getSafeImageSrc = (src) => {
+    if (!src || src === '' || src === 'null' || src === 'undefined') {
+      return '/images/products/womens/women-1.jpg';
+    }
+    
+    // If it's already a full URL, return as is
+    if (src.startsWith('http')) return src;
+    
+    // If it starts with /uploads/, it's from backend - prepend backend URL
+    if (src.startsWith('/uploads/')) {
+      return `http://localhost:5000${src}`;
+    }
+    
+    // If it starts with upload-, it's from backend uploads - use proxy
+    if (src.startsWith('upload-')) {
+      return `http://localhost:5000/uploads/${src}`;
+    }
+    
+    // If it starts with /, it's a relative path
+    if (src.startsWith('/')) return src;
+    
+    // Default case - treat as relative path
+    return `/${src}`;
+  };
+
+  // Get the initial image source from backend data
+  const getInitialImageSrc = () => {
+    // Check if product has images array from backend
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      const firstImage = product.images[0];
+      if (firstImage && firstImage.url) {
+        return firstImage.url;
+      }
+    }
+    
+    // Fallback to old structure
+    if (product.imgSrc) {
+      return product.imgSrc;
+    }
+    
+    // Final fallback
+    return '/images/products/womens/women-1.jpg';
+  };
+
   useEffect(() => {
-    setCurrentImage(product.imgSrc);
+    const imageSrc = getSafeImageSrc(getInitialImageSrc());
+    setCurrentImage(imageSrc);
   }, [product]);
+
   return (
     <div
       className="card-product style-list"
@@ -29,42 +76,50 @@ export default function ProductsCards6({ product }) {
       data-brand="gucci"
     >
       <div className="card-product-wrapper">
-        <Link href={`/product-detail/${product.id}`} className="product-img">
+        <Link href={`/product-detail/${product.slug || product.id || product._id || 'product'}`} className="product-img">
           <Image
             className="lazyload img-product"
             src={currentImage}
-            alt={product.title}
+            alt={product.title || product.name || 'Product Image'}
             width={600}
             height={800}
+            onError={(e) => {
+      
+              e.target.src = '/images/products/womens/women-1.jpg';
+            }}
           />
-          <Image
-            className="lazyload img-hover"
-            src={product.imgHover}
-            alt={product.title}
-            width={600}
-            height={800}
-          />
+          {product.imgHover && (
+            <Image
+              className="lazyload img-hover"
+              src={getSafeImageSrc(product.imgHover)}
+              alt={product.title || product.name || 'Product Image'}
+              width={600}
+              height={800}
+              onError={(e) => {
+        
+                e.target.src = '/images/products/womens/women-1.jpg';
+              }}
+            />
+          )}
         </Link>
         {product.isOnSale && (
           <div className="on-sale-wrap">
-            <span className="on-sale-item">-25%</span>
+            <span className="on-sale-item">{product.saleText || '-25%'}</span>
           </div>
         )}
       </div>
       <div className="card-product-info">
-        <Link href={`/product-detail/${product.id}`} className="title link">
-          {product.title}
+        <Link href={`/product-detail/${product.slug || product.id || product._id || 'product'}`} className="title link">
+          {product.title || product.name || 'Product Title'}
         </Link>
         <span className="price current-price">
-          {product.oldPrice && (
-            <span className="old-price">${product.oldPrice.toFixed(2)}</span>
+          {product.oldPrice && product.oldPrice > product.price && (
+            <span className="old-price">₹{product.oldPrice?.toFixed(2) || '0.00'}</span>
           )}{" "}
-          ${product.price?.toFixed(2)}
+          ₹{product.price?.toFixed(2) || '0.00'}
         </span>
         <p className="description text-secondary text-line-clamp-2">
-          The garments labelled as Committed are products that have been
-          produced using sustainable fibres or processes, reducing their
-          environmental impact.
+          {product.shortDescription || product.description || 'The garments labelled as Committed are products that have been produced using sustainable fibres or processes, reducing their environmental impact.'}
         </p>
         <div className="variant-wrap-list">
           {product.colors && (
@@ -75,15 +130,19 @@ export default function ProductsCards6({ product }) {
                   className={`list-color-item color-swatch ${
                     currentImage == color.imgSrc ? "active" : ""
                   } `}
-                  onMouseOver={() => setCurrentImage(color.imgSrc)}
+                  onMouseOver={() => setCurrentImage(getSafeImageSrc(color.imgSrc))}
                 >
                   <span className={`swatch-value ${color.bgColor}`} />
                   <Image
                     className="lazyload"
-                    src={color.imgSrc}
+                    src={getSafeImageSrc(color.imgSrc)}
                     alt="color variant"
                     width={600}
                     height={800}
+                    onError={(e) => {
+              
+                      e.target.src = '/images/products/womens/women-1.jpg';
+                    }}
                   />
                 </li>
               ))}

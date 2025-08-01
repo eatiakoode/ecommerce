@@ -5,7 +5,7 @@ import Footer1 from "@/components/footers/Footer1";
 import { fetchProductsByCategory } from "@/api/category";
 import Link from "next/link";
 import Image from "next/image";
-import { convertAndFormatUSDToINR } from "@/utils/currencyConverter";
+import { formatToINR } from "@/utils/currencyConverter";
 
 // Add custom styles to prevent full-window image display
 const categoryStyles = `
@@ -192,7 +192,7 @@ export default function CategoryPage() {
         setCategoryData(response);
         setTotalPages(response.totalPages || 0);
       } catch (error) {
-        console.error('Error loading category products:', error);
+
       } finally {
         setLoading(false);
       }
@@ -358,11 +358,11 @@ export default function CategoryPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
                               <span className="category-product-price">
-                                {convertAndFormatUSDToINR(product.sellingPrice)}
+                                {formatToINR(product.sellingPrice)}
                               </span>
                               {product.MRP && product.MRP > product.sellingPrice && (
                                 <span className="category-product-original-price">
-                                  {convertAndFormatUSDToINR(product.MRP)}
+                                  {formatToINR(product.MRP)}
                                 </span>
                               )}
                             </div>
@@ -373,7 +373,7 @@ export default function CategoryPage() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 // Add to cart functionality here
-                                console.log('Add to cart:', product.title);
+                        
                               }}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

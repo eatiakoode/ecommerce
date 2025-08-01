@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 // import { productMain } from "@/data/products";
 import "react-range-slider-input/dist/style.css";
 const availabilityOptions = [
-  { label: "In stock", value: true },
-  { label: "Out of stock", value: false },
+  { label: "All", value: "All" },
+  { label: "In Stock", value: "In Stock" },
+  { label: "Out of Stock", value: "Out of Stock" },
 ];
 
 let RangeSlider;
 try {
   RangeSlider = require("react-range-slider-input").default;
 } catch (error) {
-  console.warn("RangeSlider component could not be loaded:", error);
+  
   RangeSlider = null;
 }
 export default function FilterSidebar({ allProps }) {
@@ -29,7 +30,14 @@ export default function FilterSidebar({ allProps }) {
     // Fetch categories
     fetch("/api/frontend/category/category-list")
       .then((res) => res.json())
-      .then((data) => setCategories(data?.data || []));
+      .then((data) => {
+        const categoriesData = data?.data || [];
+        setCategories(categoriesData);
+        // Pass categories data to parent component
+        if (allProps.setCategoriesData) {
+          allProps.setCategoriesData(categoriesData);
+        }
+      });
     // Fetch brands
     fetch("/api/brand")
       .then((res) => res.json())
@@ -41,8 +49,15 @@ export default function FilterSidebar({ allProps }) {
     // Fetch colors
     fetch("/api/color")
       .then((res) => res.json())
-      .then((data) => setColors(data || []));
-  }, [mounted]);
+      .then((data) => {
+        const colorsData = data || [];
+        setColors(colorsData);
+        // Pass colors data to parent component
+        if (allProps.setColorsData) {
+          allProps.setColorsData(colorsData);
+        }
+      });
+  }, [mounted, allProps.setCategoriesData]);
   if (!mounted) return null;
   return (
     <div className="sidebar-filter canvas-filter left">
@@ -62,8 +77,15 @@ export default function FilterSidebar({ allProps }) {
                     className={`categories-item${allProps.categories && allProps.categories.includes(category._id) ? ' active' : ''}`}
                     onClick={e => {
                       e.preventDefault();
+                      // Toggle category selection
                       if (allProps.setCategories) {
-                        allProps.setCategories([category._id]);
+                        const currentCategories = allProps.categories || [];
+                        const isSelected = currentCategories.includes(category._id);
+                        if (isSelected) {
+                          allProps.setCategories(currentCategories.filter(id => id !== category._id));
+                        } else {
+                          allProps.setCategories([...currentCategories, category._id]);
+                        }
                       } else if (allProps.setCategory) {
                         allProps.setCategory(category._id);
                       }
@@ -82,7 +104,7 @@ export default function FilterSidebar({ allProps }) {
             {RangeSlider && !sliderError ? (
               <RangeSlider
                 min={10}
-                max={450}
+                max={30000}
                 value={allProps.price}
                 onInput={(value) => allProps.setPrice(value)}
                 onError={() => setSliderError(true)}
@@ -92,7 +114,7 @@ export default function FilterSidebar({ allProps }) {
                 <input
                   type="range"
                   min="10"
-                  max="450"
+                  max="30000"
                   value={allProps.price[0]}
                   onChange={(e) => allProps.setPrice([parseInt(e.target.value), allProps.price[1]])}
                   style={{ width: '100%', marginBottom: '10px' }}
@@ -101,7 +123,7 @@ export default function FilterSidebar({ allProps }) {
                 <input
                   type="range"
                   min="10"
-                  max="450"
+                  max="30000"
                   value={allProps.price[1]}
                   onChange={(e) => allProps.setPrice([allProps.price[0], parseInt(e.target.value)])}
                   style={{ width: '100%' }}
@@ -115,9 +137,9 @@ export default function FilterSidebar({ allProps }) {
                 <div
                   className="price-val"
                   id="price-min-value"
-                  data-currency="$"
+                  data-currency="₹"
                 >
-                  {allProps.price[0]}
+                  ₹{allProps.price[0]}
                 </div>
               </div>
               <div className="box-price-item">
@@ -125,9 +147,9 @@ export default function FilterSidebar({ allProps }) {
                 <div
                   className="price-val"
                   id="price-max-value"
-                  data-currency="$"
+                  data-currency="₹"
                 >
-                  {allProps.price[1]}
+                  ₹{allProps.price[1]}
                 </div>
               </div>
             </div>
@@ -138,22 +160,17 @@ export default function FilterSidebar({ allProps }) {
               {sizes.map((size, index) => (
                 <span
                   key={size._id || index}
-                  onClick={() => allProps.setSize(size.value || size.name || size.title || size)}
+                  onClick={() => {
+                    const sizeValue = size.value || size.name || size.title;
+                    allProps.setSize(sizeValue);
+                  }}
                   className={`size-item size-check ${
-                    allProps.size === (size.value || size.name || size.title || size) ? "active" : ""
+                    allProps.size === (size.value || size.name || size.title) ? "active" : ""
                   }`}
                 >
-                  {size.value || size.name || size.title || size}
+                  {size.value || size.name || size.title}
                 </span>
               ))}
-              <span
-                className={`size-item size-check free-size ${
-                  allProps.size == "Free Size" ? "active" : ""
-                } `}
-                onClick={() => allProps.setSize("Free Size")}
-              >
-                Free Size
-              </span>
             </div>
           </div>
           <div className="widget-facet facet-color">
@@ -161,10 +178,19 @@ export default function FilterSidebar({ allProps }) {
             <div className="facet-color-box">
               {colors.map((color, index) => (
                 <div
-                  onClick={() => allProps.setColor(color)}
+                  onClick={() => {
+                    const colorValue = color.title || color.name;
+                    
+                    // Toggle color selection
+                    if (allProps.color === colorValue) {
+                      allProps.setColor('All');
+                    } else {
+                      allProps.setColor(colorValue);
+                    }
+                  }}
                   key={color._id || index}
                   className={`color-item color-check ${
-                    color == allProps.color ? "active" : ""
+                    (color.title || color.name) === allProps.color ? "active" : ""
                   }`}
                   title={color.name || color.title}
                 >
@@ -188,34 +214,43 @@ export default function FilterSidebar({ allProps }) {
           <div className="widget-facet facet-fieldset">
             <h6 className="facet-title">Availability</h6>
             <div className="box-fieldset-item">
-              {availabilityOptions.map((option, index) => (
-                <fieldset
-                  key={index}
-                  className="fieldset-item"
-                  onClick={() => allProps.setAvailability(option)}
-                  suppressHydrationWarning
-                >
-                  <input
-                    type="radio"
-                    name="availability"
-                    className="tf-check"
-                    readOnly
-                    checked={allProps.availability === option}
+              {availabilityOptions.map((option, index) => {
+                // Calculate count for each availability option
+                let count = 0;
+                if (allProps.products && Array.isArray(allProps.products)) {
+                  if (option.value === 'All') {
+                    count = allProps.products.length;
+                  } else if (option.value === 'In Stock') {
+                    count = allProps.products.filter(product => (product.quantity || 0) > 0).length;
+                  } else if (option.value === 'Out of Stock') {
+                    count = allProps.products.filter(product => (product.quantity || 0) <= 0).length;
+                  }
+                }
+                
+                return (
+                  <fieldset
+                    key={index}
+                    className="fieldset-item"
+                    onClick={() => allProps.setAvailability(option.value)}
                     suppressHydrationWarning
-                  />
-                  <label>
-                    {option.label}{" "}
-                    <span className="count-stock">
-                      (
-                      {
-                        // productMain.filter((el) => el.inStock == option.value)
-                        //   .length
-                      }
-                      )
-                    </span>
-                  </label>
-                </fieldset>
-              ))}
+                  >
+                    <input
+                      type="radio"
+                      name="availability"
+                      className="tf-check"
+                      readOnly
+                      checked={allProps.availability === option.value}
+                      suppressHydrationWarning
+                    />
+                    <label>
+                      {option.label}{" "}
+                      <span className="count-stock">
+                        ({count})
+                      </span>
+                    </label>
+                  </fieldset>
+                );
+              })}
             </div>
           </div>
           <div className="widget-facet facet-fieldset">

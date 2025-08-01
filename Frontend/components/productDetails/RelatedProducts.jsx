@@ -29,7 +29,7 @@ export default function RelatedProducts({ product }) {
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching related products:", error);
+
         setLoading(false);
       });
   }, [product]);

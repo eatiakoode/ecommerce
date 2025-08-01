@@ -56,6 +56,10 @@ const orderSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "Color",
         },
+        size: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Size", 
+        },
         quantity: { type: Number },
         price: { type: Number },
       },

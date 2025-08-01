@@ -65,10 +65,15 @@ export default function LoginModal({ message = "Please login to add items to you
       if (result.success) {
         // Close modal and redirect
         const modal = document.getElementById('loginModal');
-        if (modal) {
-          const bootstrapModal = bootstrap.Modal.getInstance(modal);
-          if (bootstrapModal) {
-            bootstrapModal.hide();
+        if (modal && typeof bootstrap !== 'undefined') {
+          try {
+            const bootstrapModal = bootstrap.Modal.getInstance(modal);
+            if (bootstrapModal) {
+              bootstrapModal.hide();
+            }
+          } catch (error) {
+            console.error('Bootstrap modal error:', error);
+            // Fallback: just redirect
           }
         }
         // Redirect to home page or stay on current page

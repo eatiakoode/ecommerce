@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { updateUserProfile, changePassword } from "@/api/auth";
+import { countries } from "@/data/countries";
 
 export default function Information() {
   const { user, token, getProfile } = useAuth();
@@ -268,35 +269,11 @@ export default function Information() {
                 data-default=""
               >
                 <option value="">Select Country</option>
-                <option value="Australia">Australia</option>
-                <option value="Austria">Austria</option>
-                <option value="Belgium">Belgium</option>
-                <option value="Canada">Canada</option>
-                <option value="Czech Republic">Czechia</option>
-                <option value="Denmark">Denmark</option>
-                <option value="Finland">Finland</option>
-                <option value="France">France</option>
-                <option value="Germany">Germany</option>
-                <option value="Hong Kong">Hong Kong SAR</option>
-                <option value="Ireland">Ireland</option>
-                <option value="Israel">Israel</option>
-                <option value="Italy">Italy</option>
-                <option value="Japan">Japan</option>
-                <option value="Malaysia">Malaysia</option>
-                <option value="Netherlands">Netherlands</option>
-                <option value="New Zealand">New Zealand</option>
-                <option value="Norway">Norway</option>
-                <option value="Poland">Poland</option>
-                <option value="Portugal">Portugal</option>
-                <option value="Singapore">Singapore</option>
-                <option value="South Korea">South Korea</option>
-                <option value="Spain">Spain</option>
-                <option value="Sweden">Sweden</option>
-                <option value="Switzerland">Switzerland</option>
-                <option value="United Arab Emirates">United Arab Emirates</option>
-                <option value="United Kingdom">United Kingdom</option>
-                <option value="United States">United States</option>
-                <option value="Vietnam">Vietnam</option>
+                {countries.map((country) => (
+                  <option key={country.code} value={country.name}>
+                    {country.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
