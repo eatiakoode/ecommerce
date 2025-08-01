@@ -1,16 +1,57 @@
 "use client";
 
-import { testimonials6 } from "@/data/testimonials";
+import { useTestimonials } from "@/hooks/useTestimonials";
 import { Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/pagination";
 
 export default function Testimonials() {
+  const { testimonials, loading, error } = useTestimonials();
+
+  if (loading) {
+    return (
+      <section className="flat-spacing">
+        <div className="container">
+          <div className="heading-section text-center wow fadeInUp">
+            <h3 className="heading">Customer Review</h3>
+          </div>
+          <div className="text-center">
+            <p>Loading customer reviews...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!testimonials || testimonials.length === 0) {
+    return (
+      <section className="flat-spacing">
+        <div className="container">
+          <div className="heading-section text-center wow fadeInUp">
+            <h3 className="heading">Customer Review</h3>
+          </div>
+          <div className="text-center">
+            <p>No customer reviews found.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="flat-spacing">
       <div className="container">
         <div className="heading-section text-center wow fadeInUp">
           <h3 className="heading">Customer Review</h3>
         </div>
+        {error && (
+          <div className="text-center mb-3">
+            <small className="text-warning">
+              Using fallback data - {error}
+            </small>
+          </div>
+        )}
         <Swiper
           className="tf-sw-testimonial wow fadeInUp"
           data-wow-delay="0.1s"
@@ -28,7 +69,7 @@ export default function Testimonials() {
           }}
           dir="ltr"
         >
-          {testimonials6.map((item, index) => (
+          {testimonials.map((item, index) => (
             <SwiperSlide key={index}>
               <div
                 className="testimonial-item style-4"
@@ -45,7 +86,7 @@ export default function Testimonials() {
                       <div className="text-title author">{item.author}</div>
                     </div>
                     <div className="list-star-default color-primary">
-                      {Array(item.stars)
+                      {Array(item.stars || 5)
                         .fill(0)
                         .map((_, starIndex) => (
                           <i key={starIndex} className="icon icon-star" />

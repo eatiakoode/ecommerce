@@ -32,6 +32,15 @@ const sliderFrntRoute = require("./routes/Frontend/sliderFrntRoute");
 const instapostRoutes = require('./routes/instaPostRoute');
 const testimonialRoutes = require("./routes/testimonialRoute");
 const testimonialFrntRoutes = require("./routes/Frontend/testimonialFrntRoute");
+const teamRoutes = require("./routes/teamRoutes");
+const aboutusFrntRoute = require("./routes/Frontend/aboutusFrntRoute");
+const faqFrntRoute = require("./routes/Frontend/faqFrntRoute");
+// const contactFormRoute = require("./routes/Frontend/contactFormRoute");
+// const contactFormRoutes = require('./routes/Frontend/contactFormRoute');
+const contactFormRoute = require('./routes/Frontend/contactFormRoute');
+
+const enqRoute = require('./routes/enqRoute');
+const checkoutRoute = require("./routes/Frontend/checkoutRoute")
 
 
 // eati test
@@ -78,7 +87,18 @@ app.use("/api/instapost", instapostRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/frontend/testimonials", testimonialFrntRoutes);
 app.use("/api/size", sizeRoute);
+app.use("/api/teams", teamRoutes);
+app.use("/api/frontend/aboutus", aboutusFrntRoute);
+app.use("/api/frontend/faq", faqFrntRoute);
+// app.use("/api/enquiry", enqRouter);
+// app.use('/api/frontend/contact-form', contactFormRoutes);
+app.use('/api/contact', contactFormRoute);
+app.use('/api/frontend/checkout', checkoutRoute);
 
+
+
+
+app.use('/api/enquiries', enqRoute);
 
 // app.use("/public", express.static(path.join(__dirname, "public")));
 // app.use(express.static("public"));

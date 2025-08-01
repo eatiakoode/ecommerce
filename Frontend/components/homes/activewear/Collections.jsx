@@ -19,7 +19,12 @@ export default function Collections() {
         const res = await fetch("/api/frontend/category/category-list");
         const result = await res.json();
         console.log("Fetched categories:", result);
-        setCollectionsData(result?.data || []);
+        // Add slug property to each category if it doesn't exist
+        const categoriesWithSlug = (result?.data || []).map(cat => ({
+          ...cat,
+          slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')
+        }));
+        setCollectionsData(categoriesWithSlug);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
@@ -57,7 +62,7 @@ export default function Collections() {
               {collectionsData.map((collection, index) => (
                 <SwiperSlide key={index}>
                   <div className="collection-circle hover-img">
-                    <Link href={`/shop-collection`} className="img-style radius-12">
+                    <Link href={`/category/${collection.slug}`} className="img-style radius-12">
                       {collection.image && (
                         <Image
                           src={
@@ -73,13 +78,13 @@ export default function Collections() {
                     </Link>
                     <div className="collection-content text-center">
                       <div>
-                        <Link href={`/shop-collection`} className="cls-title">
-                          <h6 className="text">{collection.name}</h6> {/* ✅ FIXED */}
+                        <Link href={`/category/${collection.slug}`} className="cls-title">
+                          <h6 className="text">{collection.name}</h6>
                           <i className="icon icon-arrowUpRight" />
                         </Link>
                       </div>
                       <div className="count text-secondary">
-                        {collection.productCount ?? 0} items {/* ✅ FIXED */}
+                        {collection.productCount ?? 0} items
                       </div>
                     </div>
                   </div>

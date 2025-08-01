@@ -1,10 +1,50 @@
 "use client";
 import Image from "next/image";
-import { teamMembers } from "@/data/team";
+import { useTeam } from "@/hooks/useTeam";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 
 export default function Team() {
+  const { teamMembers, loading, error } = useTeam();
+
+  if (loading) {
+    return (
+      <section className="flat-spacing">
+        <div className="container">
+          <div className="heading-section text-center wow fadeInUp">
+            <h3 className="heading">Meet Our Teams</h3>
+            <p className="subheading text-secondary-2">
+              Discover exceptional experiences through testimonials from our
+              satisfied customers.
+            </p>
+          </div>
+          <div className="text-center">
+            <p>Loading team members...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!teamMembers || teamMembers.length === 0) {
+    return (
+      <section className="flat-spacing">
+        <div className="container">
+          <div className="heading-section text-center wow fadeInUp">
+            <h3 className="heading">Meet Our Teams</h3>
+            <p className="subheading text-secondary-2">
+              Discover exceptional experiences through testimonials from our
+              satisfied customers.
+            </p>
+          </div>
+          <div className="text-center">
+            <p>No team members found.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="flat-spacing">
       <div className="container">
@@ -15,6 +55,13 @@ export default function Team() {
             satisfied customers.
           </p>
         </div>
+        {error && (
+          <div className="text-center mb-3">
+            <small className="text-warning">
+              Using fallback data - {error}
+            </small>
+          </div>
+        )}
         <Swiper
           dir="ltr"
           spaceBetween={30}
