@@ -131,13 +131,13 @@ export default function BlogsTable({
                       />
                     </td>
                     <td className="p-3">
-                      {blog.images && blog.images.length > 0 ? (
+                      {blog.image ? (
                         <img
-                          src={blog.images[0].url.startsWith('http') ? blog.images[0].url : `http://localhost:5000${blog.images[0].url}`}
+                          src={blog.image.startsWith('http') ? blog.image : `http://localhost:5000${blog.image}`}
                           alt={blog.title}
                           style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }}
                           onError={e => { 
-                            console.log('Image failed to load:', blog.images[0].url);
+                            console.log('Image failed to load:', blog.image);
                             (e.target as HTMLImageElement).src = '/no-image.png'; 
                           }}
                         />
@@ -155,7 +155,7 @@ export default function BlogsTable({
                       {blog.date ? new Date(blog.date).toLocaleDateString() : "No Date"}
                     </td>
                     <td className="p-3 text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                      {blog.category?.title || blog.category || "No Category"}
+                      {blog.category || "No Category"}
                     </td>
                     <td className="p-3 text-center">
                       <MemoizedActions blog={blog} onRefresh={() => {}} />

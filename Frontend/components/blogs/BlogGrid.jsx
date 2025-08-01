@@ -13,7 +13,7 @@ export default function BlogGrid() {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/blog');
+        const response = await fetch('http://localhost:5000/api/frontend/blog/list');
         if (!response.ok) {
           throw new Error('Failed to fetch blogs');
         }
@@ -92,66 +92,71 @@ export default function BlogGrid() {
         <div className="row">
           <div className="col-12">
             <div className="tf-grid-layout md-col-3">
-              {blogs.map((blog, index) => (
-                <div className="wg-blog style-1 hover-image" key={blog._id || index}>
-                  <div className="image">
-                    {blog.images && blog.images.length > 0 ? (
+              {blogs.map((blog, i) => (
+                <div key={blog._id || i} className="col-lg-4 col-md-6">
+                  <div className="wg-blog hover-image">
+                    <div className="image">
+                      {blog.image ? (
+                        <Image
+                          className="lazyload"
+                          alt={blog.title}
+                          src={blog.image.startsWith('http') ? blog.image : `http://localhost:5000${blog.image}`}
+                          width={600}
+                          height={399}
+                          onError={(e) => {
+                            console.log('Image failed to load:', blog.image);
+                            e.target.src = '/images/blog/blog-grid-1.jpg';
+                          }}
+                        />
+                      ) : (
                       <Image
                         className="lazyload"
-                        data-src={blog.images[0].url.startsWith('http') ? blog.images[0].url : `http://localhost:5000${blog.images[0].url}`}
-                        alt={blog.title}
-                        src={blog.images[0].url.startsWith('http') ? blog.images[0].url : `http://localhost:5000${blog.images[0].url}`}
-                        width={615}
-                        height={461}
-                        onError={(e) => {
-                          console.log('Image failed to load:', blog.images[0].url);
-                          e.target.src = '/images/blog/blog-grid-1.jpg';
-                        }}
-                      />
-                    ) : (
-                    <Image
-                      className="lazyload"
-                        data-src="/images/blog/blog-grid-1.jpg"
-                        alt="Default blog image"
-                        src="/images/blog/blog-grid-1.jpg"
-                      width={615}
-                      height={461}
-                    />
-                    )}
-                  </div>
-                  <div className="content">
-                    <div className="meta">
-                      <div className="meta-item gap-8">
-                        <div className="icon">
-                          <i className="icon-calendar" />
-                        </div>
-                        <p className="text-caption-1">
-                          {blog.date ? new Date(blog.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          }) : 'No date'}
-                        </p>
-                      </div>
-                      <div className="meta-item gap-8">
-                        <div className="icon">
-                          <i className="icon-user" />
-                        </div>
-                        <p className="text-caption-1">
-                          by{" "}
-                          <a className="link" href="#">
-                            {blog.author || 'Unknown Author'}
-                          </a>
-                        </p>
-                      </div>
+                          alt="Default blog image"
+                          src="/images/blog/blog-grid-1.jpg"
+                          width={600}
+                          height={399}
+                        />
+                      )}
                     </div>
-                    <div>
-                      <h6 className="title fw-5">
-                        <Link className="link" href={`/blog-detail/${blog._id}`}>
+                    <div className="content">
+                      <div className="d-flex align-items-center justify-content-between flex-wrap gap-10">
+                        <div className="meta">
+                          <div className="meta-item gap-8">
+                            <div className="icon">
+                              <i className="icon-calendar" />
+                            </div>
+                            <div className="text-caption-1">
+                              {blog.date ? new Date(blog.date).toLocaleDateString() : "No Date"}
+                            </div>
+                          </div>
+                          <div className="meta-item gap-8">
+                            <div className="icon">
+                              <i className="icon-user" />
+                            </div>
+                            <div className="text-caption-1">{blog.author || "No Author"}</div>
+                          </div>
+                        </div>
+                        <div className="meta">
+                          <div className="meta-item gap-4">
+                            <div className="icon">
+                              <i className="icon-comment" />
+                            </div>
+                            <div className="text-caption-1">0</div>
+                          </div>
+                          <div className="meta-item gap-4">
+                            <div className="icon">
+                              <i className="icon-eye" />
+                            </div>
+                            <div className="text-caption-1">0</div>
+                          </div>
+                        </div>
+                      </div>
+                      <h5 className="title">
+                        <Link className="link" href={`/blog-detail/${blog.slug || blog._id}`}>
                           {blog.title}
                         </Link>
-                      </h6>
-                      <div className="body-text">
+                      </h5>
+                      <p className="text-caption-1">
                         {blog.description ? 
                           (blog.description.length > 100 ? 
                             `${blog.description.substring(0, 100)}...` : 
@@ -159,7 +164,13 @@ export default function BlogGrid() {
                           ) : 
                           'No description available'
                         }
-                      </div>
+                      </p>
+                      <Link
+                        href={`/blog-detail/${blog.slug || blog._id}`}
+                        className="link text-button bot-button"
+                      >
+                        Read More
+                      </Link>
                     </div>
                   </div>
                 </div>

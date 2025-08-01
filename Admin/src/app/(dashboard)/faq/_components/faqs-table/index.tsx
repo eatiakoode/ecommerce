@@ -26,6 +26,7 @@ export default function FaqsTable({
   setTypeFilter,
 }: FaqsTableProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const router = useRouter();
 
   // Debounce filter input
@@ -38,6 +39,26 @@ export default function FaqsTable({
   // Memoize Actions and Filters
   const MemoizedActions = React.memo(Actions);
   const MemoizedFilters = React.memo(Filters);
+
+  const toggleGroup = (slug: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(slug) 
+        ? prev.filter(s => s !== slug)
+        : [...prev, slug]
+    );
+  };
+
+  const getAllFaqIds = () => {
+    return faqs.flatMap(group => group.faqs.map((faq: any) => faq._id));
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(getAllFaqIds());
+    } else {
+      setSelectedIds([]);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -96,51 +117,97 @@ export default function FaqsTable({
                   <th className="p-3 border-b border-gray-200 dark:border-gray-700">
                     <input
                       type="checkbox"
-                      checked={selectedIds.length === faqs.length && faqs.length > 0}
-                      onChange={e => {
-                        if (e.target.checked) {
-                          setSelectedIds(faqs.map(f => f._id));
-                        } else {
-                          setSelectedIds([]);
-                        }
-                      }}
+                      checked={selectedIds.length === getAllFaqIds().length && getAllFaqIds().length > 0}
+                      onChange={e => handleSelectAll(e.target.checked)}
                     />
                   </th>
-                  <th className="p-3 border-b border-gray-200 dark:border-gray-700">Title</th>
-                  <th className="p-3 border-b border-gray-200 dark:border-gray-700">Description</th>
+                  <th className="p-3 border-b border-gray-200 dark:border-gray-700">Category</th>
+                  <th className="p-3 border-b border-gray-200 dark:border-gray-700">Questions</th>
                   <th className="p-3 border-b border-gray-200 dark:border-gray-700">Type</th>
                   <th className="p-3 border-b border-gray-200 dark:border-gray-700 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {faqs.map((faq) => (
-                  <tr key={faq._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#23242B]">
-                    <td className="p-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(faq._id)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setSelectedIds(prev => [...prev, faq._id]);
-                          } else {
-                            setSelectedIds(prev => prev.filter(id => id !== faq._id));
-                          }
-                        }}
-                      />
-                    </td>
-                    <td className="p-3 font-semibold truncate max-w-xs text-gray-900 dark:text-gray-100">{faq.title || ""}</td>
-                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">{faq.description}</td>
-                    <td className="p-3 text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded text-xs">
-                        {faq.type === "how-to-buy" ? "How to Buy" : 
-                         faq.type === "exchange-and-return" ? "Exchange and Return" : 
-                         faq.type === "refund-question" ? "Refund Question" : faq.type}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center">
-                      <MemoizedActions faq={faq} onRefresh={() => {}} />
-                    </td>
-                  </tr>
+                {faqs.map((group) => (
+                  <React.Fragment key={group.slug}>
+                    {/* Group Header Row */}
+                    <tr className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#23242B] bg-gray-50 dark:bg-[#1F2027]">
+                      <td className="p-3">
+                        <input
+                          type="checkbox"
+                          checked={group.faqs.every((faq: any) => selectedIds.includes(faq._id))}
+                          onChange={e => {
+                            const faqIds = group.faqs.map((faq: any) => faq._id);
+                            if (e.target.checked) {
+                              setSelectedIds(prev => [...prev, ...faqIds.filter(id => !prev.includes(id))]);
+                            } else {
+                              setSelectedIds(prev => prev.filter(id => !faqIds.includes(id)));
+                            }
+                          }}
+                        />
+                      </td>
+                      <td className="p-3 font-semibold text-gray-900 dark:text-gray-100">
+                        <button
+                          onClick={() => toggleGroup(group.slug)}
+                          className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400"
+                        >
+                          <span className={`transform transition-transform ${expandedGroups.includes(group.slug) ? 'rotate-90' : ''}`}>
+                            ▶
+                          </span>
+                          {group.title}
+                        </button>
+                      </td>
+                      <td className="p-3 text-sm text-gray-500 dark:text-gray-400">
+                        {group.faqs.length} question{group.faqs.length !== 1 ? 's' : ''}
+                      </td>
+                      <td className="p-3 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded text-xs">
+                          {group.title}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <button
+                          onClick={() => router.push(`/faq/add?type=${group.type}`)}
+                          className="px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900 dark:hover:bg-green-800 dark:text-green-300 rounded text-xs"
+                        >
+                          + Add Question
+                        </button>
+                      </td>
+                    </tr>
+                    
+                    {/* Individual FAQ Rows (when expanded) */}
+                    {expandedGroups.includes(group.slug) && group.faqs.map((faq: any) => (
+                      <tr key={faq._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#23242B] bg-gray-25 dark:bg-[#1A1B22]">
+                        <td className="p-3 pl-8">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(faq._id)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedIds(prev => [...prev, faq._id]);
+                              } else {
+                                setSelectedIds(prev => prev.filter(id => id !== faq._id));
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="p-3 pl-8 font-medium text-gray-900 dark:text-gray-100">
+                          {faq.title || ""}
+                        </td>
+                        <td className="p-3 pl-8 text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                          {faq.description}
+                        </td>
+                        <td className="p-3 pl-8 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="px-2 py-1 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded text-xs">
+                            Question
+                          </span>
+                        </td>
+                        <td className="p-3 pl-8 text-center">
+                          <MemoizedActions faq={faq} onRefresh={() => {}} />
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

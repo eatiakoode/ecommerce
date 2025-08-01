@@ -180,7 +180,6 @@ export default function Header1({ fullWidth = false }) {
                     </>
                   )}
                   <div className="sub-bot">
-                    <span className="body-text-">Support</span>
                   </div>
                 </div>
               </li>

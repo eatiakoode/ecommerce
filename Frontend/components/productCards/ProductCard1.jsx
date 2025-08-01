@@ -196,7 +196,7 @@ export default function ProductCard1({
             >
               <i className={`icon ${isInWishlist(product.id || product._id) ? "icon-heart-fill" : "icon-heart"}`} style={{ color: isInWishlist(product.id || product._id) ? '#dc3545' : '#333', fontSize: '14px' }} />
             </button>
-            <button
+            {/* <button
               className="list-btn"
               onClick={() => addToCompareItem(product.id || product._id)}
               title="Add to Compare"
@@ -217,7 +217,7 @@ export default function ProductCard1({
               }}
             >
               <i className={`icon ${isAddedtoCompareItem(product.id || product._id) ? "icon-refresh-fill" : "icon-refresh"}`} style={{ color: isAddedtoCompareItem(product.id || product._id) ? '#007bff' : '#333', fontSize: '14px' }} />
-            </button>
+            </button> */}
             <button
               className="list-btn"
               onClick={() => setQuickViewItem(product)}

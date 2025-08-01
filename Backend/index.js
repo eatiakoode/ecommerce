@@ -34,6 +34,7 @@ const instapostRoutes = require('./routes/instaPostRoute');
 const testimonialRoutes = require("./routes/testimonialRoute");
 const testimonialFrntRoutes = require("./routes/Frontend/testimonialFrntRoute");
 const checkoutRoute = require("./routes/Frontend/checkoutRoute");
+const blogFrntRoutes = require("./routes/Frontend/blogFrntRoute");
 
 
 // eati test
@@ -113,6 +114,7 @@ app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/frontend/testimonials", testimonialFrntRoutes);
 app.use("/api/size", sizeRoute);
 app.use("/api/frontend/checkout", checkoutRoute);
+app.use("/api/frontend/blog", blogFrntRoutes);
 
 
 // app.use("/public", express.static(path.join(__dirname, "public")));

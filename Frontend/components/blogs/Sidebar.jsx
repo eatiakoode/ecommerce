@@ -1,9 +1,41 @@
 "use client";
 import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { blogPosts6 } from "@/data/blogs";
+
 export default function Sidebar() {
+  const [categories, setCategories] = useState([]);
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch categories
+        const categoriesResponse = await fetch('http://localhost:5000/api/blogcategory');
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json();
+          setCategories(categoriesData);
+        }
+
+        // Fetch recent posts
+        const postsResponse = await fetch('http://localhost:5000/api/frontend/blog/list');
+        if (postsResponse.ok) {
+          const postsData = await postsResponse.json();
+          setRecentPosts(postsData.slice(0, 5)); // Get first 5 posts
+        }
+      } catch (error) {
+        console.error('Error fetching sidebar data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="sidebar maxw-360">
       <div className="sidebar-item sidebar-search">
@@ -49,127 +81,138 @@ export default function Sidebar() {
         </form>
       </div>
       <div className="sidebar-item sidebar-relatest-post">
-        <h5 className="sidebar-heading">Relatest Post</h5>
+        <h5 className="sidebar-heading">Recent Posts</h5>
         <div>
-          {blogPosts6.slice(3, 8).map((post, i) => (
-            <div
-              key={i}
-              className={`relatest-post-item ${
-                i != 0 ? "style-row" : ""
-              } hover-image `}
-            >
-              <div className="image">
-                <Image
-                  className="lazyload"
-                  alt=""
-                  src={post.imgSrc}
-                  width={540}
-                  height={360}
-                />
-              </div>
-              <div className="content">
-                <div className="meta">
-                  <div className="meta-item gap-8">
-                    <div className="icon">
-                      <i className="icon-calendar" />
-                    </div>
-                    <p className="text-caption-1">{post.date}</p>
-                  </div>
-                  <div className="meta-item gap-8">
-                    <div className="icon">
-                      <i className="icon-user" />
-                    </div>
-                    <p className="text-caption-1">
-                      by{" "}
-                      <a className="link" href="#">
-                        {post.author}
-                      </a>
-                    </p>
-                  </div>
+          {loading ? (
+            // Loading skeleton
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="relatest-post-item style-row hover-image">
+                <div className="image">
+                  <div className="bg-gray-200 animate-pulse" style={{ width: 540, height: 360 }}></div>
                 </div>
-                <h6 className="title fw-5">
-                  <Link className="link" href={`/blog-detail/${post.id}`}>
-                    {post.description.split(" ").slice(0, 8).join(" ")}
-                  </Link>
-                </h6>
+                <div className="content">
+                  <div className="meta">
+                    <div className="meta-item gap-8">
+                      <div className="icon">
+                        <i className="icon-calendar" />
+                      </div>
+                      <div className="bg-gray-200 animate-pulse h-4 w-20 rounded"></div>
+                    </div>
+                    <div className="meta-item gap-8">
+                      <div className="icon">
+                        <i className="icon-user" />
+                      </div>
+                      <div className="bg-gray-200 animate-pulse h-4 w-24 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-200 animate-pulse h-4 w-full rounded mb-2"></div>
+                  <div className="bg-gray-200 animate-pulse h-4 w-3/4 rounded"></div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            recentPosts.map((post, i) => (
+              <div
+                key={post._id || i}
+                className={`relatest-post-item ${
+                  i != 0 ? "style-row" : ""
+                } hover-image `}
+              >
+                <div className="image">
+                  {post.image ? (
+                    <Image
+                      className="lazyload"
+                      alt={post.title}
+                      src={post.image.startsWith('http') ? post.image : `http://localhost:5000${post.image}`}
+                      width={540}
+                      height={360}
+                      onError={(e) => {
+                        e.target.src = '/images/blog/blog-grid-1.jpg';
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      className="lazyload"
+                      alt="Default blog image"
+                      src="/images/blog/blog-grid-1.jpg"
+                      width={540}
+                      height={360}
+                    />
+                  )}
+                </div>
+                <div className="content">
+                  <div className="meta">
+                    <div className="meta-item gap-8">
+                      <div className="icon">
+                        <i className="icon-calendar" />
+                      </div>
+                      <p className="text-caption-1">
+                        {post.date ? new Date(post.date).toLocaleDateString() : "No Date"}
+                      </p>
+                    </div>
+                    <div className="meta-item gap-8">
+                      <div className="icon">
+                        <i className="icon-user" />
+                      </div>
+                      <p className="text-caption-1">
+                        by{" "}
+                        <a className="link" href="#">
+                          {post.author || "Unknown Author"}
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                  <h6 className="title fw-5">
+                    <Link className="link" href={`/blog-detail/${post.slug || post._id}`}>
+                      {post.title || "No Title"}
+                    </Link>
+                  </h6>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
       <div className="sidebar-item sidebar-categories">
         <h5 className="sidebar-heading">Categories</h5>
         <ul>
-          <li>
-            <a className="text-button link" href="#">
-              Trending
-            </a>
-          </li>
-          <li>
-            <a className="text-button link" href="#">
-              Fashion
-            </a>
-          </li>
-          <li>
-            <a className="text-button link" href="#">
-              Outfit
-            </a>
-          </li>
-          <li>
-            <a className="text-button link" href="#">
-              Accessories
-            </a>
-          </li>
-          <li>
-            <a className="text-button link" href="#">
-              Beauty
-            </a>
-          </li>
+          {loading ? (
+            // Loading skeleton for categories
+            [...Array(5)].map((_, i) => (
+              <li key={i}>
+                <div className="bg-gray-200 animate-pulse h-4 w-20 rounded"></div>
+              </li>
+            ))
+          ) : (
+            categories.map((category) => (
+              <li key={category._id}>
+                <a className="text-button link" href="#">
+                  {category.title || category.name}
+                </a>
+              </li>
+            ))
+          )}
         </ul>
       </div>
       <div className="sidebar-item sidebar-tag">
         <h5 className="sidebar-heading">Popular Tag</h5>
         <ul className="list-tags">
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Fashion Trends
-            </a>
-          </li>
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Sustainable Fashion
-            </a>
-          </li>
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Street Style
-            </a>
-          </li>
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Beauty Tips
-            </a>
-          </li>
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Street Style
-            </a>
-          </li>
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Vintage Fashion
-            </a>
-          </li>
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Eco Friendly
-            </a>
-          </li>
-          <li>
-            <a href="#" className="text-caption-1 link">
-              Tips
-            </a>
-          </li>
+          {loading ? (
+            // Loading skeleton for tags
+            [...Array(8)].map((_, i) => (
+              <li key={i}>
+                <div className="bg-gray-200 animate-pulse h-4 w-24 rounded"></div>
+              </li>
+            ))
+          ) : (
+            categories.slice(0, 8).map((category) => (
+              <li key={category._id}>
+                <a href="#" className="text-caption-1 link">
+                  {category.title || category.name}
+                </a>
+              </li>
+            ))
+          )}
         </ul>
       </div>
     </div>

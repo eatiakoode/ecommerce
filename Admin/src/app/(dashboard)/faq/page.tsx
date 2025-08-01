@@ -27,16 +27,40 @@ export default function FaqsPage() {
     }
   }, [isError]);
 
-  const filteredFaqs = useMemo(() => {
-    return faqs.filter((f: any) => {
-      const search = filter.toLowerCase();
-      const titleOrDescMatch = (f.title || "").toLowerCase().includes(search) || (f.description || "").toLowerCase().includes(search);
-      const typeMatch =
-        typeFilter === "all" ||
-        (f.type && f.type === typeFilter);
-      return titleOrDescMatch && typeMatch;
+  // Group FAQs by slug
+  const groupedFaqs = useMemo(() => {
+    const groups: { [key: string]: any[] } = {};
+    
+    faqs.forEach((faq: any) => {
+      const slug = faq.slug || faq.type;
+      if (!groups[slug]) {
+        groups[slug] = [];
+      }
+      groups[slug].push(faq);
     });
-  }, [faqs, filter, typeFilter]);
+    
+    return Object.entries(groups).map(([slug, faqs]) => ({
+      slug,
+      type: faqs[0]?.type || slug,
+      faqs,
+      title: slug === "how-to-buy" ? "How to Buy" : 
+             slug === "exchange-and-return" ? "Exchange and Return" : 
+             slug === "refund-question" ? "Refund Question" : slug
+    }));
+  }, [faqs]);
+
+  const filteredFaqs = useMemo(() => {
+    return groupedFaqs.filter((group) => {
+      const search = filter.toLowerCase();
+      const titleMatch = group.title.toLowerCase().includes(search);
+      const questionsMatch = group.faqs.some((f: any) => 
+        (f.title || "").toLowerCase().includes(search) || 
+        (f.description || "").toLowerCase().includes(search)
+      );
+      const typeMatch = typeFilter === "all" || group.type === typeFilter;
+      return (titleMatch || questionsMatch) && typeMatch;
+    });
+  }, [groupedFaqs, filter, typeFilter]);
 
   return (
     <FaqsTable

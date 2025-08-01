@@ -379,7 +379,7 @@ export default function Details1({ product }) {
                             ₹{ (product.price * quantity).toFixed(2) }
                           </span>
                         </a>
-                        <a
+                        {/* <a
                           href="#compare"
                           data-bs-toggle="offcanvas"
                           aria-controls="compare"
@@ -392,7 +392,7 @@ export default function Details1({ product }) {
                               ? "Already compared"
                               : "Compare"}
                           </span>
-                        </a>
+                        </a> */}
                         <a
                           onClick={handleAddToWishlist}
                           className="box-icon hover-tooltip text-caption-2 wishlist btn-icon-action"

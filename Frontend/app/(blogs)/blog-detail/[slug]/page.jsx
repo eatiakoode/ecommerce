@@ -3,15 +3,14 @@ import RelatedBlogs from "@/components/blogs/RelatedBlogs";
 import Footer1 from "@/components/footers/Footer1";
 // import Topbar6 from "@/components/headers/Topbar6";
 import React from "react";
-import { redirect } from "next/navigation";
 
-export default async function BlogDetailsPage1({ params }) {
-  const { id } = params;
+export default async function BlogDetailsPageBySlug({ params }) {
+  const { slug } = params;
   let blog = null;
   
   try {
-    // First try to fetch by ID (admin API)
-    const res = await fetch(`http://localhost:5000/api/blog/${id}`, { 
+    // Try to fetch by slug using the admin API
+    const res = await fetch(`http://localhost:5000/api/blog/slug/${slug}`, { 
       cache: "no-store",
       headers: {
         'Content-Type': 'application/json',
@@ -20,12 +19,6 @@ export default async function BlogDetailsPage1({ params }) {
     
     if (res.ok) {
       const blogData = await res.json();
-      
-      // If we have a slug, redirect to the slug-based route
-      if (blogData.slug && blogData.slug !== id) {
-        redirect(`/blog-detail/${blogData.slug}`);
-      }
-      
       // Transform the admin API response to match frontend format
       blog = {
         category: blogData.category?.title || null,
@@ -38,28 +31,24 @@ export default async function BlogDetailsPage1({ params }) {
         }) : null,
         author: blogData.author,
         images: blogData.images,
-        slug: blogData.slug || id,
+        slug: blogData.slug,
         _id: blogData._id,
       };
     } else {
-      // If ID fetch fails, try to find by slug in all blogs
-      const allBlogsRes = await fetch(`http://localhost:5000/api/blog`, { 
+      // If slug fetch fails, try to find by slug in all blogs
+      const resById = await fetch(`http://localhost:5000/api/blog`, { 
         cache: "no-store",
         headers: {
           'Content-Type': 'application/json',
         }
       });
       
-      if (allBlogsRes.ok) {
-        const allBlogs = await allBlogsRes.json();
-        const foundBlog = allBlogs.find(b => b.slug === id || b._id === id);
+      if (resById.ok) {
+        const allBlogs = await resById.json();
+        const foundBlog = allBlogs.find(b => b.slug === slug);
         
         if (foundBlog) {
-          // If we have a slug, redirect to the slug-based route
-          if (foundBlog.slug && foundBlog.slug !== id) {
-            redirect(`/blog-detail/${foundBlog.slug}`);
-          }
-          
+          // Transform the admin API response to match frontend format
           blog = {
             category: foundBlog.category?.title || null,
             title: foundBlog.title,
@@ -89,4 +78,4 @@ export default async function BlogDetailsPage1({ params }) {
       <RelatedBlogs currentBlogId={blog?._id} currentBlogSlug={blog?.slug} />
     </>
   );
-}
+} 

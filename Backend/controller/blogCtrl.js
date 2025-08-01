@@ -302,6 +302,32 @@ const getBlog = asyncHandler(async (req, res) => {
   }
 });
 
+const getBlogBySlug = asyncHandler(async (req, res) => {
+  const { slug } = req.params;
+  try {
+    const getBlog = await Blog.findOne({ slug })
+      .populate("likes")
+      .populate("dislikes")
+      .populate("category");
+    
+    if (!getBlog) {
+      res.status(404);
+      throw new Error("Blog not found");
+    }
+    
+    await Blog.findByIdAndUpdate(
+      getBlog._id,
+      {
+        $inc: { numViews: 1 },
+      },
+      { new: true }
+    );
+    res.json(getBlog);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 const getAllBlogs = asyncHandler(async (req, res) => {
   try {
     const getBlogs = await Blog.find().populate("category");
@@ -446,6 +472,7 @@ module.exports = {
   createBlog,
   updateBlog,
   getBlog,
+  getBlogBySlug,
   getAllBlogs,
   deleteBlog,
   liketheBlog,

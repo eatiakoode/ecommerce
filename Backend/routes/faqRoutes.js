@@ -9,7 +9,6 @@ const {
   deleteFAQ,
 } = require("../controller/faqCtrl");
 
-
 router.post("/", createFAQ);
 router.get("/", getAllFAQs);
 router.get("/:id", getFAQById);
